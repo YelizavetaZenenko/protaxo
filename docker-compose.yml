@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: protaxo_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: lizaliza123
+      POSTGRES_DB: protaxo
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
