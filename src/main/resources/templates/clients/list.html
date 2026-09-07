@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>ProTaxo — Контрагенти</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='clients')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Контрагенти</h1>
+                <a class="btn" th:href="@{/clients/new}">+ Новий контрагент</a>
+            </div>
+
+            <form th:action="@{/clients}" method="get" class="filter-bar">
+                <div class="field">
+                    <label for="filterName">Назва</label>
+                    <input type="text" id="filterName" name="filterName" th:value="${filterName}" placeholder="Пошук за назвою">
+                </div>
+                <div class="field">
+                    <label for="filterEdrpou">Код ЄДРПОУ</label>
+                    <input type="text" id="filterEdrpou" name="filterEdrpou" th:value="${filterEdrpou}" placeholder="Пошук за кодом">
+                </div>
+                <div class="field filter-actions-field">
+                    <label>&nbsp;</label>
+                    <div class="filter-actions">
+                        <button type="submit" class="btn-outline">Фільтрувати</button>
+                        <a class="link-btn" th:if="${filterName != null or filterEdrpou != null}" th:href="@{/clients}">Скинути фільтр</a>
+                    </div>
+                </div>
+            </form>
+
+            <table class="clean-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Назва</th>
+                    <th>Повна назва</th>
+                    <th>Код ЄДРПОУ</th>
+                    <th>Контактна особа</th>
+                    <th>Код</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="c : ${clients}" class="clickable-row" th:attr="data-href=@{/clients/{id}(id=${c.id})}">
+                    <td th:text="${c.id}"></td>
+                    <td th:text="${c.name}"></td>
+                    <td th:text="${c.fullName}"></td>
+                    <td th:text="${c.edrpou}"></td>
+                    <td th:text="${c.contactPersonName}"></td>
+                    <td th:text="${c.code}"></td>
+                    <td class="actions-cell">
+                        <a class="link-btn" th:href="@{/clients/{id}(id=${c.id})}">Переглянути</a>
+                        <a class="link-btn" th:href="@{/clients/{id}/edit(id=${c.id})}">Редагувати</a>
+                        <form sec:authorize="hasRole('ADMIN')" th:action="@{/clients/{id}/delete(id=${c.id})}" method="post" style="display:inline">
+                            <button type="submit" class="link-btn link-btn-danger"
+                                    onclick="return confirm('Видалити контрагента?')">Видалити</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(clients)}">
+                    <td colspan="7">Контрагентів ще немає</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.clickable-row').forEach(function (row) {
+                row.addEventListener('click', function (e) {
+                    if (e.target.closest('.actions-cell')) return;
+                    window.location.href = row.dataset.href;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

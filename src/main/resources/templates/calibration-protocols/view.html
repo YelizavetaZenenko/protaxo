@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'ProTaxo — Протокол ' + ${protocol.protocolNumber}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='calibration')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1 th:text="'Протокол ' + ${protocol.protocolNumber}"></h1>
+                <div class="actions-cell">
+                    <a class="btn-outline" th:href="@{/calibration-protocols/{id}/edit(id=${protocol.id})}">Редагувати</a>
+                    <a class="btn-outline" th:href="@{/calibration-protocols/{id}/pdf(id=${protocol.id})}" target="_blank">Друк PDF</a>
+                    <a class="btn-outline" th:href="@{/calibration-protocols}">Назад до списку</a>
+                </div>
+            </div>
+
+            <div class="view-meta">
+                <div class="field">
+                    <label>Дата та час</label>
+                    <div th:text="${#temporals.format(protocol.protocolDate, 'dd.MM.yyyy HH:mm')}"></div>
+                </div>
+                <div class="field">
+                    <label>Внутрішній номер</label>
+                    <div th:text="${protocol.internalNumber}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(protocol.stampNumber)}">
+                    <label>Номер штампу</label>
+                    <div th:text="${protocol.stampNumber}"></div>
+                </div>
+                <div class="field field-full">
+                    <label>Контрагент</label>
+                    <div th:text="${client.name}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(protocol.vehicleName)}">
+                    <label>Транспортний засіб</label>
+                    <div th:text="${protocol.vehicleName}"></div>
+                </div>
+                <div class="field field-full">
+                    <label>Наряд</label>
+                    <div th:text="${protocol.orderLabel}"></div>
+                </div>
+                <div class="field">
+                    <label>Номер картки</label>
+                    <div th:text="${protocol.cardNumber}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(protocol.representativeName)}">
+                    <label>Представник</label>
+                    <div th:text="${protocol.representativeName}"></div>
+                </div>
+            </div>
+
+            <h2 class="view-section-title">Дані тахографа</h2>
+            <div class="view-meta">
+                <div class="field" th:if="${not #strings.isEmpty(protocol.tachographBrand)}">
+                    <label>Марка</label>
+                    <div th:text="${protocol.tachographBrand}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(protocol.tachographModel)}">
+                    <label>Модель</label>
+                    <div th:text="${protocol.tachographModel}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(protocol.tachographType)}">
+                    <label>Тип</label>
+                    <div th:text="${protocol.tachographType}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(protocol.tachographManufacturer)}">
+                    <label>Виробник</label>
+                    <div th:text="${protocol.tachographManufacturer}"></div>
+                </div>
+                <div class="field" th:if="${protocol.previousInspectionDate} != null">
+                    <label>Дата попередньої перевірки</label>
+                    <div th:text="${#temporals.format(protocol.previousInspectionDate, 'dd.MM.yyyy')}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

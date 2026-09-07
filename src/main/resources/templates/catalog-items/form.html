@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${editId} != null ? 'ProTaxo — Редагування позиції каталогу' : 'ProTaxo — Нова позиція каталогу'"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='catalog')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <h1 th:text="${editId} != null ? 'Редагування позиції каталогу' : 'Нова позиція каталогу'"></h1>
+
+            <form th:object="${catalogItem}"
+                  th:action="${editId} != null ? @{/catalog-items/{id}/edit(id=${editId})} : @{/catalog-items}"
+                  method="post" class="form-grid">
+
+                <div class="field">
+                    <label for="type">Тип *</label>
+                    <select id="type" th:field="*{type}">
+                        <option value="">— оберіть тип —</option>
+                        <option th:each="t : ${types}" th:value="${t}" th:text="${t}"></option>
+                    </select>
+                    <div class="field-error" th:if="${#fields.hasErrors('type')}" th:errors="*{type}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="basePrice">Базова ціна *</label>
+                    <input type="number" step="0.01" min="0" id="basePrice" th:field="*{basePrice}">
+                    <div class="field-error" th:if="${#fields.hasErrors('basePrice')}" th:errors="*{basePrice}"></div>
+                </div>
+
+                <div class="field field-full">
+                    <label for="name">Назва *</label>
+                    <input type="text" id="name" th:field="*{name}">
+                    <div class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="stockQuantity">Залишок на складі</label>
+                    <input type="number" step="0.001" min="0" id="stockQuantity" th:field="*{stockQuantity}">
+                    <div class="muted">Залиште порожнім для послуг</div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn">Зберегти</button>
+                    <a class="btn-outline" th:href="@{/catalog-items(activeType=${catalogItem.type})}">Скасувати</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

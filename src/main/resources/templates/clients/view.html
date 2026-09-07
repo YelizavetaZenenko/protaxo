@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'ProTaxo — ' + ${client.name}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='clients')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1 th:text="${client.name}"></h1>
+                <div class="actions-cell">
+                    <a class="btn-outline" th:href="@{/clients/{id}/edit(id=${client.id})}">Редагувати</a>
+                    <a class="btn-outline" th:href="@{/clients}">Назад до списку</a>
+                </div>
+            </div>
+
+            <div class="view-meta">
+                <div class="field field-full" th:if="${not #strings.isEmpty(client.fullName)}">
+                    <label>Повна назва</label>
+                    <div th:text="${client.fullName}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(client.edrpou)}">
+                    <label>Код ЄДРПОУ</label>
+                    <div th:text="${client.edrpou}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(client.code)}">
+                    <label>Код</label>
+                    <div th:text="${client.code}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(client.contactPersonName)}">
+                    <label>Ім'я контактної особи</label>
+                    <div th:text="${client.contactPersonName}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(client.contactPersonPhone)}">
+                    <label>Телефон контактної особи</label>
+                    <div th:text="${client.contactPersonPhone}"></div>
+                </div>
+
+                <div class="field" th:if="${not #strings.isEmpty(client.lastName) or not #strings.isEmpty(client.firstName) or not #strings.isEmpty(client.middleName)}">
+                    <label>Контактна особа (ПІБ)</label>
+                    <div th:text="${#strings.trim((client.lastName ?: '') + ' ' + (client.firstName ?: '') + ' ' + (client.middleName ?: ''))}"></div>
+                </div>
+                <div class="field" th:if="${client.birthDate} != null">
+                    <label>Дата народження</label>
+                    <div th:text="${#temporals.format(client.birthDate, 'dd.MM.yyyy')}"></div>
+                </div>
+                <div class="field" th:if="${client.gender} != null">
+                    <label>Стать</label>
+                    <div th:text="${client.gender.label}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(client.position)}">
+                    <label>Посада</label>
+                    <div th:text="${client.position}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(client.phone)}">
+                    <label>Телефон</label>
+                    <div th:text="${client.phone}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(client.email)}">
+                    <label>Email</label>
+                    <div th:text="${client.email}"></div>
+                </div>
+            </div>
+
+            <h2 class="view-section-title">Водії</h2>
+            <table class="clean-table" id="driversTable">
+                <colgroup>
+                    <col style="width:40%">
+                    <col style="width:30%">
+                    <col style="width:30%">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th>ПІБ</th>
+                    <th>Телефон</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="driversBody">
+                <tr th:each="d : ${drivers}" th:attr="data-id=${d.id},data-full-name=${d.fullName},data-phone=${d.phone}">
+                    <td th:text="${d.fullName}"></td>
+                    <td th:text="${d.phone}"></td>
+                    <td class="actions-cell">
+                        <button type="button" class="link-btn edit-driver-btn">Редагувати</button>
+                        <button type="button" class="link-btn link-btn-danger delete-driver-btn" sec:authorize="hasRole('ADMIN')">Видалити</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="muted" id="driversEmpty" th:if="${#lists.isEmpty(drivers)}">У цього контрагента ще немає водіїв.</div>
+            <button type="button" class="btn-outline" id="addDriverBtn" style="margin-top:0.75rem;">+ Додати водія</button>
+
+            <h2 class="view-section-title" style="margin-top:2rem;">Автомобілі</h2>
+            <table class="clean-table">
+                <thead>
+                <tr>
+                    <th>Держ. номер</th>
+                    <th>VIN</th>
+                    <th>Марка</th>
+                    <th>Модель</th>
+                    <th>Рік</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="v : ${vehicles}">
+                    <td th:text="${v.registrationNumber}"></td>
+                    <td th:text="${v.vin}"></td>
+                    <td th:text="${v.make}"></td>
+                    <td th:text="${v.model}"></td>
+                    <td th:text="${v.year}"></td>
+                    <td class="actions-cell">
+                        <a class="link-btn" th:href="@{/vehicles/{id}/edit(id=${v.id})}">Редагувати</a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(vehicles)}">
+                    <td colspan="6">У цього контрагента ще немає автомобілів.</td>
+                </tr>
+                </tbody>
+            </table>
+            <a class="btn-outline" th:href="@{/vehicles/new}" style="margin-top:0.75rem;">+ Додати автомобіль</a>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="confirmModalOverlay" hidden>
+        <div class="modal">
+            <h2>Підтвердження</h2>
+            <p id="confirmModalMessage"></p>
+            <div class="form-actions">
+                <button type="button" class="btn" id="confirmModalYesBtn">Так, видалити</button>
+                <button type="button" class="btn-outline" id="confirmModalNoBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="driverModalOverlay" hidden>
+        <div class="modal">
+            <h2 id="driverModalTitle">Новий водій</h2>
+            <div class="alert alert-error" id="driverModalError" hidden></div>
+            <div class="field field-full">
+                <label for="driverFullName">ПІБ *</label>
+                <input type="text" id="driverFullName">
+            </div>
+            <div class="field field-full">
+                <label for="driverPhone">Телефон</label>
+                <input type="tel" id="driverPhone" placeholder="+380XXXXXXXXX">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveDriverBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelDriverBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        var clientId = /*[[${client.id}]]*/ null;
+    </script>
+    <script>
+        /** Reusable styled replacement for window.confirm() — see #confirmModalOverlay. */
+        function showConfirm(message, onConfirm) {
+            var overlay = document.getElementById('confirmModalOverlay');
+            var msgEl = document.getElementById('confirmModalMessage');
+            var yesBtn = document.getElementById('confirmModalYesBtn');
+            var noBtn = document.getElementById('confirmModalNoBtn');
+            msgEl.textContent = message;
+            overlay.hidden = false;
+            function cleanup() {
+                overlay.hidden = true;
+                yesBtn.removeEventListener('click', onYes);
+                noBtn.removeEventListener('click', onNo);
+            }
+            function onYes() { cleanup(); onConfirm(); }
+            function onNo() { cleanup(); }
+            yesBtn.addEventListener('click', onYes);
+            noBtn.addEventListener('click', onNo);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var driversBody = document.getElementById('driversBody');
+            var driversEmpty = document.getElementById('driversEmpty');
+            var addDriverBtn = document.getElementById('addDriverBtn');
+            var driverModalOverlay = document.getElementById('driverModalOverlay');
+            var driverModalTitle = document.getElementById('driverModalTitle');
+            var driverModalError = document.getElementById('driverModalError');
+            var driverFullName = document.getElementById('driverFullName');
+            var driverPhone = document.getElementById('driverPhone');
+            var editingDriverId = null;
+
+            function openModal(title, id, fullName, phone) {
+                editingDriverId = id;
+                driverModalTitle.textContent = title;
+                driverModalError.hidden = true;
+                driverFullName.value = fullName || '';
+                driverPhone.value = phone || '';
+                driverModalOverlay.hidden = false;
+                driverFullName.focus();
+            }
+
+            function addRow(driver) {
+                var row = document.createElement('tr');
+                row.dataset.id = driver.id;
+                row.dataset.fullName = driver.fullName;
+                row.dataset.phone = driver.phone || '';
+
+                var nameTd = document.createElement('td');
+                nameTd.textContent = driver.fullName;
+                row.appendChild(nameTd);
+
+                var phoneTd = document.createElement('td');
+                phoneTd.textContent = driver.phone || '';
+                row.appendChild(phoneTd);
+
+                var actionsTd = document.createElement('td');
+                actionsTd.className = 'actions-cell';
+                actionsTd.appendChild(buildEditButton());
+                actionsTd.appendChild(buildDeleteButton());
+                row.appendChild(actionsTd);
+
+                driversBody.appendChild(row);
+                if (driversEmpty) driversEmpty.hidden = true;
+            }
+
+            function buildEditButton() {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'link-btn edit-driver-btn';
+                btn.textContent = 'Редагувати';
+                return btn;
+            }
+
+            function buildDeleteButton() {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'link-btn link-btn-danger delete-driver-btn';
+                btn.textContent = 'Видалити';
+                return btn;
+            }
+
+            addDriverBtn.addEventListener('click', function () {
+                openModal('Новий водій', null, '', '');
+            });
+
+            driversBody.addEventListener('click', function (e) {
+                var row = e.target.closest('tr');
+                if (!row) return;
+                if (e.target.classList.contains('edit-driver-btn')) {
+                    openModal('Редагування водія', row.dataset.id, row.dataset.fullName, row.dataset.phone);
+                } else if (e.target.classList.contains('delete-driver-btn')) {
+                    showConfirm('Видалити водія?', function () {
+                        fetch('/api/drivers/' + row.dataset.id, { method: 'DELETE', credentials: 'same-origin' })
+                            .then(function (resp) {
+                                if (resp.ok) {
+                                    row.remove();
+                                    if (driversBody.children.length === 0 && driversEmpty) driversEmpty.hidden = false;
+                                }
+                            });
+                    });
+                }
+            });
+
+            document.getElementById('cancelDriverBtn').addEventListener('click', function () {
+                driverModalOverlay.hidden = true;
+            });
+
+            document.getElementById('saveDriverBtn').addEventListener('click', function () {
+                var fullName = driverFullName.value.trim();
+                var phone = driverPhone.value.trim();
+                var phonePattern = /^\+380\d{9}$/;
+                if (!fullName) {
+                    driverModalError.textContent = "ПІБ обов'язкове";
+                    driverModalError.hidden = false;
+                    return;
+                }
+                if (!phone) {
+                    driverModalError.textContent = 'Телефон обовʼязковий';
+                    driverModalError.hidden = false;
+                    return;
+                }
+                if (!phonePattern.test(phone)) {
+                    driverModalError.textContent = 'Телефон має бути у форматі +380XXXXXXXXX';
+                    driverModalError.hidden = false;
+                    return;
+                }
+                var body = JSON.stringify({ clientId: clientId, fullName: fullName, phone: phone });
+                var url = editingDriverId ? '/api/drivers/' + editingDriverId : '/api/drivers';
+                var method = editingDriverId ? 'PUT' : 'POST';
+
+                fetch(url, {
+                    method: method,
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (b) { throw new Error(b.message || 'Не вдалося зберегти водія'); });
+                    }
+                    return resp.json();
+                }).then(function (saved) {
+                    if (editingDriverId) {
+                        var row = driversBody.querySelector('tr[data-id="' + editingDriverId + '"]');
+                        if (row) {
+                            row.dataset.fullName = saved.fullName;
+                            row.dataset.phone = saved.phone || '';
+                            row.children[0].textContent = saved.fullName;
+                            row.children[1].textContent = saved.phone || '';
+                        }
+                    } else {
+                        addRow(saved);
+                    }
+                    driverModalOverlay.hidden = true;
+                }).catch(function (err) {
+                    driverModalError.textContent = err.message;
+                    driverModalError.hidden = false;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ProTaxo — Активація акаунта</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="auth-page">
+    <div class="auth-card card">
+        <h1>ProTaxo ERP</h1>
+
+        <div th:if="${invalid}">
+            <div class="alert alert-error">
+                Посилання недійсне, протерміноване або вже було використане.
+            </div>
+            <a class="btn-outline btn-block" th:href="@{/login}">До сторінки входу</a>
+        </div>
+
+        <div th:unless="${invalid}">
+            <p class="muted">Встановіть пароль, щоб активувати акаунт.</p>
+
+            <div class="alert alert-error" th:if="${formError}" th:text="${formError}"></div>
+
+            <form th:object="${form}" th:action="@{/accept-invite(token=${token})}" method="post">
+                <div class="field">
+                    <label for="password">Новий пароль</label>
+                    <input type="password" id="password" th:field="*{password}" autocomplete="new-password">
+                    <div class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                </div>
+                <div class="field">
+                    <label for="confirmPassword">Підтвердіть пароль</label>
+                    <input type="password" id="confirmPassword" th:field="*{confirmPassword}" autocomplete="new-password">
+                    <div class="field-error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></div>
+                </div>
+                <button type="submit" class="btn btn-block">Активувати акаунт</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

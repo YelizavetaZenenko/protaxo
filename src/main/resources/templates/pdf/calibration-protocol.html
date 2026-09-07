@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Протокол калібрування</title>
+    <style>
+        @page { size: A4; margin: 2cm; }
+        body { font-family: 'DejaVu Sans'; font-size: 11pt; color: #111111; }
+        h1 { font-size: 16pt; margin: 0 0 10pt 0; }
+        h2 { font-size: 12pt; margin: 18pt 0 6pt 0; }
+        .meta div { margin: 2pt 0; }
+        .signatures { margin-top: 40pt; }
+        .signatures div { margin-top: 24pt; }
+        .line { display: inline-block; border-bottom: 1px solid #333333; width: 220pt; margin-left: 10pt; }
+    </style>
+</head>
+<body>
+    <h1 th:text="'ПРОТОКОЛ КАЛІБРУВАННЯ ' + ${protocol.protocolNumber}">ПРОТОКОЛ КАЛІБРУВАННЯ</h1>
+
+    <div class="meta">
+        <div th:text="'Дата: ' + ${#temporals.format(protocol.protocolDate, 'dd.MM.yyyy HH:mm')}">Дата</div>
+        <div th:text="'Внутрішній номер: ' + ${protocol.internalNumber}">Внутрішній номер</div>
+        <div th:if="${not #strings.isEmpty(protocol.stampNumber)}" th:text="'Номер штампу: ' + ${protocol.stampNumber}">Номер штампу</div>
+        <div th:text="'Контрагент: ' + ${clientName}">Контрагент</div>
+        <div th:if="${not #strings.isEmpty(protocol.vehicleName)}" th:text="'Транспортний засіб: ' + ${protocol.vehicleName}">ТЗ</div>
+        <div th:text="${protocol.orderLabel}">Наряд</div>
+        <div th:text="'Номер картки: ' + ${protocol.cardNumber}">Номер картки</div>
+        <div th:if="${not #strings.isEmpty(protocol.representativeName)}" th:text="'Представник: ' + ${protocol.representativeName}">Представник</div>
+    </div>
+
+    <h2>Дані тахографа</h2>
+    <div class="meta">
+        <div th:if="${not #strings.isEmpty(protocol.tachographBrand)}" th:text="'Марка: ' + ${protocol.tachographBrand}">Марка</div>
+        <div th:if="${not #strings.isEmpty(protocol.tachographModel)}" th:text="'Модель: ' + ${protocol.tachographModel}">Модель</div>
+        <div th:if="${not #strings.isEmpty(protocol.tachographType)}" th:text="'Тип: ' + ${protocol.tachographType}">Тип</div>
+        <div th:if="${not #strings.isEmpty(protocol.tachographManufacturer)}" th:text="'Виробник: ' + ${protocol.tachographManufacturer}">Виробник</div>
+        <div th:if="${protocol.previousInspectionDate} != null"
+             th:text="'Дата попередньої перевірки: ' + ${#temporals.format(protocol.previousInspectionDate, 'dd.MM.yyyy')}">Попередня перевірка</div>
+    </div>
+
+    <div class="signatures">
+        <div>Виконавець: <span class="line"> </span></div>
+        <div>Представник контрагента: <span class="line"> </span></div>
+    </div>
+</body>
+</html>

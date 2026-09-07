@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>ProTaxo — Каталог</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='catalog')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Каталог товарів і послуг</h1>
+                <a class="btn" th:href="@{/catalog-items/new(activeType=${activeType})}">+ Нова позиція</a>
+            </div>
+
+            <div class="doc-tabs" style="margin-top:0;">
+                <a class="doc-tab-btn" th:classappend="${activeType.name() == 'MATERIAL'} ? 'active'" th:href="@{/catalog-items(activeType='MATERIAL')}">Товари</a>
+                <a class="doc-tab-btn" th:classappend="${activeType.name() == 'SERVICE'} ? 'active'" th:href="@{/catalog-items(activeType='SERVICE')}">Послуги</a>
+            </div>
+
+            <table class="clean-table">
+                <colgroup>
+                    <col style="width:8%">
+                    <col style="width:42%">
+                    <col style="width:20%">
+                    <col style="width:15%">
+                    <col style="width:15%">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Назва</th>
+                    <th>Базова ціна</th>
+                    <th>Залишок</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="ci : ${catalogItems}">
+                    <td th:text="${ci.id}"></td>
+                    <td th:text="${ci.name}"></td>
+                    <td th:text="${#numbers.formatDecimal(ci.basePrice, 1, 2)}"></td>
+                    <td th:text="${ci.stockQuantity != null ? #numbers.formatDecimal(ci.stockQuantity, 1, 3) : '—'}"></td>
+                    <td class="actions-cell">
+                        <a class="link-btn" th:href="@{/catalog-items/{id}/edit(id=${ci.id})}">Редагувати</a>
+                        <form sec:authorize="hasRole('ADMIN')" th:action="@{/catalog-items/{id}/delete(id=${ci.id})}" method="post" style="display:inline">
+                            <button type="submit" class="link-btn link-btn-danger"
+                                    onclick="return confirm('Видалити позицію каталогу?')">Видалити</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(catalogItems)}">
+                    <td colspan="5" th:text="${activeType.name() == 'MATERIAL'} ? 'Товарів ще немає' : 'Послуг ще немає'"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,12 +1,27 @@
 package com.example.protaxo.client.dto;
 
-import com.example.protaxo.client.entity.PaymentType;
+import com.example.protaxo.client.entity.Gender;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import java.time.LocalDate;
 
 public record ClientRequest(
         @NotBlank String name,
         String edrpou,
-        String contacts,
-        PaymentType defaultPaymentType
+        String fullName,
+        String contactPersonName,
+        String contactPersonPhone,
+        @Pattern(regexp = "^(\\d{9})?$", message = "Код має складатись рівно з 9 цифр")
+        String code,
+        String lastName,
+        String firstName,
+        String middleName,
+        LocalDate birthDate,
+        Gender gender,
+        Long employerClientId,
+        String position,
+        String phone,
+        @Email(message = "Некоректний email") String email
 ) {
 }

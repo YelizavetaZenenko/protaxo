@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ProTaxo — Вхід</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="auth-page">
+    <div class="auth-card card">
+        <h1>ProTaxo ERP</h1>
+
+        <div class="alert alert-error" th:if="${param.error}">
+            Невірний email або пароль
+        </div>
+        <div class="alert alert-success" th:if="${param.logout}">
+            Ви вийшли з системи
+        </div>
+        <div class="alert alert-success" th:if="${param.activated}">
+            Акаунт активовано, тепер увійдіть
+        </div>
+
+        <form th:action="@{/login}" method="post">
+            <div class="field">
+                <label for="username">Email</label>
+                <input type="email" id="username" name="username" autocomplete="username" required>
+            </div>
+            <div class="field">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="btn btn-block">Увійти</button>
+        </form>
+    </div>
+</body>
+</html>

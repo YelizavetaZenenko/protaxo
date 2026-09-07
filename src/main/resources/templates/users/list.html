@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>ProTaxo — Користувачі</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='users')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Користувачі</h1>
+                <a class="btn" th:href="@{/users/new}">+ Запросити користувача</a>
+            </div>
+
+            <div class="alert alert-error" th:if="${formError}" th:text="${formError}"></div>
+
+            <table class="clean-table">
+                <colgroup>
+                    <col style="width:26%">
+                    <col style="width:28%">
+                    <col style="width:14%">
+                    <col style="width:18%">
+                    <col style="width:14%">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th>Ім'я</th>
+                    <th>Email</th>
+                    <th>Роль</th>
+                    <th>Статус</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="u : ${users}">
+                    <td th:text="${u.fullName}"></td>
+                    <td th:text="${u.email}"></td>
+                    <td><span class="badge" th:text="${u.role}"></span></td>
+                    <td>
+                        <span th:if="${u.active}" class="badge">Активний</span>
+                        <span th:unless="${u.active}" class="badge" style="background:#fbeceb;color:#b3261e;">Очікує підтвердження</span>
+                    </td>
+                    <td class="actions-cell">
+                        <form sec:authorize="hasRole('ADMIN')" th:action="@{/users/{id}/delete(id=${u.id})}" method="post" style="display:inline">
+                            <button type="submit" class="link-btn link-btn-danger"
+                                    onclick="return confirm('Видалити користувача?')">Видалити</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(users)}">
+                    <td colspan="5">Користувачів ще немає</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

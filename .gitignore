@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Obsidian ###
+docs/.obsidian/
+
+### Logs ###
+logs/

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${editId} != null ? 'ProTaxo — Редагування тахографа' : 'ProTaxo — Новий тахограф'"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='tachographs')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <h1 th:text="${editId} != null ? 'Редагування тахографа' : 'Новий тахограф'"></h1>
+
+            <form th:object="${tachograph}"
+                  th:action="${editId} != null ? @{/tachographs/{id}/edit(id=${editId})} : @{/tachographs}"
+                  method="post" class="form-grid">
+
+                <div class="field field-full">
+                    <label for="vehicleId">Автомобіль *</label>
+                    <select id="vehicleId" th:field="*{vehicleId}">
+                        <option value="">— оберіть автомобіль —</option>
+                        <option th:each="v : ${vehicles}" th:value="${v.id}"
+                                th:text="${v.vin} + ' (' + ${v.registrationNumber} + ')'"></option>
+                    </select>
+                    <div class="field-error" th:if="${#fields.hasErrors('vehicleId')}" th:errors="*{vehicleId}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="manufacturer">Виробник *</label>
+                    <input type="text" id="manufacturer" th:field="*{manufacturer}">
+                    <div class="field-error" th:if="${#fields.hasErrors('manufacturer')}" th:errors="*{manufacturer}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="model">Модель *</label>
+                    <input type="text" id="model" th:field="*{model}">
+                    <div class="field-error" th:if="${#fields.hasErrors('model')}" th:errors="*{model}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="firmwareVersion">Версія ПЗ</label>
+                    <input type="text" id="firmwareVersion" th:field="*{firmwareVersion}">
+                </div>
+
+                <div class="field">
+                    <label for="serialNumber">Серійний номер *</label>
+                    <input type="text" id="serialNumber" th:field="*{serialNumber}">
+                    <div class="field-error" th:if="${#fields.hasErrors('serialNumber')}" th:errors="*{serialNumber}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="productionDate">Дата випуску</label>
+                    <input type="date" id="productionDate" th:field="*{productionDate}">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn">Зберегти</button>
+                    <a class="btn-outline" th:href="@{/tachographs}">Скасувати</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

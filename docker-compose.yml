@@ -12,5 +12,12 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  mailhog:
+    image: mailhog/mailhog
+    container_name: protaxo_mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
 volumes:
   pgdata:

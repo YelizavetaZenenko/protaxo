@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>ProTaxo — Автомобілі</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='vehicles')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Автомобілі</h1>
+                <a class="btn" th:href="@{/vehicles/new}">+ Новий автомобіль</a>
+            </div>
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Контрагент</th>
+                    <th>VIN</th>
+                    <th>Держномер</th>
+                    <th>Марка / Модель</th>
+                    <th>Рік</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="v : ${vehicles}">
+                    <td th:text="${v.id}"></td>
+                    <td th:text="${clientNames[v.clientId]}"></td>
+                    <td th:text="${v.vin}"></td>
+                    <td th:text="${v.registrationNumber}"></td>
+                    <td th:text="${v.make} + ' ' + ${v.model}"></td>
+                    <td th:text="${v.year}"></td>
+                    <td class="actions-cell">
+                        <a class="link-btn" th:href="@{/vehicles/{id}/edit(id=${v.id})}">Редагувати</a>
+                        <form sec:authorize="hasRole('ADMIN')" th:action="@{/vehicles/{id}/delete(id=${v.id})}" method="post" style="display:inline">
+                            <button type="submit" class="link-btn link-btn-danger"
+                                    onclick="return confirm('Видалити автомобіль?')">Видалити</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(vehicles)}">
+                    <td colspan="7">Автомобілів ще немає</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
