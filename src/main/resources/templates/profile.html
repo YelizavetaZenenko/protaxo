@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ProTaxo — Мій профіль</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='profile')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <h1>Мій профіль</h1>
+
+            <div class="alert alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
+            <div class="alert alert-error" th:if="${formError}" th:text="${formError}"></div>
+
+            <form th:object="${profile}" th:action="@{/profile}" method="post" class="form-grid">
+
+                <div class="field">
+                    <label>Email</label>
+                    <div th:text="${currentUser.email}"></div>
+                </div>
+
+                <div class="field">
+                    <label>Роль</label>
+                    <div th:text="${currentUser.roleLabel}"></div>
+                </div>
+
+                <div class="field field-full">
+                    <label for="fullName">Ім'я *</label>
+                    <input type="text" id="fullName" th:field="*{fullName}">
+                    <div class="field-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                </div>
+
+                <div class="field-full" style="margin-top: 0.5rem;">
+                    <strong>Зміна пароля</strong>
+                    <div class="muted">Залиште поля порожніми, якщо не хочете змінювати пароль</div>
+                </div>
+
+                <div class="field">
+                    <label for="currentPassword">Поточний пароль</label>
+                    <input type="password" id="currentPassword" th:field="*{currentPassword}" autocomplete="current-password">
+                </div>
+
+                <div class="field"></div>
+
+                <div class="field">
+                    <label for="newPassword">Новий пароль</label>
+                    <input type="password" id="newPassword" th:field="*{newPassword}" autocomplete="new-password">
+                </div>
+
+                <div class="field">
+                    <label for="confirmNewPassword">Підтвердіть новий пароль</label>
+                    <input type="password" id="confirmNewPassword" th:field="*{confirmNewPassword}" autocomplete="new-password">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn">Зберегти</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

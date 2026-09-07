@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Наряд-заказ</title>
+    <style>
+        @page { size: A4; margin: 2cm; }
+        body { font-family: 'DejaVu Sans'; font-size: 11pt; color: #111111; }
+        h1 { font-size: 16pt; margin: 0 0 10pt 0; }
+        .meta div { margin: 2pt 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 14pt; }
+        th, td { border: 1px solid #333333; padding: 5pt 7pt; font-size: 10pt; }
+        th { background-color: #eeeeee; text-align: left; }
+        td.num { text-align: right; }
+        tfoot td { font-weight: bold; }
+        .signatures { margin-top: 40pt; }
+        .signatures div { margin-top: 24pt; }
+        .line { display: inline-block; border-bottom: 1px solid #333333; width: 220pt; margin-left: 10pt; }
+    </style>
+</head>
+<body>
+    <h1 th:text="'НАРЯД-ЗАКАЗ № ' + ${invoice.number}">НАРЯД-ЗАКАЗ</h1>
+
+    <div class="meta">
+        <div th:text="'Дата: ' + ${#temporals.format(invoice.documentDate, 'dd.MM.yyyy HH:mm')}">Дата</div>
+        <div th:text="'Тип оплати: ' + ${invoice.paymentType.label}">Тип оплати</div>
+        <div th:text="'Контрагент: ' + ${clientName}">Контрагент</div>
+        <div th:if="${not #strings.isEmpty(invoice.vehicleName)}" th:text="'Автомобіль: ' + ${invoice.vehicleName}">Автомобіль</div>
+        <div th:if="${not #strings.isEmpty(invoice.driverName)}" th:text="'Водій: ' + ${invoice.driverName}">Водій</div>
+        <div th:if="${not #strings.isEmpty(invoice.repairResponsibleName)}" th:text="'Відповідальний за ремонт: ' + ${invoice.repairResponsibleName}">Відповідальний</div>
+        <div th:if="${not #strings.isEmpty(invoice.repairSupervisorName)}" th:text="'Керівник ремонту: ' + ${invoice.repairSupervisorName}">Керівник ремонту</div>
+        <div th:text="${invoice.buyerOrderLabel}">Замовлення покупця</div>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>№</th>
+            <th>Номенклатура</th>
+            <th>Кількість</th>
+            <th>Ціна</th>
+            <th>Вартість</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${invoice.items}">
+            <td th:text="${item.lineNumber}">1</td>
+            <td th:text="${item.itemName}">Позиція</td>
+            <td class="num" th:text="${#numbers.formatDecimal(item.quantity, 1, 3)}">1.000</td>
+            <td class="num" th:text="${#numbers.formatDecimal(item.price, 1, 2)}">0.00</td>
+            <td class="num" th:text="${#numbers.formatDecimal(item.amount, 1, 2)}">0.00</td>
+        </tr>
+        </tbody>
+        <tfoot>
+        <tr>
+            <td colspan="4">Разом</td>
+            <td class="num" th:text="${#numbers.formatDecimal(invoice.totalAmount, 1, 2)}">0.00</td>
+        </tr>
+        </tfoot>
+    </table>
+
+    <div class="signatures">
+        <div>Виконавець: <span class="line"> </span></div>
+        <div>Замовник: <span class="line"> </span></div>
+    </div>
+</body>
+</html>

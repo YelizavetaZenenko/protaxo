@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'ProTaxo — Наряд-заказ № ' + ${invoice.number}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='invoices')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1 th:text="'Наряд-заказ № ' + ${invoice.number}"></h1>
+                <div class="actions-cell">
+                    <a class="btn-outline" th:href="@{/invoices/{id}/edit(id=${invoice.id})}">Редагувати</a>
+                    <a class="btn-outline" th:href="@{/invoices/{id}/pdf(id=${invoice.id})}" target="_blank">Друк PDF</a>
+                    <a class="btn-outline" th:href="@{/invoices/{id}/bill-pdf(id=${invoice.id})}" target="_blank">Рахунок PDF</a>
+                    <a class="btn-outline" th:href="@{/invoices}">Назад до списку</a>
+                    <a th:if="${hasCalibrationService and existingProtocolId == null}" class="btn-outline"
+                       th:href="@{/calibration-protocols/new(invoiceId=${invoice.id})}">Створити протокол</a>
+                    <a th:if="${hasCalibrationService and existingProtocolId != null}" class="btn-outline"
+                       th:href="@{/calibration-protocols/{id}(id=${existingProtocolId})}">Переглянути протокол</a>
+                </div>
+            </div>
+
+            <div class="view-meta">
+                <div class="field">
+                    <label>Дата та час</label>
+                    <div th:text="${#temporals.format(invoice.documentDate, 'dd.MM.yyyy HH:mm')}"></div>
+                </div>
+                <div class="field">
+                    <label>Тип оплати</label>
+                    <div th:text="${invoice.paymentType.label}"></div>
+                </div>
+                <div class="field field-full">
+                    <label>Контрагент</label>
+                    <div th:text="${client.name}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(client.phone)}">
+                    <label>Телефон контрагента</label>
+                    <div th:text="${client.phone}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(client.email)}">
+                    <label>Email контрагента</label>
+                    <div th:text="${client.email}"></div>
+                </div>
+                <div class="field field-full">
+                    <label>Замовлення покупця</label>
+                    <div th:text="${invoice.buyerOrderLabel}"></div>
+                </div>
+
+                <div class="field" th:if="${not #strings.isEmpty(invoice.vehicleName)}">
+                    <label>Автомобіль</label>
+                    <div th:text="${invoice.vehicleName}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(invoice.driverName)}">
+                    <label>Водій</label>
+                    <div th:text="${invoice.driverName}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(invoice.repairResponsibleName)}">
+                    <label>Відповідальний за ремонт</label>
+                    <div th:text="${invoice.repairResponsibleName}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(invoice.repairSupervisorName)}">
+                    <label>Керівник ремонту</label>
+                    <div th:text="${invoice.repairSupervisorName}"></div>
+                </div>
+            </div>
+
+            <h2 class="view-section-title">Товари та послуги</h2>
+            <table class="items-table">
+                <thead>
+                <tr>
+                    <th style="width:5%">№</th>
+                    <th>Номенклатура</th>
+                    <th style="width:14%">Тип</th>
+                    <th style="width:12%">Кількість</th>
+                    <th style="width:14%">Ціна</th>
+                    <th style="width:14%">Вартість</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${invoice.items}">
+                    <td th:text="${item.lineNumber}"></td>
+                    <td th:text="${item.itemName}"></td>
+                    <td th:text="${item.catalogItemType == T(com.example.protaxo.catalog.entity.CatalogItemType).SERVICE ? 'Послуга' : 'Товар'}"></td>
+                    <td th:text="${#numbers.formatDecimal(item.quantity, 1, 3)}"></td>
+                    <td th:text="${#numbers.formatDecimal(item.price, 1, 2)}"></td>
+                    <td th:text="${#numbers.formatDecimal(item.amount, 1, 2)}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(invoice.items)}">
+                    <td colspan="6">Позицій ще немає</td>
+                </tr>
+                </tbody>
+                <tfoot>
+                <tr>
+                    <td colspan="5">Загалом</td>
+                    <td th:text="${#numbers.formatDecimal(invoice.totalAmount, 1, 2)}"></td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

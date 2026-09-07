@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${editId} != null ? 'ProTaxo — Редагування автомобіля' : 'ProTaxo — Новий автомобіль'"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='vehicles')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <h1 th:text="${editId} != null ? 'Редагування автомобіля' : 'Новий автомобіль'"></h1>
+
+            <form th:object="${vehicle}"
+                  th:action="${editId} != null ? @{/vehicles/{id}/edit(id=${editId})} : @{/vehicles}"
+                  method="post" class="form-grid">
+
+                <input type="hidden" th:field="*{returnToClientId}">
+
+                <div class="field field-full">
+                    <label for="clientId">Контрагент *</label>
+                    <select id="clientId" th:field="*{clientId}">
+                        <option value="">— оберіть клієнта —</option>
+                        <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
+                    </select>
+                    <div class="field-error" th:if="${#fields.hasErrors('clientId')}" th:errors="*{clientId}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="vin">VIN *</label>
+                    <input type="text" id="vin" th:field="*{vin}">
+                    <div class="field-error" th:if="${#fields.hasErrors('vin')}" th:errors="*{vin}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="registrationNumber">Держномер *</label>
+                    <input type="text" id="registrationNumber" th:field="*{registrationNumber}">
+                    <div class="field-error" th:if="${#fields.hasErrors('registrationNumber')}" th:errors="*{registrationNumber}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="make">Марка *</label>
+                    <select id="make" th:field="*{make}"></select>
+                    <button type="button" class="link-btn" id="addMakeBtn">+ Додати нову марку</button>
+                    <div class="field-error" th:if="${#fields.hasErrors('make')}" th:errors="*{make}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="model">Модель *</label>
+                    <select id="model" th:field="*{model}" disabled></select>
+                    <button type="button" class="link-btn" id="addModelBtn" disabled>+ Додати нову модель</button>
+                    <div class="field-error" th:if="${#fields.hasErrors('model')}" th:errors="*{model}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="year">Рік випуску *</label>
+                    <input type="number" id="year" th:field="*{year}">
+                    <div class="field-error" th:if="${#fields.hasErrors('year')}" th:errors="*{year}"></div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn">Зберегти</button>
+                    <a class="btn-outline"
+                       th:href="${vehicle.returnToClientId} != null ? @{/clients/{id}/edit(id=${vehicle.returnToClientId})} : @{/vehicles}">Скасувати</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="makeModalOverlay" hidden>
+        <div class="modal">
+            <h2>Нова марка</h2>
+            <div class="alert alert-error" id="makeModalError" hidden></div>
+            <div class="field field-full">
+                <label for="newMakeName">Назва *</label>
+                <input type="text" id="newMakeName">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveMakeBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelMakeBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modelModalOverlay" hidden>
+        <div class="modal">
+            <h2>Нова модель</h2>
+            <div class="alert alert-error" id="modelModalError" hidden></div>
+            <div class="field field-full">
+                <label for="newModelName">Назва *</label>
+                <input type="text" id="newModelName">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveModelBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelModelBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        var initialMake = /*[[${vehicle.make}]]*/ '';
+        var initialModel = /*[[${vehicle.model}]]*/ '';
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var makeSelect = document.getElementById('make');
+            var modelSelect = document.getElementById('model');
+            var addModelBtn = document.getElementById('addModelBtn');
+            var allMakes = [];
+
+            function populateMakes(selectName) {
+                makeSelect.innerHTML = '<option value="">— оберіть марку —</option>';
+                allMakes.forEach(function (m) {
+                    var opt = document.createElement('option');
+                    opt.value = m.name;
+                    opt.textContent = m.name;
+                    opt.dataset.id = m.id;
+                    if (m.name === selectName) opt.selected = true;
+                    makeSelect.appendChild(opt);
+                });
+            }
+
+            function currentMakeId() {
+                var opt = makeSelect.selectedOptions[0];
+                return opt ? opt.dataset.id : null;
+            }
+
+            function loadModels(makeId, selectName) {
+                if (!makeId) {
+                    modelSelect.innerHTML = '';
+                    modelSelect.disabled = true;
+                    addModelBtn.disabled = true;
+                    return;
+                }
+                fetch('/api/vehicle-makes/' + makeId + '/models', { credentials: 'same-origin' })
+                    .then(function (resp) { return resp.ok ? resp.json() : []; })
+                    .then(function (models) {
+                        modelSelect.innerHTML = '<option value="">— оберіть модель —</option>';
+                        models.forEach(function (m) {
+                            var opt = document.createElement('option');
+                            opt.value = m.name;
+                            opt.textContent = m.name;
+                            if (m.name === selectName) opt.selected = true;
+                            modelSelect.appendChild(opt);
+                        });
+                        modelSelect.disabled = false;
+                        addModelBtn.disabled = false;
+                    });
+            }
+
+            fetch('/api/vehicle-makes', { credentials: 'same-origin' })
+                .then(function (resp) { return resp.ok ? resp.json() : []; })
+                .then(function (makes) {
+                    allMakes = makes;
+                    populateMakes(initialMake);
+                    loadModels(currentMakeId(), initialModel);
+                });
+
+            makeSelect.addEventListener('change', function () {
+                loadModels(currentMakeId(), null);
+            });
+
+            var makeModalOverlay = document.getElementById('makeModalOverlay');
+            var makeModalError = document.getElementById('makeModalError');
+            var newMakeName = document.getElementById('newMakeName');
+
+            document.getElementById('addMakeBtn').addEventListener('click', function () {
+                makeModalError.hidden = true;
+                newMakeName.value = '';
+                makeModalOverlay.hidden = false;
+                newMakeName.focus();
+            });
+            document.getElementById('cancelMakeBtn').addEventListener('click', function () {
+                makeModalOverlay.hidden = true;
+            });
+            document.getElementById('saveMakeBtn').addEventListener('click', function () {
+                var name = newMakeName.value.trim();
+                if (!name) {
+                    makeModalError.textContent = "Назва обов'язкова";
+                    makeModalError.hidden = false;
+                    return;
+                }
+                fetch('/api/vehicle-makes', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (body) { throw new Error(body.message || 'Не вдалося зберегти марку'); });
+                    }
+                    return resp.json();
+                }).then(function (created) {
+                    allMakes.push(created);
+                    populateMakes(created.name);
+                    loadModels(created.id, null);
+                    makeModalOverlay.hidden = true;
+                }).catch(function (err) {
+                    makeModalError.textContent = err.message;
+                    makeModalError.hidden = false;
+                });
+            });
+
+            var modelModalOverlay = document.getElementById('modelModalOverlay');
+            var modelModalError = document.getElementById('modelModalError');
+            var newModelName = document.getElementById('newModelName');
+
+            addModelBtn.addEventListener('click', function () {
+                if (addModelBtn.disabled) return;
+                modelModalError.hidden = true;
+                newModelName.value = '';
+                modelModalOverlay.hidden = false;
+                newModelName.focus();
+            });
+            document.getElementById('cancelModelBtn').addEventListener('click', function () {
+                modelModalOverlay.hidden = true;
+            });
+            document.getElementById('saveModelBtn').addEventListener('click', function () {
+                var name = newModelName.value.trim();
+                if (!name) {
+                    modelModalError.textContent = "Назва обов'язкова";
+                    modelModalError.hidden = false;
+                    return;
+                }
+                var makeId = currentMakeId();
+                fetch('/api/vehicle-makes/' + makeId + '/models', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (body) { throw new Error(body.message || 'Не вдалося зберегти модель'); });
+                    }
+                    return resp.json();
+                }).then(function (created) {
+                    loadModels(makeId, created.name);
+                    modelModalOverlay.hidden = true;
+                }).catch(function (err) {
+                    modelModalError.textContent = err.message;
+                    modelModalError.hidden = false;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${editId} != null ? 'ProTaxo — Редагування договору' : 'ProTaxo — Новий договір'"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='contracts')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <h1 th:text="${editId} != null ? 'Редагування договору' : 'Новий договір'"></h1>
+
+            <form th:object="${contract}"
+                  th:action="${editId} != null ? @{/contracts/{id}/edit(id=${editId})} : @{/contracts}"
+                  method="post" class="form-grid">
+
+                <div class="field field-full">
+                    <label for="clientId">Контрагент *</label>
+                    <select id="clientId" th:field="*{clientId}">
+                        <option value="">— оберіть клієнта —</option>
+                        <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
+                    </select>
+                    <div class="field-error" th:if="${#fields.hasErrors('clientId')}" th:errors="*{clientId}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="contractNumber">Номер договору *</label>
+                    <input type="text" id="contractNumber" th:field="*{contractNumber}">
+                    <div class="field-error" th:if="${#fields.hasErrors('contractNumber')}" th:errors="*{contractNumber}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="status">Статус *</label>
+                    <select id="status" th:field="*{status}">
+                        <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"></option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn">Зберегти</button>
+                    <a class="btn-outline" th:href="@{/contracts}">Скасувати</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

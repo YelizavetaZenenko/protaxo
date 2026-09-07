@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${editId} != null ? 'ProTaxo — Редагування контрагента' : 'ProTaxo — Новий контрагент'"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='clients')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <h1 th:text="${editId} != null ? 'Редагування контрагента' : 'Новий контрагент'"></h1>
+
+            <form th:object="${client}"
+                  th:action="${editId} != null ? @{/clients/{id}/edit(id=${editId})} : @{/clients}"
+                  method="post" class="form-grid">
+
+                <div class="field field-full">
+                    <label for="name">Назва *</label>
+                    <input type="text" id="name" th:field="*{name}">
+                    <div class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                    <div class="field-error" id="nameClientError" hidden>Спочатку вкажіть назву контрагента.</div>
+                </div>
+
+                <div class="field field-full">
+                    <label for="fullName">Повна назва</label>
+                    <input type="text" id="fullName" th:field="*{fullName}">
+                </div>
+
+                <div class="field">
+                    <label for="edrpou">Код ЄДРПОУ</label>
+                    <input type="text" id="edrpou" th:field="*{edrpou}">
+                </div>
+
+                <div class="field">
+                    <label for="code">Код</label>
+                    <input type="text" id="code" th:field="*{code}" maxlength="9" inputmode="numeric" placeholder="123456789">
+                    <div class="field-error" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></div>
+                </div>
+
+                <div class="field-full form-section">
+                    <strong>Контактна особа</strong>
+                </div>
+
+                <div class="field">
+                    <label for="lastName">Прізвище</label>
+                    <input type="text" id="lastName" th:field="*{lastName}">
+                </div>
+
+                <div class="field">
+                    <label for="firstName">Ім'я</label>
+                    <input type="text" id="firstName" th:field="*{firstName}">
+                </div>
+
+                <div class="field">
+                    <label for="middleName">По батькові</label>
+                    <input type="text" id="middleName" th:field="*{middleName}">
+                </div>
+
+                <div class="field">
+                    <label for="contactPersonPhone">Телефон</label>
+                    <input type="tel" id="contactPersonPhone" th:field="*{contactPersonPhone}" placeholder="+380XXXXXXXXX">
+                </div>
+
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" th:field="*{email}">
+                    <div class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                </div>
+
+                <div class="field-full form-section" th:if="${editId} != null">
+                    <strong>Дані працівника</strong>
+                </div>
+
+                <div class="field field-full" th:if="${editId} != null">
+                    <label>Працівники</label>
+                    <table class="clean-table" id="employeesTable">
+                        <colgroup>
+                            <col style="width:40%">
+                            <col style="width:30%">
+                            <col style="width:30%">
+                        </colgroup>
+                        <thead>
+                        <tr>
+                            <th>Прізвище, ім'я</th>
+                            <th>Телефон</th>
+                            <th>Посада</th>
+                        </tr>
+                        </thead>
+                        <tbody id="employeesBody"></tbody>
+                    </table>
+                    <div class="muted" id="employeesEmpty">У цього контрагента ще немає працівників.</div>
+                    <button type="button" class="btn-outline" id="addEmployeeBtn" style="margin-top:0.75rem;">+ Додати працівника</button>
+                </div>
+
+                <div class="field-full form-section">
+                    <strong>Водії</strong>
+                </div>
+
+                <div class="field field-full">
+                    <table class="clean-table" id="driversTable">
+                        <colgroup>
+                            <col style="width:40%">
+                            <col style="width:30%">
+                            <col style="width:30%">
+                        </colgroup>
+                        <thead>
+                        <tr>
+                            <th>ПІБ</th>
+                            <th>Телефон</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody id="driversBody">
+                        <tr th:each="d : ${drivers}" th:attr="data-id=${d.id},data-full-name=${d.fullName},data-phone=${d.phone}">
+                            <td th:text="${d.fullName}"></td>
+                            <td th:text="${d.phone}"></td>
+                            <td class="actions-cell">
+                                <button type="button" class="link-btn edit-driver-btn">Редагувати</button>
+                                <button type="button" class="link-btn link-btn-danger delete-driver-btn" sec:authorize="hasRole('ADMIN')">Видалити</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <div class="muted" id="driversEmpty" th:if="${#lists.isEmpty(drivers)}">У цього контрагента ще немає водіїв.</div>
+                    <button type="button" class="btn-outline" id="addDriverBtn" style="margin-top:0.75rem;">+ Додати водія</button>
+                </div>
+
+                <div class="field-full form-section">
+                    <strong>Автомобілі</strong>
+                </div>
+
+                <div class="field field-full">
+                    <table class="clean-table">
+                        <thead>
+                        <tr>
+                            <th>Держ. номер</th>
+                            <th>VIN</th>
+                            <th>Марка</th>
+                            <th>Модель</th>
+                            <th>Рік</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="v : ${vehicles}">
+                            <td th:text="${v.registrationNumber}"></td>
+                            <td th:text="${v.vin}"></td>
+                            <td th:text="${v.make}"></td>
+                            <td th:text="${v.model}"></td>
+                            <td th:text="${v.year}"></td>
+                            <td class="actions-cell">
+                                <a class="link-btn" th:href="@{/vehicles/{id}/edit(id=${v.id})}">Редагувати</a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(vehicles)}">
+                            <td colspan="6">У цього контрагента ще немає автомобілів.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn-outline" id="addVehicleBtn" style="margin-top:0.75rem;">+ Додати автомобіль</button>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn">Зберегти</button>
+                    <a class="btn-outline" th:href="@{/clients}">Скасувати</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="employeeModalOverlay" hidden>
+        <div class="modal">
+            <h2>Новий працівник</h2>
+            <div class="alert alert-error" id="employeeModalError" hidden></div>
+            <div class="field field-full">
+                <label for="employeeLastName">Прізвище</label>
+                <input type="text" id="employeeLastName">
+            </div>
+            <div class="field field-full">
+                <label for="employeeFirstName">Ім'я</label>
+                <input type="text" id="employeeFirstName">
+            </div>
+            <div class="field field-full">
+                <label for="employeePhone">Телефон</label>
+                <input type="tel" id="employeePhone" placeholder="+380XXXXXXXXX">
+            </div>
+            <div class="field field-full">
+                <label for="employeePosition">Посада</label>
+                <input type="text" id="employeePosition">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveEmployeeBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelEmployeeBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="confirmModalOverlay" hidden>
+        <div class="modal">
+            <h2>Підтвердження</h2>
+            <p id="confirmModalMessage"></p>
+            <div class="form-actions">
+                <button type="button" class="btn" id="confirmModalYesBtn">Так, видалити</button>
+                <button type="button" class="btn-outline" id="confirmModalNoBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="driverModalOverlay" hidden>
+        <div class="modal">
+            <h2 id="driverModalTitle">Новий водій</h2>
+            <div class="alert alert-error" id="driverModalError" hidden></div>
+            <div class="field field-full">
+                <label for="driverFullName">ПІБ *</label>
+                <input type="text" id="driverFullName">
+            </div>
+            <div class="field field-full">
+                <label for="driverPhone">Телефон</label>
+                <input type="tel" id="driverPhone" placeholder="+380XXXXXXXXX">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveDriverBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelDriverBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var codeInput = document.getElementById('code');
+            codeInput.addEventListener('input', function () {
+                codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 9);
+            });
+        });
+    </script>
+
+    <script th:inline="javascript">
+        var editClientId = /*[[${editId}]]*/ null;
+    </script>
+    <script>
+        function fieldValueOrNull(id) {
+            var el = document.getElementById(id);
+            return el && el.value ? el.value : null;
+        }
+
+        /** Reusable styled replacement for window.confirm() — see #confirmModalOverlay. */
+        function showConfirm(message, onConfirm) {
+            var overlay = document.getElementById('confirmModalOverlay');
+            var msgEl = document.getElementById('confirmModalMessage');
+            var yesBtn = document.getElementById('confirmModalYesBtn');
+            var noBtn = document.getElementById('confirmModalNoBtn');
+            msgEl.textContent = message;
+            overlay.hidden = false;
+            function cleanup() {
+                overlay.hidden = true;
+                yesBtn.removeEventListener('click', onYes);
+                noBtn.removeEventListener('click', onNo);
+            }
+            function onYes() { cleanup(); onConfirm(); }
+            function onNo() { cleanup(); }
+            yesBtn.addEventListener('click', onYes);
+            noBtn.addEventListener('click', onNo);
+        }
+
+        var SYNC_FIELD_IDS = ['name', 'edrpou', 'fullName', 'code', 'lastName', 'firstName', 'middleName', 'contactPersonPhone', 'email'];
+        var autoSaved = false;
+
+        function collectSyncableFields() {
+            var fields = {};
+            SYNC_FIELD_IDS.forEach(function (id) { fields[id] = fieldValueOrNull(id); });
+            return fields;
+        }
+
+        /**
+         * Keeps the auto-saved draft (see ensureClientSaved below) honest: without this, editing
+         * a field after the silent auto-save — most importantly clearing "Назва" back out — would
+         * leave the database record holding the old, since-deleted text with no way to tell from
+         * the screen. Only wired up after a real auto-save happens (see enableAutoSync), never for
+         * a normal edit-page visit — those still work the usual way, nothing persists early.
+         */
+        function syncClient() {
+            if (!editClientId || !autoSaved) return;
+            var nameError = document.getElementById('nameClientError');
+            var name = fieldValueOrNull('name');
+            if (!name) {
+                nameError.textContent = 'Без назви зміни не буде збережено — контрагент лишиться з попередньою назвою.';
+                nameError.hidden = false;
+                return;
+            }
+            nameError.hidden = true;
+            fetch('/api/clients/' + editClientId, {
+                method: 'PUT',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(collectSyncableFields())
+            });
+        }
+
+        function enableAutoSync() {
+            SYNC_FIELD_IDS.forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.addEventListener('blur', syncClient);
+            });
+        }
+
+        /**
+         * "Водії"/"Автомобілі" need a saved client id. On the create form there isn't one yet,
+         * so the first "+ Додати..." click silently creates the client from whatever's already
+         * filled in (Назва is the only hard requirement), then continues as if we'd always been
+         * editing — including retargeting the main form's submit so "Зберегти" updates that same
+         * record instead of creating a duplicate, and turning on syncClient() above so further
+         * edits to Назва etc. don't go stale.
+         */
+        function ensureClientSaved(callback) {
+            if (editClientId) {
+                callback(editClientId);
+                return;
+            }
+            var nameInput = document.getElementById('name');
+            var nameError = document.getElementById('nameClientError');
+            var name = fieldValueOrNull('name');
+            if (!name) {
+                nameError.textContent = 'Спочатку вкажіть назву контрагента.';
+                nameError.hidden = false;
+                nameInput.focus();
+                return;
+            }
+            nameError.hidden = true;
+            fetch('/api/clients', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(collectSyncableFields())
+            }).then(function (resp) {
+                if (!resp.ok) {
+                    return resp.json().then(function (b) { throw new Error(b.message || 'Не вдалося зберегти контрагента'); });
+                }
+                return resp.json();
+            }).then(function (saved) {
+                editClientId = saved.id;
+                autoSaved = true;
+                var form = document.querySelector('form.form-grid');
+                form.action = '/clients/' + saved.id + '/edit';
+                var h1 = document.querySelector('h1');
+                if (h1) h1.textContent = 'Редагування контрагента';
+                enableAutoSync();
+                callback(saved.id);
+            }).catch(function (err) {
+                nameError.textContent = err.message;
+                nameError.hidden = false;
+            });
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!editClientId) return;
+
+            var employeesBody = document.getElementById('employeesBody');
+            var employeesEmpty = document.getElementById('employeesEmpty');
+            var addEmployeeBtn = document.getElementById('addEmployeeBtn');
+            var employeeModalOverlay = document.getElementById('employeeModalOverlay');
+            var employeeModalError = document.getElementById('employeeModalError');
+            var employeeLastName = document.getElementById('employeeLastName');
+            var employeeFirstName = document.getElementById('employeeFirstName');
+            var employeePhone = document.getElementById('employeePhone');
+            var employeePosition = document.getElementById('employeePosition');
+            var allClients = [];
+
+            function employeeLabel(emp) {
+                var full = [emp.lastName, emp.firstName].filter(Boolean).join(' ');
+                return full || emp.name;
+            }
+
+            function renderEmployees() {
+                employeesBody.innerHTML = '';
+                var employees = allClients.filter(function (c) { return c.employerClientId === editClientId; });
+                if (employees.length === 0) {
+                    employeesEmpty.hidden = false;
+                    return;
+                }
+                employeesEmpty.hidden = true;
+                employees.forEach(function (emp) {
+                    var row = document.createElement('tr');
+                    var nameTd = document.createElement('td');
+                    nameTd.textContent = employeeLabel(emp);
+                    var phoneTd = document.createElement('td');
+                    phoneTd.textContent = emp.phone || '';
+                    var positionTd = document.createElement('td');
+                    positionTd.textContent = emp.position || '';
+                    row.appendChild(nameTd);
+                    row.appendChild(phoneTd);
+                    row.appendChild(positionTd);
+                    employeesBody.appendChild(row);
+                });
+            }
+
+            fetch('/api/clients', { credentials: 'same-origin' })
+                .then(function (resp) { return resp.ok ? resp.json() : []; })
+                .then(function (clients) {
+                    allClients = clients;
+                    renderEmployees();
+                });
+
+            addEmployeeBtn.addEventListener('click', function () {
+                employeeModalError.hidden = true;
+                employeeLastName.value = '';
+                employeeFirstName.value = '';
+                employeePhone.value = '';
+                employeePosition.value = '';
+                employeeModalOverlay.hidden = false;
+                employeeLastName.focus();
+            });
+
+            document.getElementById('cancelEmployeeBtn').addEventListener('click', function () {
+                employeeModalOverlay.hidden = true;
+            });
+
+            document.getElementById('saveEmployeeBtn').addEventListener('click', function () {
+                var lastName = employeeLastName.value.trim();
+                var firstName = employeeFirstName.value.trim();
+                if (!lastName && !firstName) {
+                    employeeModalError.textContent = "Вкажіть прізвище або ім'я";
+                    employeeModalError.hidden = false;
+                    return;
+                }
+                var fullName = [lastName, firstName].filter(Boolean).join(' ');
+                var body = JSON.stringify({
+                    name: fullName,
+                    lastName: lastName || null,
+                    firstName: firstName || null,
+                    phone: employeePhone.value || null,
+                    position: employeePosition.value || null,
+                    employerClientId: editClientId
+                });
+                fetch('/api/clients', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (b) { throw new Error(b.message || 'Не вдалося додати працівника'); });
+                    }
+                    return resp.json();
+                }).then(function (saved) {
+                    allClients.push(saved);
+                    renderEmployees();
+                    employeeModalOverlay.hidden = true;
+                }).catch(function (err) {
+                    employeeModalError.textContent = err.message;
+                    employeeModalError.hidden = false;
+                });
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var driversBody = document.getElementById('driversBody');
+            var driversEmpty = document.getElementById('driversEmpty');
+            var addDriverBtn = document.getElementById('addDriverBtn');
+            var driverModalOverlay = document.getElementById('driverModalOverlay');
+            var driverModalTitle = document.getElementById('driverModalTitle');
+            var driverModalError = document.getElementById('driverModalError');
+            var driverFullName = document.getElementById('driverFullName');
+            var driverPhone = document.getElementById('driverPhone');
+            var editingDriverId = null;
+
+            function openModal(title, id, fullName, phone) {
+                editingDriverId = id;
+                driverModalTitle.textContent = title;
+                driverModalError.hidden = true;
+                driverFullName.value = fullName || '';
+                driverPhone.value = phone || '';
+                driverModalOverlay.hidden = false;
+                driverFullName.focus();
+            }
+
+            function addRow(driver) {
+                var row = document.createElement('tr');
+                row.dataset.id = driver.id;
+                row.dataset.fullName = driver.fullName;
+                row.dataset.phone = driver.phone || '';
+
+                var nameTd = document.createElement('td');
+                nameTd.textContent = driver.fullName;
+                row.appendChild(nameTd);
+
+                var phoneTd = document.createElement('td');
+                phoneTd.textContent = driver.phone || '';
+                row.appendChild(phoneTd);
+
+                var actionsTd = document.createElement('td');
+                actionsTd.className = 'actions-cell';
+                actionsTd.appendChild(buildEditButton());
+                actionsTd.appendChild(buildDeleteButton());
+                row.appendChild(actionsTd);
+
+                driversBody.appendChild(row);
+                if (driversEmpty) driversEmpty.hidden = true;
+            }
+
+            function buildEditButton() {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'link-btn edit-driver-btn';
+                btn.textContent = 'Редагувати';
+                return btn;
+            }
+
+            function buildDeleteButton() {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'link-btn link-btn-danger delete-driver-btn';
+                btn.textContent = 'Видалити';
+                return btn;
+            }
+
+            addDriverBtn.addEventListener('click', function () {
+                ensureClientSaved(function () {
+                    openModal('Новий водій', null, '', '');
+                });
+            });
+
+            var addVehicleBtn = document.getElementById('addVehicleBtn');
+            addVehicleBtn.addEventListener('click', function () {
+                ensureClientSaved(function (id) {
+                    window.location.href = '/vehicles/new?clientId=' + id;
+                });
+            });
+
+            driversBody.addEventListener('click', function (e) {
+                var row = e.target.closest('tr');
+                if (!row) return;
+                if (e.target.classList.contains('edit-driver-btn')) {
+                    openModal('Редагування водія', row.dataset.id, row.dataset.fullName, row.dataset.phone);
+                } else if (e.target.classList.contains('delete-driver-btn')) {
+                    showConfirm('Видалити водія?', function () {
+                        fetch('/api/drivers/' + row.dataset.id, { method: 'DELETE', credentials: 'same-origin' })
+                            .then(function (resp) {
+                                if (resp.ok) {
+                                    row.remove();
+                                    if (driversBody.children.length === 0 && driversEmpty) driversEmpty.hidden = false;
+                                }
+                            });
+                    });
+                }
+            });
+
+            document.getElementById('cancelDriverBtn').addEventListener('click', function () {
+                driverModalOverlay.hidden = true;
+            });
+
+            document.getElementById('saveDriverBtn').addEventListener('click', function () {
+                var fullName = driverFullName.value.trim();
+                var phone = driverPhone.value.trim();
+                var phonePattern = /^\+380\d{9}$/;
+                if (!fullName) {
+                    driverModalError.textContent = "ПІБ обов'язкове";
+                    driverModalError.hidden = false;
+                    return;
+                }
+                if (!phone) {
+                    driverModalError.textContent = 'Телефон обовʼязковий';
+                    driverModalError.hidden = false;
+                    return;
+                }
+                if (!phonePattern.test(phone)) {
+                    driverModalError.textContent = 'Телефон має бути у форматі +380XXXXXXXXX';
+                    driverModalError.hidden = false;
+                    return;
+                }
+                var body = JSON.stringify({ clientId: editClientId, fullName: fullName, phone: phone });
+                var url = editingDriverId ? '/api/drivers/' + editingDriverId : '/api/drivers';
+                var method = editingDriverId ? 'PUT' : 'POST';
+
+                fetch(url, {
+                    method: method,
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (b) { throw new Error(b.message || 'Не вдалося зберегти водія'); });
+                    }
+                    return resp.json();
+                }).then(function (saved) {
+                    if (editingDriverId) {
+                        var row = driversBody.querySelector('tr[data-id="' + editingDriverId + '"]');
+                        if (row) {
+                            row.dataset.fullName = saved.fullName;
+                            row.dataset.phone = saved.phone || '';
+                            row.children[0].textContent = saved.fullName;
+                            row.children[1].textContent = saved.phone || '';
+                        }
+                    } else {
+                        addRow(saved);
+                    }
+                    driverModalOverlay.hidden = true;
+                }).catch(function (err) {
+                    driverModalError.textContent = err.message;
+                    driverModalError.hidden = false;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

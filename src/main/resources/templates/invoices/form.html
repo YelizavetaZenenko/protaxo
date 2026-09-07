@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${editId} != null ? 'ProTaxo — Редагування наряд-заказу' : 'ProTaxo — Новий наряд-заказ'"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='invoices')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1 th:text="${editId} != null ? 'Редагування наряд-заказу' : 'Новий наряд-заказ'"></h1>
+                <a th:if="${editId} != null" class="btn-outline" th:href="@{/invoices/{id}/pdf(id=${editId})}" target="_blank">Друк PDF</a>
+                <a th:if="${editId} != null" class="btn-outline" th:href="@{/invoices/{id}/bill-pdf(id=${editId})}" target="_blank">Рахунок PDF</a>
+            </div>
+
+            <form th:object="${invoice}"
+                  th:action="${editId} != null ? @{/invoices/{id}/edit(id=${editId})} : @{/invoices}"
+                  method="post" class="form-grid">
+
+                <div class="field">
+                    <label>Номер</label>
+                    <div th:if="${documentNumber} != null" th:text="${documentNumber}"></div>
+                    <div th:if="${documentNumber} == null" class="muted">
+                        буде проставлено автоматично при збереженні
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Дата та час</label>
+                    <div th:if="${documentDate} != null" th:text="${#temporals.format(documentDate, 'dd.MM.yyyy HH:mm')}"></div>
+                    <div th:if="${documentDate} == null" class="muted" id="autoDatePreview">
+                        буде проставлено автоматично при збереженні
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="paymentType">Тип оплати *</label>
+                    <select id="paymentType" th:field="*{paymentType}">
+                        <option value="">— оберіть тип оплати —</option>
+                        <option th:each="pt : ${paymentTypes}" th:value="${pt}" th:text="${pt.label}"></option>
+                    </select>
+                    <div class="field-error" th:if="${#fields.hasErrors('paymentType')}" th:errors="*{paymentType}"></div>
+                </div>
+
+                <div class="field combobox-field">
+                    <label for="clientSearchInput">Контрагент *</label>
+                    <div class="combobox">
+                        <input type="text" id="clientSearchInput" autocomplete="off"
+                               th:value="${selectedClientName}" placeholder="Почніть вводити назву...">
+                        <input type="hidden" th:field="*{clientId}">
+                        <div class="combobox-dropdown" id="clientDropdown" hidden>
+                            <div class="combobox-options" id="clientOptions"></div>
+                            <button type="button" class="combobox-add-btn" id="addClientBtn">+ Додати нового контрагента</button>
+                        </div>
+                    </div>
+                    <div class="field-error" th:if="${#fields.hasErrors('clientId')}" th:errors="*{clientId}"></div>
+                </div>
+
+                <div class="field field-full">
+                    <label>Замовлення покупця</label>
+                    <div th:if="${buyerOrderLabel} != null" th:text="${buyerOrderLabel}"></div>
+                    <div th:if="${buyerOrderLabel} == null" class="muted">
+                        буде сформовано автоматично при збереженні
+                    </div>
+                </div>
+
+                <div class="doc-tabs">
+                    <button type="button" class="doc-tab-btn active" data-tab="tabNaryad">Наряд</button>
+                    <button type="button" class="doc-tab-btn" data-tab="tabTovary">Товари</button>
+                    <button type="button" class="doc-tab-btn" data-tab="tabPosluhy">Послуги</button>
+                </div>
+
+                <div class="doc-tab-panel" id="tabNaryad">
+                    <div class="field">
+                        <label for="vehicleName">Автомобіль</label>
+                        <input type="text" id="vehicleName" th:field="*{vehicleName}" readonly
+                               class="picker-input" placeholder="Спочатку оберіть контрагента">
+                    </div>
+
+                    <div class="field combobox-field">
+                        <label for="driverName">Водій</label>
+                        <div class="combobox">
+                            <input type="text" id="driverName" th:field="*{driverName}" readonly
+                                   class="picker-input" placeholder="Спочатку оберіть контрагента">
+                            <div class="combobox-dropdown" id="driverDropdown" hidden>
+                                <div class="combobox-options" id="driverOptions"></div>
+                                <button type="button" class="combobox-add-btn" id="addDriverBtn">+ Додати нового водія</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field combobox-field">
+                        <label for="repairResponsibleName">Відповідальний за ремонт</label>
+                        <div class="combobox">
+                            <input type="text" id="repairResponsibleName" th:field="*{repairResponsibleName}" readonly class="picker-input">
+                            <div class="combobox-dropdown" id="repairResponsibleDropdown" hidden>
+                                <div class="combobox-options" id="repairResponsibleOptions"></div>
+                                <button type="button" class="combobox-add-btn" id="addRepairResponsibleBtn"
+                                        sec:authorize="hasRole('ADMIN')">+ Додати нового робітника</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field combobox-field">
+                        <label for="repairSupervisorName">Керівник ремонту</label>
+                        <div class="combobox">
+                            <input type="text" id="repairSupervisorName" th:field="*{repairSupervisorName}" readonly class="picker-input">
+                            <div class="combobox-dropdown" id="repairSupervisorDropdown" hidden>
+                                <div class="combobox-options" id="repairSupervisorOptions"></div>
+                                <button type="button" class="combobox-add-btn" id="addRepairSupervisorBtn"
+                                        sec:authorize="hasRole('ADMIN')">+ Додати нового робітника</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="doc-tab-panel doc-tab-panel-block" id="tabTovary" hidden>
+                    <div class="items-section" style="margin-top:0;">
+                        <table class="items-table">
+                            <thead>
+                            <tr>
+                                <th style="width:3%">№</th>
+                                <th>Номенклатура товару</th>
+                                <th style="width:12%">Кількість</th>
+                                <th style="width:14%">Ціна</th>
+                                <th style="width:14%">Вартість</th>
+                                <th style="width:3%"></th>
+                            </tr>
+                            </thead>
+                            <tbody id="materialsBody">
+                            <tr th:each="idx : ${materialRows}" class="item-row">
+                                <td class="row-index"></td>
+                                <td>
+                                    <select th:field="*{items[__${idx}__].catalogItemId}" class="catalog-select">
+                                        <option value="">— оберіть товар —</option>
+                                        <option th:each="ci : ${materialCatalogItems}" th:value="${ci.id}"
+                                                th:attr="data-price=${ci.basePrice}" th:text="${ci.name}"></option>
+                                    </select>
+                                </td>
+                                <td><input type="number" step="0.001" min="0" th:field="*{items[__${idx}__].quantity}" class="qty-input"></td>
+                                <td><input type="number" step="0.01" min="0" th:field="*{items[__${idx}__].price}" class="price-input"></td>
+                                <td class="amount-cell"><span class="amount-display">0.00</span></td>
+                                <td><button type="button" class="remove-row-btn" title="Видалити рядок">✕</button></td>
+                            </tr>
+                            </tbody>
+                            <tfoot>
+                            <tr>
+                                <td colspan="4">Разом за товари</td>
+                                <td class="amount-cell" id="materialsSubtotal">0.00</td>
+                                <td></td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                        <button type="button" class="btn-outline" id="addMaterialRowBtn" style="margin-top:0.75rem;">+ Додати товар</button>
+                    </div>
+                </div>
+
+                <div class="doc-tab-panel doc-tab-panel-block" id="tabPosluhy" hidden>
+                    <div class="items-section" style="margin-top:0;">
+                        <table class="items-table">
+                            <thead>
+                            <tr>
+                                <th style="width:3%">№</th>
+                                <th>Автопослуга</th>
+                                <th style="width:12%">Кількість</th>
+                                <th style="width:14%">Ціна</th>
+                                <th style="width:14%">Вартість</th>
+                                <th style="width:3%"></th>
+                            </tr>
+                            </thead>
+                            <tbody id="servicesBody">
+                            <tr th:each="idx : ${serviceRows}" class="item-row">
+                                <td class="row-index"></td>
+                                <td>
+                                    <select th:field="*{items[__${idx}__].catalogItemId}" class="catalog-select">
+                                        <option value="">— оберіть послугу —</option>
+                                        <option th:each="ci : ${serviceCatalogItems}" th:value="${ci.id}"
+                                                th:attr="data-price=${ci.basePrice}" th:text="${ci.name}"></option>
+                                    </select>
+                                </td>
+                                <td><input type="number" step="0.001" min="0" th:field="*{items[__${idx}__].quantity}" class="qty-input"></td>
+                                <td><input type="number" step="0.01" min="0" th:field="*{items[__${idx}__].price}" class="price-input"></td>
+                                <td class="amount-cell"><span class="amount-display">0.00</span></td>
+                                <td><button type="button" class="remove-row-btn" title="Видалити рядок">✕</button></td>
+                            </tr>
+                            </tbody>
+                            <tfoot>
+                            <tr>
+                                <td colspan="4">Разом за послуги</td>
+                                <td class="amount-cell" id="servicesSubtotal">0.00</td>
+                                <td></td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                        <button type="button" class="btn-outline" id="addServiceRowBtn" style="margin-top:0.75rem;">+ Додати послугу</button>
+                    </div>
+                </div>
+
+                <div class="field field-full grand-total-row">Загалом: <span id="grandTotal">0.00</span></div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn" id="saveInvoiceBtn">Зберегти</button>
+                    <button type="button" class="btn-outline" id="recordDraftBtn" th:if="${editId} == null">Записати</button>
+                    <a class="btn-outline" id="cancelInvoiceBtn" th:href="@{/invoices}">Скасувати</a>
+                    <span class="muted" id="draftStatus" hidden></span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="clientModalOverlay" hidden>
+        <div class="modal">
+            <h2>Новий контрагент</h2>
+            <div class="alert alert-error" id="clientModalError" hidden></div>
+
+            <div class="field field-full">
+                <label for="newClientName">Назва *</label>
+                <input type="text" id="newClientName">
+            </div>
+            <div class="field field-full">
+                <label for="newClientPhone">Телефон</label>
+                <input type="tel" id="newClientPhone" placeholder="+380XXXXXXXXX">
+            </div>
+            <div class="field field-full">
+                <label for="newClientEmail">Email</label>
+                <input type="email" id="newClientEmail">
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveNewClientBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelNewClientBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="vehiclePickerOverlay" hidden>
+        <div class="modal modal-wide">
+            <h2>Автомобілі контрагента</h2>
+            <div class="alert alert-error" id="vehiclePickerError" hidden></div>
+
+            <div class="table-scroll">
+                <table class="clean-table" id="vehiclePickerTable">
+                    <thead>
+                    <tr>
+                        <th>Держ. номер</th>
+                        <th>VIN</th>
+                        <th>Марка</th>
+                        <th>Модель</th>
+                        <th>Рік</th>
+                        <th>Останній візит</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody id="vehiclePickerBody"></tbody>
+                </table>
+            </div>
+            <div class="muted" id="vehiclePickerEmpty" hidden>У цього контрагента ще немає жодного автомобіля.</div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-outline" id="openAddVehicleBtn">+ Додати автомобіль</button>
+                <button type="button" class="btn-outline" id="closeVehiclePickerBtn">Закрити</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addVehicleOverlay" hidden>
+        <div class="modal">
+            <h2>Новий автомобіль</h2>
+            <div class="alert alert-error" id="addVehicleError" hidden></div>
+
+            <div class="field field-full">
+                <label for="newVehicleRegistrationNumber">Державний номер *</label>
+                <input type="text" id="newVehicleRegistrationNumber">
+            </div>
+            <div class="field field-full">
+                <label for="newVehicleVin">VIN *</label>
+                <input type="text" id="newVehicleVin">
+            </div>
+            <div class="field field-full">
+                <label for="newVehicleMake">Марка *</label>
+                <select id="newVehicleMake"></select>
+                <button type="button" class="link-btn" id="addVehicleMakeBtn">+ Додати нову марку</button>
+            </div>
+            <div class="field field-full">
+                <label for="newVehicleModel">Модель *</label>
+                <select id="newVehicleModel" disabled></select>
+                <button type="button" class="link-btn" id="addVehicleModelBtn" disabled>+ Додати нову модель</button>
+            </div>
+            <div class="field field-full">
+                <label for="newVehicleYear">Рік випуску *</label>
+                <input type="number" id="newVehicleYear" min="1950" max="2100">
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveNewVehicleBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelNewVehicleBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addVehicleMakeOverlay" hidden>
+        <div class="modal">
+            <h2>Нова марка</h2>
+            <div class="alert alert-error" id="addVehicleMakeError" hidden></div>
+            <div class="field field-full">
+                <label for="newVehicleMakeName">Назва *</label>
+                <input type="text" id="newVehicleMakeName">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveVehicleMakeBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelVehicleMakeBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addVehicleModelOverlay" hidden>
+        <div class="modal">
+            <h2>Нова модель</h2>
+            <div class="alert alert-error" id="addVehicleModelError" hidden></div>
+            <div class="field field-full">
+                <label for="newVehicleModelName">Назва *</label>
+                <input type="text" id="newVehicleModelName">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveVehicleModelBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelVehicleModelBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addDriverOverlay" hidden>
+        <div class="modal">
+            <h2>Новий водій</h2>
+            <div class="alert alert-error" id="addDriverError" hidden></div>
+            <div class="field field-full">
+                <label for="newDriverFullName">ПІБ *</label>
+                <input type="text" id="newDriverFullName">
+            </div>
+            <div class="field field-full">
+                <label for="newDriverPhone">Телефон</label>
+                <input type="tel" id="newDriverPhone" placeholder="+380XXXXXXXXX">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveNewDriverBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelNewDriverBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addWorkerOverlay" hidden>
+        <div class="modal">
+            <h2>Новий робітник</h2>
+            <div class="alert alert-error" id="addWorkerError" hidden></div>
+            <div class="field field-full">
+                <label for="newWorkerFullName">ПІБ *</label>
+                <input type="text" id="newWorkerFullName">
+            </div>
+            <div class="field field-full">
+                <label for="newWorkerPosition">Посада *</label>
+                <input type="text" id="newWorkerPosition">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveNewWorkerBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelNewWorkerBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <template id="materialRowTemplate">
+        <tr class="item-row">
+            <td class="row-index"></td>
+            <td>
+                <select name="items[__INDEX__].catalogItemId" class="catalog-select">
+                    <option value="">— оберіть товар —</option>
+                    <option th:each="ci : ${materialCatalogItems}" th:value="${ci.id}"
+                            th:attr="data-price=${ci.basePrice}" th:text="${ci.name}"></option>
+                </select>
+            </td>
+            <td><input type="number" step="0.001" min="0" name="items[__INDEX__].quantity" class="qty-input"></td>
+            <td><input type="number" step="0.01" min="0" name="items[__INDEX__].price" class="price-input"></td>
+            <td class="amount-cell"><span class="amount-display">0.00</span></td>
+            <td><button type="button" class="remove-row-btn" title="Видалити рядок">✕</button></td>
+        </tr>
+    </template>
+
+    <template id="serviceRowTemplate">
+        <tr class="item-row">
+            <td class="row-index"></td>
+            <td>
+                <select name="items[__INDEX__].catalogItemId" class="catalog-select">
+                    <option value="">— оберіть послугу —</option>
+                    <option th:each="ci : ${serviceCatalogItems}" th:value="${ci.id}"
+                            th:attr="data-price=${ci.basePrice}" th:text="${ci.name}"></option>
+                </select>
+            </td>
+            <td><input type="number" step="0.001" min="0" name="items[__INDEX__].quantity" class="qty-input"></td>
+            <td><input type="number" step="0.01" min="0" name="items[__INDEX__].price" class="price-input"></td>
+            <td class="amount-cell"><span class="amount-display">0.00</span></td>
+            <td><button type="button" class="remove-row-btn" title="Видалити рядок">✕</button></td>
+        </tr>
+    </template>
+
+    <script th:inline="javascript">
+        var allClients = [];
+        /*[# th:each="c : ${clients}"]*/
+        allClients.push({ id: [[${c.id}]], name: [[${c.name}]] });
+        /*[/]*/
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var materialsBody = document.getElementById('materialsBody');
+            var servicesBody = document.getElementById('servicesBody');
+            var materialsSubtotalEl = document.getElementById('materialsSubtotal');
+            var servicesSubtotalEl = document.getElementById('servicesSubtotal');
+            var grandTotalEl = document.getElementById('grandTotal');
+
+            function toNumber(value) {
+                var n = parseFloat(value);
+                return isNaN(n) ? 0 : n;
+            }
+
+            function recalcTable(tbody, subtotalEl) {
+                var total = 0;
+                Array.prototype.forEach.call(tbody.querySelectorAll('.item-row'), function (row, idx) {
+                    row.querySelector('.row-index').textContent = idx + 1;
+                    var qty = toNumber(row.querySelector('.qty-input').value);
+                    var price = toNumber(row.querySelector('.price-input').value);
+                    var amount = qty * price;
+                    row.querySelector('.amount-display').textContent = amount.toFixed(2);
+                    total += amount;
+                });
+                subtotalEl.textContent = total.toFixed(2);
+                return total;
+            }
+
+            function recalcAll() {
+                var materialsTotal = recalcTable(materialsBody, materialsSubtotalEl);
+                var servicesTotal = recalcTable(servicesBody, servicesSubtotalEl);
+                grandTotalEl.textContent = (materialsTotal + servicesTotal).toFixed(2);
+            }
+
+            function renumberNames() {
+                var idx = 0;
+                document.querySelectorAll('.item-row').forEach(function (row) {
+                    row.querySelectorAll('input, select').forEach(function (field) {
+                        field.name = field.name.replace(/items\[\d+]/, 'items[' + idx + ']');
+                    });
+                    idx++;
+                });
+            }
+
+            function addRow(tbody, templateId) {
+                var template = document.getElementById(templateId);
+                var nextIndex = document.querySelectorAll('.item-row').length;
+                var html = template.innerHTML.replace(/__INDEX__/g, nextIndex);
+                var wrapper = document.createElement('tbody');
+                wrapper.innerHTML = html.trim();
+                tbody.appendChild(wrapper.firstElementChild);
+                recalcAll();
+            }
+
+            document.body.addEventListener('input', function (e) {
+                if (e.target.classList.contains('qty-input') || e.target.classList.contains('price-input')) {
+                    recalcAll();
+                }
+            });
+
+            document.body.addEventListener('change', function (e) {
+                if (!e.target.classList.contains('catalog-select')) return;
+                var row = e.target.closest('tr');
+                var selectedOption = e.target.selectedOptions[0];
+                var price = selectedOption ? selectedOption.dataset.price : null;
+                if (price) {
+                    row.querySelector('.price-input').value = price;
+                }
+                var qtyInput = row.querySelector('.qty-input');
+                if (!qtyInput.value) {
+                    qtyInput.value = '1';
+                }
+                recalcAll();
+            });
+
+            document.body.addEventListener('click', function (e) {
+                if (e.target.classList.contains('remove-row-btn')) {
+                    e.target.closest('tr').remove();
+                    renumberNames();
+                    recalcAll();
+                }
+            });
+
+            document.getElementById('addMaterialRowBtn').addEventListener('click', function () {
+                addRow(materialsBody, 'materialRowTemplate');
+            });
+            document.getElementById('addServiceRowBtn').addEventListener('click', function () {
+                addRow(servicesBody, 'serviceRowTemplate');
+            });
+
+            recalcAll();
+
+            // Document tabs: "Наряд" / "Товари" / "Послуги".
+            var tabButtons = document.querySelectorAll('.doc-tab-btn');
+            var tabPanels = document.querySelectorAll('.doc-tab-panel');
+
+            tabButtons.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    tabButtons.forEach(function (b) { b.classList.remove('active'); });
+                    tabPanels.forEach(function (p) { p.hidden = true; });
+                    btn.classList.add('active');
+                    document.getElementById(btn.dataset.tab).hidden = false;
+                });
+            });
+
+            // Контрагент: searchable combobox backed by a hidden clientId input,
+            // with an inline "add new client" modal so the user never leaves this page.
+            var clientSearchInput = document.getElementById('clientSearchInput');
+            var clientIdInput = document.getElementById('clientId');
+            var clientDropdown = document.getElementById('clientDropdown');
+            var clientOptions = document.getElementById('clientOptions');
+            var vehicleNameInput = document.getElementById('vehicleName');
+            var driverNameInput = document.getElementById('driverName');
+            var driverDropdown = document.getElementById('driverDropdown');
+            var driverOptions = document.getElementById('driverOptions');
+            var currentDrivers = [];
+
+            function renderClientOptions(filterText) {
+                var q = (filterText || '').toLowerCase();
+                var matches = allClients.filter(function (c) {
+                    return c.name.toLowerCase().indexOf(q) !== -1;
+                });
+                clientOptions.innerHTML = '';
+                if (matches.length === 0) {
+                    var empty = document.createElement('div');
+                    empty.className = 'combobox-empty';
+                    empty.textContent = 'Нічого не знайдено';
+                    clientOptions.appendChild(empty);
+                }
+                matches.forEach(function (c) {
+                    var opt = document.createElement('div');
+                    opt.className = 'combobox-option';
+                    opt.textContent = c.name;
+                    opt.addEventListener('click', function () {
+                        selectClient(c.id, c.name);
+                    });
+                    clientOptions.appendChild(opt);
+                });
+            }
+
+            function selectClient(id, name) {
+                var changedClient = clientIdInput.value !== String(id);
+                clientIdInput.value = id;
+                clientSearchInput.value = name;
+                clientDropdown.hidden = true;
+                if (changedClient) {
+                    vehicleNameInput.value = '';
+                    driverNameInput.value = '';
+                }
+                updateFleetFieldPlaceholders();
+                loadClientFleet(id);
+            }
+
+            function loadClientFleet(clientId) {
+                if (!clientId) return;
+                fetch('/api/clients/' + clientId + '/drivers', { credentials: 'same-origin' })
+                    .then(function (resp) { return resp.ok ? resp.json() : []; })
+                    .then(function (drivers) {
+                        currentDrivers = drivers;
+                    });
+            }
+
+            function updateFleetFieldPlaceholders() {
+                var placeholder = clientIdInput.value ? 'Оберіть зі списку' : 'Спочатку оберіть контрагента';
+                vehicleNameInput.placeholder = clientIdInput.value ? 'Оберіть автомобіль' : 'Спочатку оберіть контрагента';
+                driverNameInput.placeholder = placeholder;
+            }
+
+            clientSearchInput.addEventListener('focus', function () {
+                renderClientOptions(clientSearchInput.value);
+                clientDropdown.hidden = false;
+            });
+            clientSearchInput.addEventListener('input', function () {
+                clientIdInput.value = '';
+                renderClientOptions(clientSearchInput.value);
+                clientDropdown.hidden = false;
+            });
+            document.addEventListener('click', function (e) {
+                if (!clientDropdown.contains(e.target) && e.target !== clientSearchInput) {
+                    clientDropdown.hidden = true;
+                }
+            });
+
+            // Populate the fleet lists immediately when editing an existing document.
+            updateFleetFieldPlaceholders();
+            if (clientIdInput.value) {
+                loadClientFleet(clientIdInput.value);
+            }
+
+            // "+ Додати нового контрагента" — inline modal, POSTs to the existing REST API
+            // (/api/** is CSRF-exempt), so the new client is usable immediately without
+            // navigating away and losing everything already typed into this form.
+            var clientModalOverlay = document.getElementById('clientModalOverlay');
+            var clientModalError = document.getElementById('clientModalError');
+            var newClientName = document.getElementById('newClientName');
+            var newClientPhone = document.getElementById('newClientPhone');
+            var newClientEmail = document.getElementById('newClientEmail');
+
+            document.getElementById('addClientBtn').addEventListener('click', function () {
+                clientDropdown.hidden = true;
+                clientModalError.hidden = true;
+                newClientName.value = clientSearchInput.value || '';
+                newClientPhone.value = '';
+                newClientEmail.value = '';
+                clientModalOverlay.hidden = false;
+                newClientName.focus();
+            });
+            document.getElementById('cancelNewClientBtn').addEventListener('click', function () {
+                clientModalOverlay.hidden = true;
+            });
+            document.getElementById('saveNewClientBtn').addEventListener('click', function () {
+                var name = newClientName.value.trim();
+                if (!name) {
+                    clientModalError.textContent = "Назва обов'язкова";
+                    clientModalError.hidden = false;
+                    return;
+                }
+                fetch('/api/clients', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        phone: newClientPhone.value || null,
+                        email: newClientEmail.value || null
+                    })
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (body) {
+                            throw new Error(body.message || 'Не вдалося створити контрагента');
+                        });
+                    }
+                    return resp.json();
+                }).then(function (created) {
+                    allClients.push({ id: created.id, name: created.name });
+                    selectClient(created.id, created.name);
+                    clientModalOverlay.hidden = true;
+                }).catch(function (err) {
+                    clientModalError.textContent = err.message;
+                    clientModalError.hidden = false;
+                });
+            });
+
+            // "Автомобіль": modal picker listing all vehicles of the selected client
+            // (держ. номер, VIN, марка/модель, рік, дата останнього візиту), with an
+            // inline "add vehicle" modal for when the desired car is not in the list yet.
+            var vehiclePickerOverlay = document.getElementById('vehiclePickerOverlay');
+            var vehiclePickerError = document.getElementById('vehiclePickerError');
+            var vehiclePickerBody = document.getElementById('vehiclePickerBody');
+            var vehiclePickerEmpty = document.getElementById('vehiclePickerEmpty');
+            var addVehicleOverlay = document.getElementById('addVehicleOverlay');
+            var addVehicleError = document.getElementById('addVehicleError');
+            var newVehicleRegistrationNumber = document.getElementById('newVehicleRegistrationNumber');
+            var newVehicleVin = document.getElementById('newVehicleVin');
+            var newVehicleMake = document.getElementById('newVehicleMake');
+            var newVehicleModel = document.getElementById('newVehicleModel');
+            var newVehicleYear = document.getElementById('newVehicleYear');
+            var addVehicleModelBtn = document.getElementById('addVehicleModelBtn');
+            var allVehicleMakes = [];
+
+            function populateVehicleMakes(selectName) {
+                newVehicleMake.innerHTML = '<option value="">— оберіть марку —</option>';
+                allVehicleMakes.forEach(function (m) {
+                    var opt = document.createElement('option');
+                    opt.value = m.name;
+                    opt.textContent = m.name;
+                    opt.dataset.id = m.id;
+                    if (m.name === selectName) opt.selected = true;
+                    newVehicleMake.appendChild(opt);
+                });
+            }
+
+            function currentVehicleMakeId() {
+                var opt = newVehicleMake.selectedOptions[0];
+                return opt ? opt.dataset.id : null;
+            }
+
+            function loadVehicleModels(makeId, selectName) {
+                if (!makeId) {
+                    newVehicleModel.innerHTML = '';
+                    newVehicleModel.disabled = true;
+                    addVehicleModelBtn.disabled = true;
+                    return;
+                }
+                fetch('/api/vehicle-makes/' + makeId + '/models', { credentials: 'same-origin' })
+                    .then(function (resp) { return resp.ok ? resp.json() : []; })
+                    .then(function (models) {
+                        newVehicleModel.innerHTML = '<option value="">— оберіть модель —</option>';
+                        models.forEach(function (m) {
+                            var opt = document.createElement('option');
+                            opt.value = m.name;
+                            opt.textContent = m.name;
+                            if (m.name === selectName) opt.selected = true;
+                            newVehicleModel.appendChild(opt);
+                        });
+                        newVehicleModel.disabled = false;
+                        addVehicleModelBtn.disabled = false;
+                    });
+            }
+
+            newVehicleMake.addEventListener('change', function () {
+                loadVehicleModels(currentVehicleMakeId(), null);
+            });
+
+            function vehicleLabel(v) {
+                var makeModel = [v.make, v.model].filter(Boolean).join(' ');
+                return makeModel ? v.registrationNumber + ' (' + makeModel + ')' : v.registrationNumber;
+            }
+
+            function formatVisitDate(value) {
+                if (!value) return '—';
+                var d = new Date(value);
+                var pad = function (n) { return n < 10 ? '0' + n : n; };
+                return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear()
+                    + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+            }
+
+            function selectVehicle(v) {
+                vehicleNameInput.value = vehicleLabel(v);
+                vehiclePickerOverlay.hidden = true;
+            }
+
+            function renderVehiclePicker(vehicles) {
+                vehiclePickerBody.innerHTML = '';
+                vehiclePickerEmpty.hidden = vehicles.length !== 0;
+                vehicles.forEach(function (v) {
+                    var row = document.createElement('tr');
+
+                    [v.registrationNumber, v.vin, v.make || '—', v.model || '—', v.year || '—',
+                     formatVisitDate(v.lastVisitDate)].forEach(function (text) {
+                        var td = document.createElement('td');
+                        td.textContent = text;
+                        row.appendChild(td);
+                    });
+
+                    var actionsTd = document.createElement('td');
+                    var chooseBtn = document.createElement('button');
+                    chooseBtn.type = 'button';
+                    chooseBtn.className = 'link-btn';
+                    chooseBtn.textContent = 'Обрати';
+                    chooseBtn.addEventListener('click', function () { selectVehicle(v); });
+                    actionsTd.appendChild(chooseBtn);
+                    row.appendChild(actionsTd);
+
+                    vehiclePickerBody.appendChild(row);
+                });
+            }
+
+            vehicleNameInput.addEventListener('click', function () {
+                var clientId = clientIdInput.value;
+                if (!clientId) return;
+                vehiclePickerError.hidden = true;
+                fetch('/invoices/vehicle-picker?clientId=' + clientId, { credentials: 'same-origin' })
+                    .then(function (resp) { return resp.ok ? resp.json() : Promise.reject(new Error('Не вдалося завантажити список автомобілів')); })
+                    .then(function (vehicles) {
+                        renderVehiclePicker(vehicles);
+                        vehiclePickerOverlay.hidden = false;
+                    })
+                    .catch(function (err) {
+                        vehiclePickerError.textContent = err.message;
+                        vehiclePickerError.hidden = false;
+                        vehiclePickerOverlay.hidden = false;
+                    });
+            });
+            document.getElementById('closeVehiclePickerBtn').addEventListener('click', function () {
+                vehiclePickerOverlay.hidden = true;
+            });
+
+            document.getElementById('openAddVehicleBtn').addEventListener('click', function () {
+                vehiclePickerOverlay.hidden = true;
+                addVehicleError.hidden = true;
+                newVehicleRegistrationNumber.value = '';
+                newVehicleVin.value = '';
+                newVehicleYear.value = '';
+                addVehicleOverlay.hidden = false;
+                newVehicleRegistrationNumber.focus();
+                if (allVehicleMakes.length === 0) {
+                    fetch('/api/vehicle-makes', { credentials: 'same-origin' })
+                        .then(function (resp) { return resp.ok ? resp.json() : []; })
+                        .then(function (makes) {
+                            allVehicleMakes = makes;
+                            populateVehicleMakes(null);
+                            loadVehicleModels(null, null);
+                        });
+                } else {
+                    populateVehicleMakes(null);
+                    loadVehicleModels(null, null);
+                }
+            });
+            document.getElementById('cancelNewVehicleBtn').addEventListener('click', function () {
+                addVehicleOverlay.hidden = true;
+                vehiclePickerOverlay.hidden = false;
+            });
+            document.getElementById('saveNewVehicleBtn').addEventListener('click', function () {
+                var registrationNumber = newVehicleRegistrationNumber.value.trim();
+                var vin = newVehicleVin.value.trim();
+                var make = newVehicleMake.value;
+                var model = newVehicleModel.value;
+                var year = newVehicleYear.value;
+                if (!registrationNumber || !vin || !make || !model || !year) {
+                    addVehicleError.textContent = 'Усі поля обов\'язкові для заповнення';
+                    addVehicleError.hidden = false;
+                    return;
+                }
+                fetch('/api/vehicles', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clientId: Number(clientIdInput.value),
+                        registrationNumber: registrationNumber,
+                        vin: vin,
+                        make: make,
+                        model: model,
+                        year: Number(year)
+                    })
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (body) {
+                            throw new Error(body.message || 'Не вдалося створити автомобіль');
+                        });
+                    }
+                    return resp.json();
+                }).then(function (created) {
+                    selectVehicle(created);
+                    addVehicleOverlay.hidden = true;
+                }).catch(function (err) {
+                    addVehicleError.textContent = err.message;
+                    addVehicleError.hidden = false;
+                });
+            });
+
+            // Nested "+ Додати нову марку/модель" — reuses the same /api/vehicle-makes
+            // catalog endpoints as /vehicles/new, so both places stay in sync.
+            var addVehicleMakeOverlay = document.getElementById('addVehicleMakeOverlay');
+            var addVehicleMakeError = document.getElementById('addVehicleMakeError');
+            var newVehicleMakeName = document.getElementById('newVehicleMakeName');
+
+            document.getElementById('addVehicleMakeBtn').addEventListener('click', function () {
+                addVehicleMakeError.hidden = true;
+                newVehicleMakeName.value = '';
+                addVehicleMakeOverlay.hidden = false;
+                newVehicleMakeName.focus();
+            });
+            document.getElementById('cancelVehicleMakeBtn').addEventListener('click', function () {
+                addVehicleMakeOverlay.hidden = true;
+            });
+            document.getElementById('saveVehicleMakeBtn').addEventListener('click', function () {
+                var name = newVehicleMakeName.value.trim();
+                if (!name) {
+                    addVehicleMakeError.textContent = "Назва обов'язкова";
+                    addVehicleMakeError.hidden = false;
+                    return;
+                }
+                fetch('/api/vehicle-makes', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (body) { throw new Error(body.message || 'Не вдалося зберегти марку'); });
+                    }
+                    return resp.json();
+                }).then(function (created) {
+                    allVehicleMakes.push(created);
+                    populateVehicleMakes(created.name);
+                    loadVehicleModels(created.id, null);
+                    addVehicleMakeOverlay.hidden = true;
+                }).catch(function (err) {
+                    addVehicleMakeError.textContent = err.message;
+                    addVehicleMakeError.hidden = false;
+                });
+            });
+
+            var addVehicleModelOverlay = document.getElementById('addVehicleModelOverlay');
+            var addVehicleModelError = document.getElementById('addVehicleModelError');
+            var newVehicleModelName = document.getElementById('newVehicleModelName');
+
+            addVehicleModelBtn.addEventListener('click', function () {
+                if (addVehicleModelBtn.disabled) return;
+                addVehicleModelError.hidden = true;
+                newVehicleModelName.value = '';
+                addVehicleModelOverlay.hidden = false;
+                newVehicleModelName.focus();
+            });
+            document.getElementById('cancelVehicleModelBtn').addEventListener('click', function () {
+                addVehicleModelOverlay.hidden = true;
+            });
+            document.getElementById('saveVehicleModelBtn').addEventListener('click', function () {
+                var name = newVehicleModelName.value.trim();
+                if (!name) {
+                    addVehicleModelError.textContent = "Назва обов'язкова";
+                    addVehicleModelError.hidden = false;
+                    return;
+                }
+                var makeId = currentVehicleMakeId();
+                fetch('/api/vehicle-makes/' + makeId + '/models', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (body) { throw new Error(body.message || 'Не вдалося зберегти модель'); });
+                    }
+                    return resp.json();
+                }).then(function (created) {
+                    loadVehicleModels(makeId, created.name);
+                    addVehicleModelOverlay.hidden = true;
+                }).catch(function (err) {
+                    addVehicleModelError.textContent = err.message;
+                    addVehicleModelError.hidden = false;
+                });
+            });
+
+            // "Водій": dropdown of the selected client's real drivers, with an inline
+            // "add driver" modal (mirrors the "Автомобіль" picker, simpler UI per request).
+            function renderDriverOptions() {
+                driverOptions.innerHTML = '';
+                if (currentDrivers.length === 0) {
+                    var empty = document.createElement('div');
+                    empty.className = 'combobox-empty';
+                    empty.textContent = 'У контрагента ще немає водіїв';
+                    driverOptions.appendChild(empty);
+                }
+                currentDrivers.forEach(function (d) {
+                    var opt = document.createElement('div');
+                    opt.className = 'combobox-option';
+                    opt.textContent = d.phone ? d.fullName + ' (' + d.phone + ')' : d.fullName;
+                    opt.addEventListener('click', function () {
+                        driverNameInput.value = d.fullName;
+                        driverDropdown.hidden = true;
+                    });
+                    driverOptions.appendChild(opt);
+                });
+            }
+
+            driverNameInput.addEventListener('click', function () {
+                if (!clientIdInput.value) return;
+                renderDriverOptions();
+                driverDropdown.hidden = false;
+            });
+            document.addEventListener('click', function (e) {
+                if (!driverDropdown.contains(e.target) && e.target !== driverNameInput) {
+                    driverDropdown.hidden = true;
+                }
+            });
+
+            var addDriverOverlay = document.getElementById('addDriverOverlay');
+            var addDriverError = document.getElementById('addDriverError');
+            var newDriverFullName = document.getElementById('newDriverFullName');
+            var newDriverPhone = document.getElementById('newDriverPhone');
+
+            document.getElementById('addDriverBtn').addEventListener('click', function () {
+                driverDropdown.hidden = true;
+                addDriverError.hidden = true;
+                newDriverFullName.value = '';
+                newDriverPhone.value = '';
+                addDriverOverlay.hidden = false;
+                newDriverFullName.focus();
+            });
+            document.getElementById('cancelNewDriverBtn').addEventListener('click', function () {
+                addDriverOverlay.hidden = true;
+            });
+            document.getElementById('saveNewDriverBtn').addEventListener('click', function () {
+                var fullName = newDriverFullName.value.trim();
+                if (!fullName) {
+                    addDriverError.textContent = "ПІБ обов'язкове";
+                    addDriverError.hidden = false;
+                    return;
+                }
+                fetch('/api/drivers', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clientId: Number(clientIdInput.value),
+                        fullName: fullName,
+                        phone: newDriverPhone.value || null
+                    })
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (body) { throw new Error(body.message || 'Не вдалося створити водія'); });
+                    }
+                    return resp.json();
+                }).then(function (created) {
+                    currentDrivers.push(created);
+                    driverNameInput.value = created.fullName;
+                    addDriverOverlay.hidden = true;
+                }).catch(function (err) {
+                    addDriverError.textContent = err.message;
+                    addDriverError.hidden = false;
+                });
+            });
+
+            // "Відповідальний за ремонт" / "Керівник ремонту": readonly dropdown pickers backed
+            // by the shared ADMIN-managed staff directory (/api/repair-workers) — MASTER can only
+            // pick an existing worker, the "+ Додати нового робітника" button renders (server-side,
+            // sec:authorize) only for ADMIN, so it may simply be absent from the DOM for MASTER.
+            var repairWorkers = [];
+
+            function setupWorkerDropdown(inputId, dropdownId, optionsId, addBtnId) {
+                var input = document.getElementById(inputId);
+                var dropdown = document.getElementById(dropdownId);
+                var optionsContainer = document.getElementById(optionsId);
+                var addBtn = document.getElementById(addBtnId);
+
+                function render() {
+                    optionsContainer.innerHTML = '';
+                    if (repairWorkers.length === 0) {
+                        var empty = document.createElement('div');
+                        empty.className = 'combobox-empty';
+                        empty.textContent = 'Довідник робітників ще порожній';
+                        optionsContainer.appendChild(empty);
+                    }
+                    repairWorkers.forEach(function (w) {
+                        var opt = document.createElement('div');
+                        opt.className = 'combobox-option';
+                        opt.textContent = w.fullName + ' — ' + w.position;
+                        opt.addEventListener('click', function () {
+                            input.value = w.fullName;
+                            dropdown.hidden = true;
+                        });
+                        optionsContainer.appendChild(opt);
+                    });
+                }
+
+                input.addEventListener('click', function () {
+                    render();
+                    dropdown.hidden = false;
+                });
+                document.addEventListener('click', function (e) {
+                    if (!dropdown.contains(e.target) && e.target !== input) {
+                        dropdown.hidden = true;
+                    }
+                });
+                if (addBtn) {
+                    addBtn.addEventListener('click', function () {
+                        dropdown.hidden = true;
+                        openAddWorkerModal(input);
+                    });
+                }
+            }
+
+            setupWorkerDropdown('repairResponsibleName', 'repairResponsibleDropdown', 'repairResponsibleOptions', 'addRepairResponsibleBtn');
+            setupWorkerDropdown('repairSupervisorName', 'repairSupervisorDropdown', 'repairSupervisorOptions', 'addRepairSupervisorBtn');
+
+            fetch('/api/repair-workers', { credentials: 'same-origin' })
+                .then(function (resp) { return resp.ok ? resp.json() : []; })
+                .then(function (workers) { repairWorkers = workers; });
+
+            var addWorkerOverlay = document.getElementById('addWorkerOverlay');
+            var addWorkerError = document.getElementById('addWorkerError');
+            var newWorkerFullName = document.getElementById('newWorkerFullName');
+            var newWorkerPosition = document.getElementById('newWorkerPosition');
+            var workerTargetInput = null;
+
+            function openAddWorkerModal(targetInput) {
+                workerTargetInput = targetInput;
+                addWorkerError.hidden = true;
+                newWorkerFullName.value = '';
+                newWorkerPosition.value = '';
+                addWorkerOverlay.hidden = false;
+                newWorkerFullName.focus();
+            }
+
+            document.getElementById('cancelNewWorkerBtn').addEventListener('click', function () {
+                addWorkerOverlay.hidden = true;
+            });
+            document.getElementById('saveNewWorkerBtn').addEventListener('click', function () {
+                var fullName = newWorkerFullName.value.trim();
+                var position = newWorkerPosition.value.trim();
+                if (!fullName || !position) {
+                    addWorkerError.textContent = "ПІБ і посада обов'язкові";
+                    addWorkerError.hidden = false;
+                    return;
+                }
+                fetch('/api/repair-workers', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullName: fullName, position: position })
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (body) { throw new Error(body.message || 'Не вдалося створити робітника'); });
+                    }
+                    return resp.json();
+                }).then(function (created) {
+                    repairWorkers.push(created);
+                    if (workerTargetInput) {
+                        workerTargetInput.value = created.fullName;
+                    }
+                    addWorkerOverlay.hidden = true;
+                }).catch(function (err) {
+                    addWorkerError.textContent = err.message;
+                    addWorkerError.hidden = false;
+                });
+            });
+
+            // Draft tracking (client-side only, see fragments/topbar.html for the sidebar +
+            // window.ProtaxoDrafts storage). Only on the "new invoice" form — an invoice being
+            // edited already has a real DB row, so it is not an "unsaved document".
+            var recordDraftBtn = document.getElementById('recordDraftBtn');
+            if (recordDraftBtn && window.ProtaxoDrafts) {
+                var draftId;
+                var draftStatus = document.getElementById('draftStatus');
+                var existingDraftId = new URLSearchParams(window.location.search).get('draft');
+
+                function catalogIdsFromTemplate(templateId) {
+                    // Content inside <template> lives in a separate inert DocumentFragment
+                    // (template.content) — plain document.querySelectorAll never sees it.
+                    var template = document.getElementById(templateId);
+                    return Array.prototype.map.call(
+                        template.content.querySelectorAll('.catalog-select option'),
+                        function (o) { return o.value; }
+                    ).filter(Boolean);
+                }
+
+                function computeDraftLabel() {
+                    var name = clientSearchInput.value.trim();
+                    return name || 'Новий наряд-заказ';
+                }
+
+                function captureSnapshot() {
+                    var items = [];
+                    document.querySelectorAll('.item-row').forEach(function (row) {
+                        items.push({
+                            catalogItemId: row.querySelector('.catalog-select').value,
+                            quantity: row.querySelector('.qty-input').value,
+                            price: row.querySelector('.price-input').value
+                        });
+                    });
+                    return {
+                        paymentType: document.getElementById('paymentType').value,
+                        clientId: clientIdInput.value,
+                        clientName: clientSearchInput.value,
+                        vehicleName: vehicleNameInput.value,
+                        driverName: driverNameInput.value,
+                        repairResponsibleName: document.getElementById('repairResponsibleName').value,
+                        repairSupervisorName: document.getElementById('repairSupervisorName').value,
+                        items: items
+                    };
+                }
+
+                function restoreSnapshot(snapshot) {
+                    if (!snapshot) return;
+                    document.getElementById('paymentType').value = snapshot.paymentType || '';
+                    if (snapshot.clientId) {
+                        selectClient(Number(snapshot.clientId), snapshot.clientName || '');
+                    }
+                    vehicleNameInput.value = snapshot.vehicleName || '';
+                    driverNameInput.value = snapshot.driverName || '';
+                    document.getElementById('repairResponsibleName').value = snapshot.repairResponsibleName || '';
+                    document.getElementById('repairSupervisorName').value = snapshot.repairSupervisorName || '';
+
+                    var serviceIds = catalogIdsFromTemplate('serviceRowTemplate');
+                    (snapshot.items || []).forEach(function (item) {
+                        if (!item.catalogItemId) return;
+                        var isService = serviceIds.indexOf(item.catalogItemId) !== -1;
+                        var targetBody = isService ? servicesBody : materialsBody;
+                        addRow(targetBody, isService ? 'serviceRowTemplate' : 'materialRowTemplate');
+                        var row = targetBody.lastElementChild;
+                        row.querySelector('.catalog-select').value = item.catalogItemId;
+                        row.querySelector('.qty-input').value = item.quantity || '';
+                        row.querySelector('.price-input').value = item.price || '';
+                    });
+                    recalcAll();
+                }
+
+                function markDraftDirty() {
+                    var draft = window.ProtaxoDrafts.get(draftId);
+                    if (draft && !draft.dirty) {
+                        draft.dirty = true;
+                        window.ProtaxoDrafts.upsert(draft);
+                    }
+                }
+
+                if (existingDraftId) {
+                    draftId = existingDraftId;
+                    var existingDraft = window.ProtaxoDrafts.get(draftId);
+                    if (existingDraft) {
+                        restoreSnapshot(existingDraft.snapshot);
+                    }
+                } else {
+                    draftId = 'draft-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+                    window.ProtaxoDrafts.upsert({ id: draftId, label: 'Новий наряд-заказ', dirty: true, snapshot: null });
+                }
+
+                var invoiceForm = document.querySelector('form');
+                invoiceForm.addEventListener('input', markDraftDirty);
+                invoiceForm.addEventListener('click', markDraftDirty);
+
+                recordDraftBtn.addEventListener('click', function () {
+                    window.ProtaxoDrafts.upsert({
+                        id: draftId,
+                        label: computeDraftLabel(),
+                        dirty: false,
+                        snapshot: captureSnapshot()
+                    });
+                    draftStatus.textContent = 'Записано';
+                    draftStatus.hidden = false;
+                    setTimeout(function () { draftStatus.hidden = true; }, 2000);
+                });
+
+                document.getElementById('saveInvoiceBtn').addEventListener('click', function () {
+                    window.ProtaxoDrafts.markPendingRemoval(draftId);
+                });
+                document.getElementById('cancelInvoiceBtn').addEventListener('click', function () {
+                    window.ProtaxoDrafts.remove(draftId);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

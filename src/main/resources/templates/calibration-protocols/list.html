@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>ProTaxo — Протоколи калібрування</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='calibration')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Протоколи калібрування</h1>
+                <a class="btn" th:href="@{/calibration-protocols/new}">+ Новий протокол</a>
+            </div>
+
+            <form th:action="@{/calibration-protocols}" method="get" class="filter-bar">
+                <div class="field">
+                    <label for="filterDate">Дата</label>
+                    <input type="date" id="filterDate" name="filterDate" th:value="${filterDate}">
+                </div>
+                <div class="field">
+                    <label for="filterInternalNumber">Внутрішній номер</label>
+                    <input type="text" id="filterInternalNumber" name="filterInternalNumber" th:value="${filterInternalNumber}" placeholder="Пошук">
+                </div>
+                <div class="field filter-actions-field">
+                    <label>&nbsp;</label>
+                    <div class="filter-actions">
+                        <button type="submit" class="btn-outline">Фільтрувати</button>
+                        <a class="link-btn" th:if="${filterDate != null or filterInternalNumber != null}" th:href="@{/calibration-protocols}">Скинути фільтр</a>
+                    </div>
+                </div>
+            </form>
+
+            <table class="clean-table">
+                <thead>
+                <tr>
+                    <th>№</th>
+                    <th>Дата</th>
+                    <th>Внутр. номер</th>
+                    <th>Контрагент</th>
+                    <th>Номер картки</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${protocols}">
+                    <td th:text="${p.protocolNumber}"></td>
+                    <td th:text="${#temporals.format(p.protocolDate, 'dd.MM.yyyy HH:mm')}"></td>
+                    <td th:text="${p.internalNumber}"></td>
+                    <td th:text="${clientNames[p.clientId]}"></td>
+                    <td th:text="${p.cardNumber}"></td>
+                    <td class="actions-cell">
+                        <a class="link-btn" th:href="@{/calibration-protocols/{id}(id=${p.id})}">Переглянути</a>
+                        <a class="link-btn" th:href="@{/calibration-protocols/{id}/edit(id=${p.id})}">Редагувати</a>
+                        <form sec:authorize="hasRole('ADMIN')" th:action="@{/calibration-protocols/{id}/delete(id=${p.id})}" method="post" style="display:inline">
+                            <button type="submit" class="link-btn link-btn-danger"
+                                    onclick="return confirm('Видалити протокол?')">Видалити</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(protocols)}">
+                    <td colspan="6">Протоколів ще немає</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

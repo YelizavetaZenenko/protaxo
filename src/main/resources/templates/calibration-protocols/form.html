@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${editId} != null ? 'ProTaxo — Редагування протоколу' : 'ProTaxo — Новий протокол'"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='calibration')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1 th:text="${editId} != null ? 'Редагування протоколу калібрування' : 'Новий протокол калібрування'"></h1>
+                <a th:if="${editId} != null" class="btn-outline" th:href="@{/calibration-protocols/{id}/pdf(id=${editId})}" target="_blank">Друк PDF</a>
+            </div>
+
+            <form th:object="${protocol}"
+                  th:action="${editId} != null ? @{/calibration-protocols/{id}/edit(id=${editId})} : @{/calibration-protocols}"
+                  method="post" class="form-grid">
+
+                <input type="hidden" th:field="*{invoiceId}">
+
+                <div class="field">
+                    <label>Номер</label>
+                    <div th:if="${protocolNumber} != null" th:text="${protocolNumber}"></div>
+                    <div th:if="${protocolNumber} == null" class="muted">буде присвоєно автоматично</div>
+                </div>
+
+                <div class="field">
+                    <label>Дата та час</label>
+                    <div th:if="${protocolDate} != null" th:text="${#temporals.format(protocolDate, 'dd.MM.yyyy HH:mm')}"></div>
+                    <div th:if="${protocolDate} == null" class="muted">буде проставлено автоматично при збереженні</div>
+                </div>
+
+                <div class="field">
+                    <label for="internalNumber">Внутрішній номер *</label>
+                    <input type="text" id="internalNumber" th:field="*{internalNumber}" th:readonly="${editId} != null or ${protocol.invoiceId} != null">
+                    <div class="muted" th:if="${protocol.invoiceId} != null">Прив'язаний до номера наряд-заказу — не редагується окремо</div>
+                    <div class="field-error" th:if="${#fields.hasErrors('internalNumber')}" th:errors="*{internalNumber}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="stampNumber">Номер штампу</label>
+                    <input type="text" id="stampNumber" th:field="*{stampNumber}">
+                </div>
+
+                <div class="field">
+                    <label for="clientId">Контрагент *</label>
+                    <select id="clientId" th:field="*{clientId}" th:disabled="${editId} != null or ${protocol.invoiceId} != null">
+                        <option value="">— оберіть контрагента —</option>
+                        <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
+                    </select>
+                    <input type="hidden" th:if="${editId} != null or ${protocol.invoiceId} != null" name="clientId" th:value="*{clientId}">
+                    <div class="field-error" th:if="${#fields.hasErrors('clientId')}" th:errors="*{clientId}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="vehicleName">Транспортний засіб</label>
+                    <input type="text" id="vehicleName" th:field="*{vehicleName}" list="vehicleNameList" autocomplete="off"
+                           th:readonly="${editId} != null or ${protocol.invoiceId} != null">
+                    <datalist id="vehicleNameList">
+                        <option th:each="v : ${vehicleSuggestions}" th:value="${v}"></option>
+                    </datalist>
+                </div>
+
+                <div class="field field-full">
+                    <label>Наряд</label>
+                    <div th:if="${orderLabel} != null" th:text="${orderLabel}"></div>
+                    <div th:if="${orderLabel} == null" class="muted">Наряд-заказ та внутрішній номер з датою та часом — з'явиться після збереження</div>
+                </div>
+
+                <div class="field">
+                    <label for="cardNumber">Номер картки *</label>
+                    <input type="text" id="cardNumber" th:field="*{cardNumber}" placeholder="XXX123456789012" style="text-transform:uppercase">
+                    <div class="muted">3 великі латинські літери та 12 цифр</div>
+                    <div class="field-error" th:if="${#fields.hasErrors('cardNumber')}" th:errors="*{cardNumber}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="representativeName">Представник</label>
+                    <input type="text" id="representativeName" th:field="*{representativeName}" list="representativeNameList"
+                           placeholder="Прізвище І.П." autocomplete="off">
+                    <datalist id="representativeNameList">
+                        <option th:each="r : ${representativeSuggestions}" th:value="${r}"></option>
+                    </datalist>
+                </div>
+
+                <div class="field-full" style="grid-column:1/-1;margin-top:0.5rem;">
+                    <h2 style="font-size:1.05rem;margin-bottom:0.25rem;">Дані тахографа</h2>
+                </div>
+
+                <div class="field">
+                    <label for="tachographBrand">Марка</label>
+                    <input type="text" id="tachographBrand" th:field="*{tachographBrand}">
+                </div>
+
+                <div class="field">
+                    <label for="tachographModel">Модель</label>
+                    <input type="text" id="tachographModel" th:field="*{tachographModel}">
+                </div>
+
+                <div class="field">
+                    <label for="tachographType">Тип</label>
+                    <input type="text" id="tachographType" th:field="*{tachographType}">
+                </div>
+
+                <div class="field">
+                    <label for="tachographManufacturer">Виробник</label>
+                    <input type="text" id="tachographManufacturer" th:field="*{tachographManufacturer}">
+                </div>
+
+                <div class="field">
+                    <label for="previousInspectionDate">Дата попередньої перевірки</label>
+                    <input type="date" id="previousInspectionDate" th:field="*{previousInspectionDate}">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn" id="saveProtocolBtn">Зберегти</button>
+                    <button type="button" class="btn-outline" id="recordProtocolDraftBtn" th:if="${editId} == null">Записати</button>
+                    <a class="btn-outline" id="cancelProtocolBtn" th:href="@{/calibration-protocols}">Скасувати</a>
+                    <span class="muted" id="protocolDraftStatus" hidden></span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var cardNumberInput = document.getElementById('cardNumber');
+            cardNumberInput.addEventListener('input', function () {
+                var pos = cardNumberInput.selectionStart;
+                cardNumberInput.value = cardNumberInput.value.toUpperCase();
+                cardNumberInput.setSelectionRange(pos, pos);
+            });
+
+            // Draft tracking (client-side only, right-hand column — see fragments/topbar.html
+            // for window.ProtaxoProtocolDrafts and the sidebar itself). Only on the "new
+            // protocol" form; an existing protocol is already a real DB row.
+            var recordDraftBtn = document.getElementById('recordProtocolDraftBtn');
+            if (recordDraftBtn && window.ProtaxoProtocolDrafts) {
+                var draftId;
+                var draftStatus = document.getElementById('protocolDraftStatus');
+                var existingDraftId = new URLSearchParams(window.location.search).get('draft');
+
+                var fieldIds = ['internalNumber', 'stampNumber', 'clientId', 'vehicleName', 'cardNumber',
+                    'representativeName', 'tachographBrand', 'tachographModel', 'tachographType',
+                    'tachographManufacturer', 'previousInspectionDate'];
+
+                function computeDraftLabel() {
+                    var vehicle = document.getElementById('vehicleName').value.trim();
+                    var internal = document.getElementById('internalNumber').value.trim();
+                    return vehicle || internal || 'Новий протокол';
+                }
+
+                function captureSnapshot() {
+                    var snapshot = {};
+                    fieldIds.forEach(function (id) {
+                        snapshot[id] = document.getElementById(id).value;
+                    });
+                    return snapshot;
+                }
+
+                function restoreSnapshot(snapshot) {
+                    if (!snapshot) return;
+                    fieldIds.forEach(function (id) {
+                        if (snapshot[id] !== undefined) {
+                            document.getElementById(id).value = snapshot[id];
+                        }
+                    });
+                }
+
+                function markDraftDirty() {
+                    var draft = window.ProtaxoProtocolDrafts.get(draftId);
+                    if (draft && !draft.dirty) {
+                        draft.dirty = true;
+                        window.ProtaxoProtocolDrafts.upsert(draft);
+                    }
+                }
+
+                if (existingDraftId) {
+                    draftId = existingDraftId;
+                    var existingDraft = window.ProtaxoProtocolDrafts.get(draftId);
+                    if (existingDraft) {
+                        restoreSnapshot(existingDraft.snapshot);
+                    }
+                } else {
+                    draftId = 'protocol-draft-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+                    window.ProtaxoProtocolDrafts.upsert({ id: draftId, label: 'Новий протокол', dirty: true, snapshot: null });
+                }
+
+                var protocolForm = document.querySelector('form');
+                protocolForm.addEventListener('input', markDraftDirty);
+                protocolForm.addEventListener('change', markDraftDirty);
+
+                recordDraftBtn.addEventListener('click', function () {
+                    window.ProtaxoProtocolDrafts.upsert({
+                        id: draftId,
+                        label: computeDraftLabel(),
+                        dirty: false,
+                        snapshot: captureSnapshot()
+                    });
+                    draftStatus.textContent = 'Записано';
+                    draftStatus.hidden = false;
+                    setTimeout(function () { draftStatus.hidden = true; }, 2000);
+                });
+
+                document.getElementById('saveProtocolBtn').addEventListener('click', function () {
+                    window.ProtaxoProtocolDrafts.markPendingRemoval(draftId);
+                });
+                document.getElementById('cancelProtocolBtn').addEventListener('click', function () {
+                    window.ProtaxoProtocolDrafts.remove(draftId);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

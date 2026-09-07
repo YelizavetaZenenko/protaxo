@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>ProTaxo — Журнал дій</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='audit')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Журнал дій</h1>
+            </div>
+            <table class="clean-table">
+                <colgroup>
+                    <col style="width:18%">
+                    <col style="width:20%">
+                    <col style="width:14%">
+                    <col style="width:28%">
+                    <col style="width:20%">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th>Дата й час</th>
+                    <th>Користувач</th>
+                    <th>Дія</th>
+                    <th>Сутність</th>
+                    <th>ID</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="e : ${entries}">
+                    <td th:text="${#temporals.format(e.occurredAt, 'dd.MM.yyyy HH:mm:ss')}"></td>
+                    <td th:text="${e.username}"></td>
+                    <td><span class="badge" th:text="${e.action}"></span></td>
+                    <td th:text="${e.entityType}"></td>
+                    <td th:text="${e.entityId}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(entries)}">
+                    <td colspan="5">Записів ще немає</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <div class="toolbar" style="margin-top:1rem;" th:if="${totalPages} > 1">
+                <a th:if="${page} > 0" class="link-btn" th:href="@{/audit-log(page=${page - 1})}">« Новіші</a>
+                <span class="muted" th:text="'Сторінка ' + (${page} + 1) + ' з ' + ${totalPages}"></span>
+                <a th:if="${page + 1} < ${totalPages}" class="link-btn" th:href="@{/audit-log(page=${page + 1})}">Старіші »</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
