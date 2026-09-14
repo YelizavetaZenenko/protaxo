@@ -1,0 +1,79 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------------< com.example:protaxo >-------------------------
+[INFO] Building  0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:4.1.0:run (default-cli) > test-compile @ protaxo >>>
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ protaxo ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 71 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ protaxo ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.5.0:testResources (default-testResources) @ protaxo ---
+[INFO] skip non existing resourceDirectory D:\protaxo\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ protaxo ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] <<< spring-boot:4.1.0:run (default-cli) < test-compile @ protaxo <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:4.1.0:run (default-cli) @ protaxo ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.0)
+
+2026-09-09T16:44:03.334+03:00  INFO 30736 --- [protaxo] [           main] com.example.protaxo.ProtaxoApplication   : Starting ProtaxoApplication using Java 24 with PID 30736 (D:\protaxo\target\classes started by Liza in D:\protaxo)
+2026-09-09T16:44:03.337+03:00  INFO 30736 --- [protaxo] [           main] com.example.protaxo.ProtaxoApplication   : No active profile set, falling back to 1 default profile: "default"
+2026-09-09T16:44:04.358+03:00  INFO 30736 --- [protaxo] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-09T16:44:04.540+03:00  INFO 30736 --- [protaxo] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 164 ms. Found 17 JPA repository interfaces.
+2026-09-09T16:44:05.496+03:00  INFO 30736 --- [protaxo] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-09-09T16:44:05.560+03:00  INFO 30736 --- [protaxo] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-09-09T16:44:05.561+03:00  INFO 30736 --- [protaxo] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.22]
+2026-09-09T16:44:05.693+03:00  INFO 30736 --- [protaxo] [           main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 2293 ms
+2026-09-09T16:44:06.138+03:00  INFO 30736 --- [protaxo] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-09T16:44:06.302+03:00  INFO 30736 --- [protaxo] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@20b54cfe
+2026-09-09T16:44:06.304+03:00  INFO 30736 --- [protaxo] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-09-09T16:44:06.330+03:00  INFO 30736 --- [protaxo] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:5432/protaxo (PostgreSQL 16.15)
+2026-09-09T16:44:06.455+03:00  INFO 30736 --- [protaxo] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 34 migrations (execution time 00:00.065s)
+2026-09-09T16:44:06.490+03:00  INFO 30736 --- [protaxo] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 33
+2026-09-09T16:44:06.514+03:00  INFO 30736 --- [protaxo] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "34 - add audit log changes"
+2026-09-09T16:44:06.574+03:00  INFO 30736 --- [protaxo] [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 1 migration to schema "public", now at version v34 (execution time 00:00.027s)
+2026-09-09T16:44:06.711+03:00  INFO 30736 --- [protaxo] [           main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-09-09T16:44:06.802+03:00  INFO 30736 --- [protaxo] [           main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.4.1.Final
+2026-09-09T16:44:07.334+03:00  INFO 30736 --- [protaxo] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-09T16:44:07.451+03:00  INFO 30736 --- [protaxo] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://localhost:5432/protaxo]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 16.15
+	Default catalog/schema: protaxo/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-09T16:44:09.301+03:00  INFO 30736 --- [protaxo] [           main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-09T16:44:09.373+03:00  INFO 30736 --- [protaxo] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-09T16:44:09.455+03:00  INFO 30736 --- [protaxo] [           main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-09-09T16:44:11.072+03:00  INFO 30736 --- [protaxo] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-09-09T16:44:11.576+03:00  INFO 30736 --- [protaxo] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-09-09T16:44:11.584+03:00  INFO 30736 --- [protaxo] [           main] com.example.protaxo.ProtaxoApplication   : Started ProtaxoApplication in 8.989 seconds (process running for 9.473)
+2026-09-09T16:44:22.589+03:00  INFO 30736 --- [protaxo] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-09-09T16:44:22.590+03:00  INFO 30736 --- [protaxo] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-09-09T16:44:22.591+03:00  INFO 30736 --- [protaxo] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-09-09T17:12:02.459+03:00  WARN 30736 --- [protaxo] [l-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=15m56s17ms557µs300ns).
+2026-09-09T23:29:48.685+03:00  WARN 30736 --- [protaxo] [l-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=5h17m16s115ms313µs100ns).

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'ProTaxo — ' + ${contract.contractNumber}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='contracts')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1 th:text="${contract.contractNumber}"></h1>
+                <div class="actions-cell">
+                    <a class="btn-outline" th:href="@{/contracts/{id}/edit(id=${contract.id})}">Редагувати</a>
+                    <a class="btn-outline" th:href="@{/contracts}">Назад до списку</a>
+                </div>
+            </div>
+
+            <div class="view-meta">
+                <div class="field">
+                    <label>Контрагент</label>
+                    <div th:text="${clientName}"></div>
+                </div>
+                <div class="field">
+                    <label>Номер договору</label>
+                    <div th:text="${contract.contractNumber}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

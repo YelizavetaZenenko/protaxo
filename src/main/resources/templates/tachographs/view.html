@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'ProTaxo — ' + ${tachograph.manufacturer} + ' ' + ${tachograph.model}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='vehicles')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1 th:text="${tachograph.manufacturer} + ' ' + ${tachograph.model}"></h1>
+                <div class="actions-cell">
+                    <a class="btn-outline" th:href="@{/tachographs/{id}/edit(id=${tachograph.id})}">Редагувати</a>
+                    <a class="btn-outline" th:href="@{/vehicles(tab='tachographs')}">Назад до списку</a>
+                </div>
+            </div>
+
+            <div class="view-meta">
+                <div class="field">
+                    <label>Автомобіль</label>
+                    <div><a th:href="@{/vehicles/{id}(id=${vehicleId})}" th:text="${vehicleLabel}"></a></div>
+                </div>
+                <div class="field">
+                    <label>Виробник</label>
+                    <div th:text="${tachograph.manufacturer}"></div>
+                </div>
+                <div class="field">
+                    <label>Модель</label>
+                    <div th:text="${tachograph.model}"></div>
+                </div>
+                <div class="field">
+                    <label>Заводський номер</label>
+                    <div th:text="${tachograph.serialNumber}"></div>
+                </div>
+                <div class="field" th:if="${tachograph.productionDate} != null">
+                    <label>Дата випуску</label>
+                    <div th:text="${#temporals.format(tachograph.productionDate, 'dd.MM.yyyy')}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
