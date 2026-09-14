@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'ProTaxo — ' + ${catalogItem.name}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='catalog')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1 th:text="${catalogItem.name}"></h1>
+                <div class="actions-cell">
+                    <a class="btn-outline" th:href="@{/catalog-items/{id}/edit(id=${catalogItem.id})}">Редагувати</a>
+                    <a class="btn-outline" th:href="@{/catalog-items(activeType=${catalogItem.type})}">Назад до списку</a>
+                </div>
+            </div>
+
+            <div class="view-meta">
+                <div class="field">
+                    <label>Тип</label>
+                    <div th:text="${catalogItem.type.name() == 'MATERIAL'} ? 'Товар' : 'Послуга'"></div>
+                </div>
+                <div class="field">
+                    <label>Назва</label>
+                    <div th:text="${catalogItem.name}"></div>
+                </div>
+                <div class="field">
+                    <label>Базова ціна</label>
+                    <div th:text="${#numbers.formatDecimal(catalogItem.basePrice, 1, 2)}"></div>
+                </div>
+                <div class="field" th:if="${catalogItem.type.name() == 'MATERIAL'}">
+                    <label>Залишок</label>
+                    <div th:text="${catalogItem.stockQuantity != null ? #numbers.formatInteger(catalogItem.stockQuantity, 1) : '—'}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
