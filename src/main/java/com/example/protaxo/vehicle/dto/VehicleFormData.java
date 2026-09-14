@@ -16,6 +16,8 @@ public class VehicleFormData {
     @NotBlank(message = "Держномер обов'язковий")
     private String registrationNumber;
 
+    private String chassisNumber;
+
     @NotBlank(message = "Марка обов'язкова")
     private String make;
 

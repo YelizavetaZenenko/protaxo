@@ -45,14 +45,13 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="p : ${protocols}">
+                <tr th:each="p : ${protocols}" class="clickable-row" th:attr="data-href=@{/calibration-protocols/{id}(id=${p.id})}">
                     <td th:text="${p.protocolNumber}"></td>
                     <td th:text="${#temporals.format(p.protocolDate, 'dd.MM.yyyy HH:mm')}"></td>
                     <td th:text="${p.internalNumber}"></td>
                     <td th:text="${clientNames[p.clientId]}"></td>
                     <td th:text="${p.cardNumber}"></td>
                     <td class="actions-cell">
-                        <a class="link-btn" th:href="@{/calibration-protocols/{id}(id=${p.id})}">Переглянути</a>
                         <a class="link-btn" th:href="@{/calibration-protocols/{id}/edit(id=${p.id})}">Редагувати</a>
                         <form sec:authorize="hasRole('ADMIN')" th:action="@{/calibration-protocols/{id}/delete(id=${p.id})}" method="post" style="display:inline">
                             <button type="submit" class="link-btn link-btn-danger"
@@ -67,5 +66,16 @@
             </table>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.clickable-row').forEach(function (row) {
+                row.addEventListener('click', function (e) {
+                    if (e.target.closest('.actions-cell')) return;
+                    window.location.href = row.dataset.href;
+                });
+            });
+        });
+    </script>
 </body>
 </html>

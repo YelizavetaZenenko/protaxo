@@ -5,6 +5,7 @@ import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.client.entity.Client;
 import com.example.protaxo.client.repository.ClientRepository;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.driver.dto.DriverRequest;
 import com.example.protaxo.driver.dto.DriverResponse;
 import com.example.protaxo.driver.entity.Driver;
@@ -12,6 +13,7 @@ import com.example.protaxo.driver.mapper.DriverMapper;
 import com.example.protaxo.driver.repository.DriverRepository;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,10 +57,14 @@ public class DriverService {
 
     public DriverResponse update(Long id, DriverRequest request) {
         Driver driver = getOrThrow(id);
+        Map<String, String[]> changes = FieldDiff.builder()
+                .add("ПІБ", driver.getFullName(), request.fullName())
+                .add("Телефон", driver.getPhone(), request.phone())
+                .build();
         driverMapper.updateEntity(request, driver);
         driver.setClient(getClientOrThrow(request.clientId()));
         Driver saved = driverRepository.save(driver);
-        auditLogService.record(AuditAction.UPDATE, "Driver", saved.getId());
+        auditLogService.record(AuditAction.UPDATE, "Driver", saved.getId(), changes);
         return driverMapper.toResponse(saved);
     }
 

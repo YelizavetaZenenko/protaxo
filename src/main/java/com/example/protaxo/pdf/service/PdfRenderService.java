@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.util.Base64;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
@@ -58,5 +59,24 @@ public class PdfRenderService {
             throw new IllegalStateException("Font resource not found: " + fileName);
         }
         return stream;
+    }
+
+    /**
+     * openhtmltopdf is given no base URI ({@code withHtmlContent(html, null)}), so a template's
+     * {@code <img src="...">} can't resolve a relative path or classpath URL on its own — the
+     * simplest fix, given only one small logo image is embedded so far, is inlining it as a
+     * base64 data URI the caller passes into the template context, no PdfRendererBuilder resource
+     * resolver needed.
+     */
+    public String classpathImageDataUri(String resourcePath, String mimeType) {
+        try (InputStream stream = getClass().getResourceAsStream("/" + resourcePath)) {
+            if (stream == null) {
+                throw new IllegalStateException("Image resource not found: " + resourcePath);
+            }
+            byte[] bytes = stream.readAllBytes();
+            return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(bytes);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to read image resource " + resourcePath, e);
+        }
     }
 }

@@ -8,46 +8,250 @@
 <body>
     <div th:replace="~{fragments/topbar :: topbar(active='vehicles')}"></div>
 
-    <div class="container">
+    <div class="container container-wide">
         <div class="card">
             <div class="toolbar">
                 <h1>Автомобілі</h1>
-                <a class="btn" th:href="@{/vehicles/new}">+ Новий автомобіль</a>
+                <a class="btn" id="tabAddBtn" th:href="@{/vehicles/new}">+ Новий автомобіль</a>
             </div>
-            <table>
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Контрагент</th>
-                    <th>VIN</th>
-                    <th>Держномер</th>
-                    <th>Марка / Модель</th>
-                    <th>Рік</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="v : ${vehicles}">
-                    <td th:text="${v.id}"></td>
-                    <td th:text="${clientNames[v.clientId]}"></td>
-                    <td th:text="${v.vin}"></td>
-                    <td th:text="${v.registrationNumber}"></td>
-                    <td th:text="${v.make} + ' ' + ${v.model}"></td>
-                    <td th:text="${v.year}"></td>
-                    <td class="actions-cell">
-                        <a class="link-btn" th:href="@{/vehicles/{id}/edit(id=${v.id})}">Редагувати</a>
-                        <form sec:authorize="hasRole('ADMIN')" th:action="@{/vehicles/{id}/delete(id=${v.id})}" method="post" style="display:inline">
-                            <button type="submit" class="link-btn link-btn-danger"
-                                    onclick="return confirm('Видалити автомобіль?')">Видалити</button>
-                        </form>
-                    </td>
-                </tr>
-                <tr th:if="${#lists.isEmpty(vehicles)}">
-                    <td colspan="7">Автомобілів ще немає</td>
-                </tr>
-                </tbody>
-            </table>
+
+            <div class="doc-tabs">
+                <button type="button" class="doc-tab-btn active" data-tab="tabVehicles" data-add-href="/vehicles/new" data-add-label="+ Новий автомобіль">Автомобілі</button>
+                <button type="button" class="doc-tab-btn" data-tab="tabTachographs" data-add-href="/tachographs/new" data-add-label="+ Новий тахограф">Тахографи</button>
+            </div>
+
+            <div class="doc-tab-panel doc-tab-panel-block" id="tabVehicles">
+                <table class="clean-table clean-table--fixed">
+                    <colgroup>
+                        <col style="width:6%">
+                        <col style="width:14.5%">
+                        <col style="width:13%">
+                        <col style="width:10%">
+                        <col style="width:12.5%">
+                        <col style="width:9.5%">
+                        <col style="width:10%">
+                        <col style="width:8.5%">
+                        <col style="width:16%">
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Контрагент</th>
+                        <th>VIN</th>
+                        <th>Номер кузова</th>
+                        <th>Держномер</th>
+                        <th>Марка</th>
+                        <th>Модель</th>
+                        <th>Рік</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="v : ${vehicles}" class="clickable-row" th:attr="data-href=@{/vehicles/{id}(id=${v.id})}"
+                        th:with="ch=${vehicleChanges[v.id]}">
+                        <td th:text="${v.id}"></td>
+                        <td th:text="${clientNames[v.clientId]}"></td>
+                        <td>
+                            <span class="cell-value-badged">
+                                <span class="cell-value-truncate" th:text="${v.vin}" th:title="${v.vin}"></span>
+                                <span class="change-badge" th:if="${ch != null and ch.containsKey('VIN')}"
+                                      th:title="'Було: ' + ${ch['VIN'][0]} + ' → Стало: ' + ${ch['VIN'][1]}"></span>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="cell-value-badged">
+                                <span class="cell-value-truncate" th:text="${v.chassisNumber}" th:title="${v.chassisNumber}"></span>
+                                <span class="change-badge" th:if="${ch != null and ch.containsKey('Номер кузова')}"
+                                      th:title="'Було: ' + ${ch['Номер кузова'][0]} + ' → Стало: ' + ${ch['Номер кузова'][1]}"></span>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="cell-value-badged">
+                                <span th:text="${v.registrationNumber}"></span>
+                                <span class="change-badge" th:if="${ch != null and ch.containsKey('Держномер')}"
+                                      th:title="'Було: ' + ${ch['Держномер'][0]} + ' → Стало: ' + ${ch['Держномер'][1]}"></span>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="cell-value-badged">
+                                <span th:text="${v.make}"></span>
+                                <span class="change-badge" th:if="${ch != null and ch.containsKey('Марка')}"
+                                      th:title="'Було: ' + ${ch['Марка'][0]} + ' → Стало: ' + ${ch['Марка'][1]}"></span>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="cell-value-badged">
+                                <span th:text="${v.model}"></span>
+                                <span class="change-badge" th:if="${ch != null and ch.containsKey('Модель')}"
+                                      th:title="'Було: ' + ${ch['Модель'][0]} + ' → Стало: ' + ${ch['Модель'][1]}"></span>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="cell-value-badged">
+                                <span th:text="${v.year}"></span>
+                                <span class="change-badge" th:if="${ch != null and ch.containsKey('Рік випуску')}"
+                                      th:title="'Було: ' + ${ch['Рік випуску'][0]} + ' → Стало: ' + ${ch['Рік випуску'][1]}"></span>
+                            </span>
+                        </td>
+                        <td class="actions-cell">
+                            <a class="link-btn" th:href="@{/vehicles/{id}/edit(id=${v.id})}">Редагувати</a>
+                            <form sec:authorize="hasRole('ADMIN')" th:action="@{/vehicles/{id}/delete(id=${v.id})}" method="post"
+                                  class="delete-vehicle-form" style="display:inline">
+                                <button type="submit" class="link-btn link-btn-danger">Видалити</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(vehicles)}">
+                        <td colspan="9">Автомобілів ще немає</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="doc-tab-panel doc-tab-panel-block" id="tabTachographs" hidden>
+                <table class="clean-table clean-table--fixed">
+                    <colgroup>
+                        <col style="width:7%">
+                        <col style="width:17%">
+                        <col style="width:13%">
+                        <col style="width:11%">
+                        <col style="width:15%">
+                        <col style="width:13%">
+                        <col style="width:24%">
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Автомобіль</th>
+                        <th>Виробник</th>
+                        <th>Модель</th>
+                        <th>Заводський номер</th>
+                        <th>Дата випуску</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="t : ${tachographs}" class="clickable-row" th:attr="data-href=@{/tachographs/{id}(id=${t.id})}"
+                        th:with="ch=${tachographChanges[t.id]}">
+                        <td th:text="${t.id}"></td>
+                        <td th:text="${vehicleLabels[t.vehicleId]}"></td>
+                        <td>
+                            <span class="cell-value-badged">
+                                <span th:text="${t.manufacturer}"></span>
+                                <span class="change-badge" th:if="${ch != null and ch.containsKey('Виробник')}"
+                                      th:title="'Було: ' + ${ch['Виробник'][0]} + ' → Стало: ' + ${ch['Виробник'][1]}"></span>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="cell-value-badged">
+                                <span th:text="${t.model}"></span>
+                                <span class="change-badge" th:if="${ch != null and ch.containsKey('Модель')}"
+                                      th:title="'Було: ' + ${ch['Модель'][0]} + ' → Стало: ' + ${ch['Модель'][1]}"></span>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="cell-value-badged">
+                                <span th:text="${t.serialNumber}"></span>
+                                <span class="change-badge" th:if="${ch != null and ch.containsKey('Заводський номер')}"
+                                      th:title="'Було: ' + ${ch['Заводський номер'][0]} + ' → Стало: ' + ${ch['Заводський номер'][1]}"></span>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="cell-value-badged">
+                                <span th:text="${t.productionDate}"></span>
+                                <span class="change-badge" th:if="${ch != null and ch.containsKey('Дата випуску')}"
+                                      th:title="'Було: ' + ${ch['Дата випуску'][0]} + ' → Стало: ' + ${ch['Дата випуску'][1]}"></span>
+                            </span>
+                        </td>
+                        <td class="actions-cell">
+                            <a class="link-btn" th:href="@{/tachographs/{id}/edit(id=${t.id})}">Редагувати</a>
+                            <form sec:authorize="hasRole('ADMIN')" th:action="@{/tachographs/{id}/delete(id=${t.id})}" method="post" style="display:inline">
+                                <button type="submit" class="link-btn link-btn-danger"
+                                        onclick="return confirm('Видалити тахограф?')">Видалити</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(tachographs)}">
+                        <td colspan="7">Тахографів ще немає — кожен тахограф прив'язується до конкретного автомобіля</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+
+    <div class="modal-overlay" id="deleteVehicleModalOverlay" hidden>
+        <div class="modal">
+            <h2>Видалити автомобіль?</h2>
+            <p>Цю дію не можна скасувати.</p>
+            <div class="form-actions">
+                <button type="button" class="btn-danger" id="confirmDeleteVehicleBtn">Так, видалити</button>
+                <button type="button" class="btn-outline" id="cancelDeleteVehicleBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var overlay = document.getElementById('deleteVehicleModalOverlay');
+            var confirmBtn = document.getElementById('confirmDeleteVehicleBtn');
+            var cancelBtn = document.getElementById('cancelDeleteVehicleBtn');
+            var pendingForm = null;
+
+            function closeModal() {
+                overlay.hidden = true;
+                pendingForm = null;
+            }
+
+            document.querySelectorAll('.delete-vehicle-form').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    pendingForm = form;
+                    overlay.hidden = false;
+                });
+            });
+
+            confirmBtn.addEventListener('click', function () {
+                if (pendingForm) pendingForm.submit();
+            });
+
+            cancelBtn.addEventListener('click', closeModal);
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) closeModal();
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var tabButtons = document.querySelectorAll('.doc-tab-btn');
+            var tabPanels = document.querySelectorAll('.doc-tab-panel-block');
+            var addBtn = document.getElementById('tabAddBtn');
+
+            function activate(btn) {
+                tabButtons.forEach(function (b) { b.classList.remove('active'); });
+                tabPanels.forEach(function (p) { p.hidden = true; });
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).hidden = false;
+                addBtn.setAttribute('href', btn.dataset.addHref);
+                addBtn.textContent = btn.dataset.addLabel;
+            }
+
+            tabButtons.forEach(function (btn) {
+                btn.addEventListener('click', function () { activate(btn); });
+            });
+
+            if (new URLSearchParams(window.location.search).get('tab') === 'tachographs') {
+                activate(document.querySelector('.doc-tab-btn[data-tab="tabTachographs"]'));
+            }
+
+            document.querySelectorAll('.clickable-row').forEach(function (row) {
+                row.addEventListener('click', function (e) {
+                    if (e.target.closest('.actions-cell')) return;
+                    window.location.href = row.dataset.href;
+                });
+            });
+        });
+    </script>
 </body>
 </html>

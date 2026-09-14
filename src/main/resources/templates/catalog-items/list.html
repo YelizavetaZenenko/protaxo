@@ -20,6 +20,21 @@
                 <a class="doc-tab-btn" th:classappend="${activeType.name() == 'SERVICE'} ? 'active'" th:href="@{/catalog-items(activeType='SERVICE')}">Послуги</a>
             </div>
 
+            <form th:action="@{/catalog-items}" method="get" class="filter-bar">
+                <input type="hidden" name="activeType" th:value="${activeType}">
+                <div class="field">
+                    <label for="filterName">Назва</label>
+                    <input type="text" id="filterName" name="filterName" th:value="${filterName}" placeholder="Пошук за назвою">
+                </div>
+                <div class="field filter-actions-field">
+                    <label>&nbsp;</label>
+                    <div class="filter-actions">
+                        <button type="submit" class="btn-outline">Фільтрувати</button>
+                        <a class="link-btn" th:if="${filterName != null}" th:href="@{/catalog-items(activeType=${activeType})}">Скинути фільтр</a>
+                    </div>
+                </div>
+            </form>
+
             <table class="clean-table">
                 <colgroup>
                     <col style="width:8%">
@@ -38,11 +53,11 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="ci : ${catalogItems}">
+                <tr th:each="ci : ${catalogItems}" class="clickable-row" th:attr="data-href=@{/catalog-items/{id}(id=${ci.id})}">
                     <td th:text="${ci.id}"></td>
                     <td th:text="${ci.name}"></td>
                     <td th:text="${#numbers.formatDecimal(ci.basePrice, 1, 2)}"></td>
-                    <td th:text="${ci.stockQuantity != null ? #numbers.formatDecimal(ci.stockQuantity, 1, 3) : '—'}"></td>
+                    <td th:text="${ci.stockQuantity != null ? #numbers.formatInteger(ci.stockQuantity, 1) : '—'}"></td>
                     <td class="actions-cell">
                         <a class="link-btn" th:href="@{/catalog-items/{id}/edit(id=${ci.id})}">Редагувати</a>
                         <form sec:authorize="hasRole('ADMIN')" th:action="@{/catalog-items/{id}/delete(id=${ci.id})}" method="post" style="display:inline">
@@ -58,5 +73,16 @@
             </table>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.clickable-row').forEach(function (row) {
+                row.addEventListener('click', function (e) {
+                    if (e.target.closest('.actions-cell')) return;
+                    window.location.href = row.dataset.href;
+                });
+            });
+        });
+    </script>
 </body>
 </html>

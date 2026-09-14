@@ -20,22 +20,23 @@
                     <label for="name">Назва *</label>
                     <input type="text" id="name" th:field="*{name}">
                     <div class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
-                    <div class="field-error" id="nameClientError" hidden>Спочатку вкажіть назву контрагента.</div>
                 </div>
 
                 <div class="field field-full">
-                    <label for="fullName">Повна назва</label>
-                    <input type="text" id="fullName" th:field="*{fullName}">
+                    <label for="fullName">Повна назва *</label>
+                    <input type="text" id="fullName" th:field="*{fullName}" required>
+                    <div class="field-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
                 </div>
 
                 <div class="field">
-                    <label for="edrpou">Код ЄДРПОУ</label>
-                    <input type="text" id="edrpou" th:field="*{edrpou}">
+                    <label for="edrpou">Код ЄДРПОУ *</label>
+                    <input type="text" id="edrpou" th:field="*{edrpou}" required>
+                    <div class="field-error" th:if="${#fields.hasErrors('edrpou')}" th:errors="*{edrpou}"></div>
                 </div>
 
                 <div class="field">
-                    <label for="code">Код</label>
-                    <input type="text" id="code" th:field="*{code}" maxlength="9" inputmode="numeric" placeholder="123456789">
+                    <label for="code">Код *</label>
+                    <input type="text" id="code" th:field="*{code}" maxlength="9" inputmode="numeric" placeholder="123456789" required>
                     <div class="field-error" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></div>
                 </div>
 
@@ -44,28 +45,33 @@
                 </div>
 
                 <div class="field">
-                    <label for="lastName">Прізвище</label>
-                    <input type="text" id="lastName" th:field="*{lastName}">
+                    <label for="lastName">Прізвище *</label>
+                    <input type="text" id="lastName" th:field="*{lastName}" required>
+                    <div class="field-error" th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}"></div>
                 </div>
 
                 <div class="field">
-                    <label for="firstName">Ім'я</label>
-                    <input type="text" id="firstName" th:field="*{firstName}">
+                    <label for="firstName">Ім'я *</label>
+                    <input type="text" id="firstName" th:field="*{firstName}" required>
+                    <div class="field-error" th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}"></div>
                 </div>
 
                 <div class="field">
-                    <label for="middleName">По батькові</label>
-                    <input type="text" id="middleName" th:field="*{middleName}">
+                    <label for="middleName">По батькові *</label>
+                    <input type="text" id="middleName" th:field="*{middleName}" required>
+                    <div class="field-error" th:if="${#fields.hasErrors('middleName')}" th:errors="*{middleName}"></div>
                 </div>
 
                 <div class="field">
-                    <label for="contactPersonPhone">Телефон</label>
-                    <input type="tel" id="contactPersonPhone" th:field="*{contactPersonPhone}" placeholder="+380XXXXXXXXX">
+                    <label for="contactPersonPhone">Телефон *</label>
+                    <input type="tel" id="contactPersonPhone" th:field="*{contactPersonPhone}"
+                           placeholder="+38(0XX)-XXX-XX-XX" maxlength="19" inputmode="tel" required>
+                    <div class="field-error" th:if="${#fields.hasErrors('contactPersonPhone')}" th:errors="*{contactPersonPhone}"></div>
                 </div>
 
                 <div class="field">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" th:field="*{email}">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" th:field="*{email}" required>
                     <div class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
                 </div>
 
@@ -98,7 +104,11 @@
                     <strong>Водії</strong>
                 </div>
 
-                <div class="field field-full">
+                <div class="field field-full" th:if="${editId} == null">
+                    <div class="muted">Спочатку збережіть контрагента.</div>
+                </div>
+
+                <div class="field field-full" th:if="${editId} != null">
                     <table class="clean-table" id="driversTable">
                         <colgroup>
                             <col style="width:40%">
@@ -131,7 +141,11 @@
                     <strong>Автомобілі</strong>
                 </div>
 
-                <div class="field field-full">
+                <div class="field field-full" th:if="${editId} == null">
+                    <div class="muted">Спочатку збережіть контрагента.</div>
+                </div>
+
+                <div class="field field-full" th:if="${editId} != null">
                     <table class="clean-table">
                         <thead>
                         <tr>
@@ -184,7 +198,7 @@
             </div>
             <div class="field field-full">
                 <label for="employeePhone">Телефон</label>
-                <input type="tel" id="employeePhone" placeholder="+380XXXXXXXXX">
+                <input type="tel" id="employeePhone" placeholder="+38(0XX)-XXX-XX-XX" maxlength="19">
             </div>
             <div class="field field-full">
                 <label for="employeePosition">Посада</label>
@@ -218,7 +232,7 @@
             </div>
             <div class="field field-full">
                 <label for="driverPhone">Телефон</label>
-                <input type="tel" id="driverPhone" placeholder="+380XXXXXXXXX">
+                <input type="tel" id="driverPhone" placeholder="+38(0XX)-XXX-XX-XX" maxlength="19">
             </div>
             <div class="form-actions">
                 <button type="button" class="btn" id="saveDriverBtn">Зберегти</button>
@@ -233,6 +247,10 @@
             codeInput.addEventListener('input', function () {
                 codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 9);
             });
+
+            ProtaxoPhone.mask(document.getElementById('contactPersonPhone'));
+            ProtaxoPhone.mask(document.getElementById('employeePhone'));
+            ProtaxoPhone.mask(document.getElementById('driverPhone'));
         });
     </script>
 
@@ -240,11 +258,6 @@
         var editClientId = /*[[${editId}]]*/ null;
     </script>
     <script>
-        function fieldValueOrNull(id) {
-            var el = document.getElementById(id);
-            return el && el.value ? el.value : null;
-        }
-
         /** Reusable styled replacement for window.confirm() — see #confirmModalOverlay. */
         function showConfirm(message, onConfirm) {
             var overlay = document.getElementById('confirmModalOverlay');
@@ -262,95 +275,6 @@
             function onNo() { cleanup(); }
             yesBtn.addEventListener('click', onYes);
             noBtn.addEventListener('click', onNo);
-        }
-
-        var SYNC_FIELD_IDS = ['name', 'edrpou', 'fullName', 'code', 'lastName', 'firstName', 'middleName', 'contactPersonPhone', 'email'];
-        var autoSaved = false;
-
-        function collectSyncableFields() {
-            var fields = {};
-            SYNC_FIELD_IDS.forEach(function (id) { fields[id] = fieldValueOrNull(id); });
-            return fields;
-        }
-
-        /**
-         * Keeps the auto-saved draft (see ensureClientSaved below) honest: without this, editing
-         * a field after the silent auto-save — most importantly clearing "Назва" back out — would
-         * leave the database record holding the old, since-deleted text with no way to tell from
-         * the screen. Only wired up after a real auto-save happens (see enableAutoSync), never for
-         * a normal edit-page visit — those still work the usual way, nothing persists early.
-         */
-        function syncClient() {
-            if (!editClientId || !autoSaved) return;
-            var nameError = document.getElementById('nameClientError');
-            var name = fieldValueOrNull('name');
-            if (!name) {
-                nameError.textContent = 'Без назви зміни не буде збережено — контрагент лишиться з попередньою назвою.';
-                nameError.hidden = false;
-                return;
-            }
-            nameError.hidden = true;
-            fetch('/api/clients/' + editClientId, {
-                method: 'PUT',
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(collectSyncableFields())
-            });
-        }
-
-        function enableAutoSync() {
-            SYNC_FIELD_IDS.forEach(function (id) {
-                var el = document.getElementById(id);
-                if (el) el.addEventListener('blur', syncClient);
-            });
-        }
-
-        /**
-         * "Водії"/"Автомобілі" need a saved client id. On the create form there isn't one yet,
-         * so the first "+ Додати..." click silently creates the client from whatever's already
-         * filled in (Назва is the only hard requirement), then continues as if we'd always been
-         * editing — including retargeting the main form's submit so "Зберегти" updates that same
-         * record instead of creating a duplicate, and turning on syncClient() above so further
-         * edits to Назва etc. don't go stale.
-         */
-        function ensureClientSaved(callback) {
-            if (editClientId) {
-                callback(editClientId);
-                return;
-            }
-            var nameInput = document.getElementById('name');
-            var nameError = document.getElementById('nameClientError');
-            var name = fieldValueOrNull('name');
-            if (!name) {
-                nameError.textContent = 'Спочатку вкажіть назву контрагента.';
-                nameError.hidden = false;
-                nameInput.focus();
-                return;
-            }
-            nameError.hidden = true;
-            fetch('/api/clients', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(collectSyncableFields())
-            }).then(function (resp) {
-                if (!resp.ok) {
-                    return resp.json().then(function (b) { throw new Error(b.message || 'Не вдалося зберегти контрагента'); });
-                }
-                return resp.json();
-            }).then(function (saved) {
-                editClientId = saved.id;
-                autoSaved = true;
-                var form = document.querySelector('form.form-grid');
-                form.action = '/clients/' + saved.id + '/edit';
-                var h1 = document.querySelector('h1');
-                if (h1) h1.textContent = 'Редагування контрагента';
-                enableAutoSync();
-                callback(saved.id);
-            }).catch(function (err) {
-                nameError.textContent = err.message;
-                nameError.hidden = false;
-            });
         }
     </script>
     <script>
@@ -458,6 +382,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            if (!editClientId) return;
+
             var driversBody = document.getElementById('driversBody');
             var driversEmpty = document.getElementById('driversEmpty');
             var addDriverBtn = document.getElementById('addDriverBtn');
@@ -519,16 +445,12 @@
             }
 
             addDriverBtn.addEventListener('click', function () {
-                ensureClientSaved(function () {
-                    openModal('Новий водій', null, '', '');
-                });
+                openModal('Новий водій', null, '', '');
             });
 
             var addVehicleBtn = document.getElementById('addVehicleBtn');
             addVehicleBtn.addEventListener('click', function () {
-                ensureClientSaved(function (id) {
-                    window.location.href = '/vehicles/new?clientId=' + id;
-                });
+                window.location.href = '/vehicles/new?clientId=' + editClientId;
             });
 
             driversBody.addEventListener('click', function (e) {
@@ -556,7 +478,7 @@
             document.getElementById('saveDriverBtn').addEventListener('click', function () {
                 var fullName = driverFullName.value.trim();
                 var phone = driverPhone.value.trim();
-                var phonePattern = /^\+380\d{9}$/;
+                var phonePattern = ProtaxoPhone.PATTERN;
                 if (!fullName) {
                     driverModalError.textContent = "ПІБ обов'язкове";
                     driverModalError.hidden = false;
@@ -568,7 +490,7 @@
                     return;
                 }
                 if (!phonePattern.test(phone)) {
-                    driverModalError.textContent = 'Телефон має бути у форматі +380XXXXXXXXX';
+                    driverModalError.textContent = 'Телефон має бути у форматі +38(0XX)-XXX-XX-XX';
                     driverModalError.hidden = false;
                     return;
                 }

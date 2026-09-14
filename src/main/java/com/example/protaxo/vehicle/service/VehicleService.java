@@ -5,6 +5,7 @@ import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.client.entity.Client;
 import com.example.protaxo.client.repository.ClientRepository;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.vehicle.dto.VehicleRequest;
 import com.example.protaxo.vehicle.dto.VehicleResponse;
 import com.example.protaxo.vehicle.entity.Vehicle;
@@ -12,6 +13,7 @@ import com.example.protaxo.vehicle.mapper.VehicleMapper;
 import com.example.protaxo.vehicle.repository.VehicleRepository;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,10 +57,18 @@ public class VehicleService {
 
     public VehicleResponse update(Long id, VehicleRequest request) {
         Vehicle vehicle = getOrThrow(id);
+        Map<String, String[]> changes = FieldDiff.builder()
+                .add("VIN", vehicle.getVin(), request.vin())
+                .add("Номер кузова", vehicle.getChassisNumber(), request.chassisNumber())
+                .add("Держномер", vehicle.getRegistrationNumber(), request.registrationNumber())
+                .add("Марка", vehicle.getMake(), request.make())
+                .add("Модель", vehicle.getModel(), request.model())
+                .add("Рік випуску", vehicle.getYear(), request.year())
+                .build();
         vehicleMapper.updateEntity(request, vehicle);
         vehicle.setClient(getClientOrThrow(request.clientId()));
         Vehicle saved = vehicleRepository.save(vehicle);
-        auditLogService.record(AuditAction.UPDATE, "Vehicle", saved.getId());
+        auditLogService.record(AuditAction.UPDATE, "Vehicle", saved.getId(), changes);
         return vehicleMapper.toResponse(saved);
     }
 

@@ -4,8 +4,6 @@ import com.example.protaxo.client.entity.Client;
 import com.example.protaxo.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -33,8 +31,4 @@ public class Contract extends BaseEntity {
 
     @Column(name = "contract_number", nullable = false, unique = true)
     private String contractNumber;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ContractStatus status;
 }

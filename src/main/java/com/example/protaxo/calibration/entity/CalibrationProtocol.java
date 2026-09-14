@@ -65,6 +65,81 @@ public class CalibrationProtocol extends BaseEntity {
     @Column(name = "previous_inspection_date")
     private LocalDate previousInspectionDate;
 
+    @Column(name = "vehicle_vrn")
+    private String vehicleVrn;
+
+    @Column(name = "vehicle_vin")
+    private String vehicleVin;
+
+    @Column(name = "tachograph_serial_number")
+    private String tachographSerialNumber;
+
+    @Column(name = "tachograph_manufacture_year")
+    private String tachographManufactureYear;
+
+    @Column(name = "inspection_reason")
+    private String inspectionReason;
+
+    @Column(name = "check_method")
+    private String checkMethod;
+
+    @Column(name = "mileage_before")
+    private String mileageBefore;
+
+    @Column(name = "mileage_after")
+    private String mileageAfter;
+
+    @Column(name = "tire_size")
+    private String tireSize;
+
+    @Column(name = "tire_pressure")
+    private String tirePressure;
+
+    @Column(name = "tire_circumference_l")
+    private String tireCircumferenceL;
+
+    @Column(name = "coefficient_w")
+    private String coefficientW;
+
+    @Column(name = "constant_k")
+    private String constantK;
+
+    @Column(name = "path_deviation_after_install")
+    private String pathDeviationAfterInstall;
+
+    @Column(name = "path_deviation_in_service")
+    private String pathDeviationInService;
+
+    @Column(name = "speed_deviation_after_install")
+    private String speedDeviationAfterInstall;
+
+    @Column(name = "speed_deviation_in_service")
+    private String speedDeviationInService;
+
+    @Column(name = "time_deviation_after_install")
+    private String timeDeviationAfterInstall;
+
+    @Column(name = "time_deviation_in_service")
+    private String timeDeviationInService;
+
+    @Column(name = "speed_limiter_value")
+    private String speedLimiterValue;
+
+    @Column(name = "cover_opening_registered")
+    private String coverOpeningRegistered;
+
+    @Column(name = "power_cutoff_registered")
+    private String powerCutoffRegistered;
+
+    @Column(name = "pulse_sensor_interruption_registered")
+    private String pulseSensorInterruptionRegistered;
+
+    @Column(name = "executor_position")
+    private String executorPosition;
+
+    @Column(name = "executor_name")
+    private String executorName;
+
     /**
      * The Наряд-заказ this protocol was created from, if any — set once at creation and never
      * changed afterward (see [[Наряд-заказ]] docs: one invoice has at most one linked protocol,

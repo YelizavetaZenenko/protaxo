@@ -7,7 +7,6 @@ import com.example.protaxo.tachograph.service.TachographService;
 import com.example.protaxo.vehicle.dto.VehicleResponse;
 import com.example.protaxo.vehicle.service.VehicleService;
 import jakarta.validation.Valid;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,11 +26,20 @@ public class TachographPageController {
     private final VehicleService vehicleService;
 
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("tachographs", tachographService.findAll());
-        model.addAttribute("vehicleLabels", vehicleService.findAll().stream()
-                .collect(Collectors.toMap(VehicleResponse::id, v -> v.vin() + " (" + v.registrationNumber() + ")", (a, b) -> a)));
-        return "tachographs/list";
+    public String list() {
+        // Standalone list retired — tachographs now live as a tab on /vehicles, since each one
+        // is tied to a single specific car (see [[Автомобілі]]).
+        return "redirect:/vehicles?tab=tachographs";
+    }
+
+    @GetMapping("/{id}")
+    public String view(@PathVariable Long id, Model model) {
+        TachographResponse tachograph = tachographService.findById(id);
+        VehicleResponse vehicle = vehicleService.findById(tachograph.vehicleId());
+        model.addAttribute("tachograph", tachograph);
+        model.addAttribute("vehicleLabel", vehicle.vin() + " (" + vehicle.registrationNumber() + ")");
+        model.addAttribute("vehicleId", vehicle.id());
+        return "tachographs/view";
     }
 
     @GetMapping("/new")
@@ -48,7 +56,7 @@ public class TachographPageController {
             return "tachographs/form";
         }
         tachographService.create(toRequest(form));
-        return "redirect:/tachographs";
+        return "redirect:/vehicles?tab=tachographs";
     }
 
     @GetMapping("/{id}/edit")
@@ -69,13 +77,13 @@ public class TachographPageController {
             return "tachographs/form";
         }
         tachographService.update(id, toRequest(form));
-        return "redirect:/tachographs";
+        return "redirect:/vehicles?tab=tachographs";
     }
 
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id) {
         tachographService.softDelete(id);
-        return "redirect:/tachographs";
+        return "redirect:/vehicles?tab=tachographs";
     }
 
     private void addReferenceData(Model model) {
@@ -84,7 +92,7 @@ public class TachographPageController {
 
     private TachographRequest toRequest(TachographFormData form) {
         return new TachographRequest(form.getVehicleId(), form.getManufacturer(), form.getModel(),
-                form.getFirmwareVersion(), form.getSerialNumber(), form.getProductionDate());
+                form.getSerialNumber(), form.getProductionDate());
     }
 
     private TachographFormData toFormData(TachographResponse response) {
@@ -92,7 +100,6 @@ public class TachographPageController {
         form.setVehicleId(response.vehicleId());
         form.setManufacturer(response.manufacturer());
         form.setModel(response.model());
-        form.setFirmwareVersion(response.firmwareVersion());
         form.setSerialNumber(response.serialNumber());
         form.setProductionDate(response.productionDate());
         return form;

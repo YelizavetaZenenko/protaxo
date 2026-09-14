@@ -3,6 +3,7 @@ package com.example.protaxo.tachograph.service;
 import com.example.protaxo.audit.entity.AuditAction;
 import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.tachograph.dto.TachographRequest;
 import com.example.protaxo.tachograph.dto.TachographResponse;
 import com.example.protaxo.tachograph.entity.Tachograph;
@@ -12,6 +13,7 @@ import com.example.protaxo.vehicle.entity.Vehicle;
 import com.example.protaxo.vehicle.repository.VehicleRepository;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +40,13 @@ public class TachographService {
         return tachographMapper.toResponse(getOrThrow(id));
     }
 
+    @Transactional(readOnly = true)
+    public List<TachographResponse> findByVehicleId(Long vehicleId) {
+        return tachographRepository.findByVehicleId(vehicleId).stream()
+                .map(tachographMapper::toResponse)
+                .toList();
+    }
+
     public TachographResponse create(TachographRequest request) {
         Tachograph tachograph = tachographMapper.toEntity(request);
         tachograph.setVehicle(getVehicleOrThrow(request.vehicleId()));
@@ -48,10 +57,16 @@ public class TachographService {
 
     public TachographResponse update(Long id, TachographRequest request) {
         Tachograph tachograph = getOrThrow(id);
+        Map<String, String[]> changes = FieldDiff.builder()
+                .add("Виробник", tachograph.getManufacturer(), request.manufacturer())
+                .add("Модель", tachograph.getModel(), request.model())
+                .add("Заводський номер", tachograph.getSerialNumber(), request.serialNumber())
+                .add("Дата випуску", tachograph.getProductionDate(), request.productionDate())
+                .build();
         tachographMapper.updateEntity(request, tachograph);
         tachograph.setVehicle(getVehicleOrThrow(request.vehicleId()));
         Tachograph saved = tachographRepository.save(tachograph);
-        auditLogService.record(AuditAction.UPDATE, "Tachograph", saved.getId());
+        auditLogService.record(AuditAction.UPDATE, "Tachograph", saved.getId(), changes);
         return tachographMapper.toResponse(saved);
     }
 

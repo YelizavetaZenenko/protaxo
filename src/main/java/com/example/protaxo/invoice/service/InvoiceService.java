@@ -7,6 +7,7 @@ import com.example.protaxo.catalog.repository.CatalogItemRepository;
 import com.example.protaxo.client.entity.Client;
 import com.example.protaxo.client.repository.ClientRepository;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.invoice.dto.InvoiceItemRequest;
 import com.example.protaxo.invoice.dto.InvoiceRequest;
 import com.example.protaxo.invoice.dto.InvoiceResponse;
@@ -78,13 +79,20 @@ public class InvoiceService {
 
     public InvoiceResponse update(Long id, InvoiceRequest request) {
         Invoice invoice = getOrThrow(id);
+        Map<String, String[]> changes = FieldDiff.builder()
+                .add("Тип оплати", invoice.getPaymentType(), request.paymentType())
+                .add("Автомобіль", invoice.getVehicleName(), request.vehicleName())
+                .add("Водій", invoice.getDriverName(), request.driverName())
+                .add("Відповідальний за ремонт", invoice.getRepairResponsibleName(), request.repairResponsibleName())
+                .add("Керівник ремонту", invoice.getRepairSupervisorName(), request.repairSupervisorName())
+                .build();
         invoice.setPaymentType(request.paymentType());
         invoice.setClient(getClientOrThrow(request.clientId()));
         applyNaryadFields(invoice, request);
         invoice.getItems().clear();
         applyItems(invoice, request.items());
         Invoice saved = invoiceRepository.save(invoice);
-        auditLogService.record(AuditAction.UPDATE, "Invoice", saved.getId());
+        auditLogService.record(AuditAction.UPDATE, "Invoice", saved.getId(), changes);
         return invoiceMapper.toResponse(saved);
     }
 

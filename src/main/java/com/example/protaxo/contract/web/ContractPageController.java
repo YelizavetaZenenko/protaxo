@@ -4,7 +4,6 @@ import com.example.protaxo.client.service.ClientService;
 import com.example.protaxo.contract.dto.ContractFormData;
 import com.example.protaxo.contract.dto.ContractRequest;
 import com.example.protaxo.contract.dto.ContractResponse;
-import com.example.protaxo.contract.entity.ContractStatus;
 import com.example.protaxo.contract.service.ContractService;
 import jakarta.validation.Valid;
 import java.util.stream.Collectors;
@@ -34,9 +33,18 @@ public class ContractPageController {
         return "contracts/list";
     }
 
+    @GetMapping("/{id}")
+    public String view(@PathVariable Long id, Model model) {
+        ContractResponse contract = contractService.findById(id);
+        model.addAttribute("contract", contract);
+        model.addAttribute("clientName", clientService.findById(contract.clientId()).name());
+        return "contracts/view";
+    }
+
     @GetMapping("/new")
     public String createForm(Model model) {
         model.addAttribute("contract", new ContractFormData());
+        model.addAttribute("contractNumber", null);
         addReferenceData(model);
         return "contracts/form";
     }
@@ -44,6 +52,7 @@ public class ContractPageController {
     @PostMapping
     public String create(@Valid @ModelAttribute("contract") ContractFormData form, BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
+            model.addAttribute("contractNumber", null);
             addReferenceData(model);
             return "contracts/form";
         }
@@ -55,6 +64,7 @@ public class ContractPageController {
     public String editForm(@PathVariable Long id, Model model) {
         ContractResponse response = contractService.findById(id);
         model.addAttribute("contract", toFormData(response));
+        model.addAttribute("contractNumber", response.contractNumber());
         model.addAttribute("editId", id);
         addReferenceData(model);
         return "contracts/form";
@@ -65,6 +75,7 @@ public class ContractPageController {
                           BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("editId", id);
+            model.addAttribute("contractNumber", contractService.findById(id).contractNumber());
             addReferenceData(model);
             return "contracts/form";
         }
@@ -80,18 +91,15 @@ public class ContractPageController {
 
     private void addReferenceData(Model model) {
         model.addAttribute("clients", clientService.findAll());
-        model.addAttribute("statuses", ContractStatus.values());
     }
 
     private ContractRequest toRequest(ContractFormData form) {
-        return new ContractRequest(form.getClientId(), form.getContractNumber(), form.getStatus());
+        return new ContractRequest(form.getClientId());
     }
 
     private ContractFormData toFormData(ContractResponse response) {
         ContractFormData form = new ContractFormData();
         form.setClientId(response.clientId());
-        form.setContractNumber(response.contractNumber());
-        form.setStatus(response.status());
         return form;
     }
 }

@@ -158,6 +158,13 @@ a {
     padding: 0 1.5rem;
 }
 
+/* Wider variant for pages whose table has too many columns to fit the
+   default 960px comfortably (e.g. vehicles: ID, contractor, VIN, chassis
+   number, plate, make/model, year, actions). */
+.container-wide {
+    max-width: 1280px;
+}
+
 .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -170,17 +177,64 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg);
+    padding: 2rem 1rem;
+    background:
+        radial-gradient(circle at 15% 15%, rgba(47, 111, 79, 0.16), transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(47, 111, 79, 0.12), transparent 45%),
+        var(--bg);
 }
 
 .auth-card {
     width: 100%;
-    max-width: 360px;
+    max-width: 380px;
+    padding: 2.5rem 2.25rem 2.25rem;
+    border-radius: 16px;
+    box-shadow: 0 20px 45px rgba(31, 36, 48, 0.1), 0 2px 6px rgba(31, 36, 48, 0.06);
+    text-align: center;
+}
+
+.auth-logo {
+    width: 190px;
+    max-width: 70%;
+    margin: 0 auto 1.5rem;
+    display: block;
 }
 
 .auth-card h1 {
-    font-size: 1.4rem;
-    margin-bottom: 1.5rem;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 1.75rem;
+    text-align: center;
+}
+
+.auth-card form {
+    text-align: left;
+}
+
+.auth-card .field input {
+    padding: 0.7rem 0.85rem;
+    font-size: 1rem;
+}
+
+.auth-card .field input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(47, 111, 79, 0.15);
+}
+
+.auth-card .btn-block {
+    padding: 0.75rem 1.2rem;
+    font-size: 1.02rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    letter-spacing: 0.01em;
+}
+
+.auth-footer {
+    margin-top: 1.5rem;
+    font-size: 0.78rem;
+    color: var(--muted);
     text-align: center;
 }
 
@@ -224,6 +278,21 @@ a {
     text-align: center;
 }
 
+.btn-danger {
+    display: inline-block;
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.btn-danger:hover {
+    background: #8f1f19;
+}
+
 .alert {
     padding: 0.6rem 0.9rem;
     border-radius: 6px;
@@ -251,7 +320,18 @@ table {
 th, td {
     text-align: left;
     padding: 0.6rem 0.75rem;
-    border-bottom: 1px solid var(--border);
+    /* box-shadow instead of border-bottom: at fractional device-pixel ratios
+       (e.g. 137.5% display scaling) Chrome snaps each cell's collapsed
+       border to the nearest device pixel independently, so a 1px border can
+       round away to nothing in some cells (most visibly the last column)
+       while surviving in others - looks like the line randomly disappears.
+       box-shadow isn't part of border-collapse and renders as one
+       consistent line regardless of scaling. */
+    box-shadow: inset 0 -1px 0 0 var(--border);
+    /* Default middle vertical-align makes short cells (e.g. action links)
+       float at a different height in every row once other cells in that
+       row wrap to different numbers of lines - reads as "wavy" borders. */
+    vertical-align: top;
 }
 
 th {
@@ -290,7 +370,24 @@ th {
 }
 
 .clean-table tbody tr:last-child td {
-    border-bottom: none;
+    box-shadow: none;
+}
+
+/* Locks column widths to the <colgroup> percentages instead of growing with content —
+   keeps wide tables (many columns, long text) inside the card instead of spilling
+   past the page edge. Headers wrap onto a second line if needed rather than forcing
+   the column wider. */
+.clean-table--fixed {
+    table-layout: fixed;
+}
+
+.clean-table--fixed th {
+    white-space: normal;
+    /* Headers are single words/short phrases - wrap at spaces only. Breaking
+       mid-word (the inherited overflow-wrap: break-word from th, td) turns
+       e.g. "ДЕРЖНОМЕР" into "ДЕРЖНОМ"/"ЕР", which reads as a rendering bug. */
+    overflow-wrap: normal;
+    word-break: keep-all;
 }
 
 .toolbar {
@@ -313,6 +410,22 @@ th {
     flex-wrap: wrap;
     gap: 0.4rem 0.75rem;
     align-items: center;
+}
+
+/* On a <td> (list-table row actions), display:flex changes the cell's computed box type away
+   from table-cell, so the browser wraps it in an anonymous table-cell to keep the row valid -
+   but the visible flex box inside stays sized to its own content instead of stretching to the
+   row's real height. With border-bottom this went unnoticed (border-collapse merges cell
+   borders across the whole row regardless of any one cell's own box), but it left this cell's
+   bottom edge short of the row's real bottom the moment borders became box-shadow (see [[Журнал
+   дій]]). Only table cells need this override - div.actions-cell (view-page toolbars) keeps the
+   flex row above, which is correct there since it isn't a table cell. */
+td.actions-cell {
+    display: table-cell;
+}
+
+td.actions-cell > * + * {
+    margin-left: 0.75rem;
 }
 
 .link-btn {
@@ -432,6 +545,21 @@ th {
 .muted {
     color: var(--muted);
     font-size: 0.85rem;
+}
+
+.nowrap-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.audit-change-row {
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.audit-change-row + .audit-change-row {
+    margin-top: 0.15rem;
 }
 
 .items-section {
@@ -573,6 +701,52 @@ a.doc-tab-btn {
 
 .clickable-row {
     cursor: pointer;
+}
+
+/* Small dot flagging that a field's value changed on the most recent edit — see
+   AuditLogService.findLatestChanges. Hover (native title attribute) shows old -> new. */
+.change-badge {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #d9822b;
+    margin-left: 0.35rem;
+    cursor: help;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+/* Keeps a cell's value and its change-badge dot on the same line as one
+   unbreakable unit, instead of the dot wrapping onto its own line when the
+   column is narrow (table-layout: auto shrinks columns to fit). */
+.cell-value-badged {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+}
+
+.cell-value-badged .change-badge {
+    margin-left: 0.35rem;
+}
+
+/* Flex items default to min-width: auto, which refuses to shrink/wrap below
+   the text's unbroken width - without this, long unbroken strings (VIN,
+   serial numbers) overflow the cell instead of wrapping. */
+.cell-value-badged > span:first-child {
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+/* For long codes (VIN, chassis number) that would otherwise wrap to 2-3 lines
+   and make row heights jump around inconsistently between rows - truncate to
+   one line with an ellipsis instead; the full value is still available via
+   the title tooltip. */
+.cell-value-badged > span.cell-value-truncate:first-child {
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .view-meta {
@@ -753,7 +927,12 @@ body.has-protocol-drafts-sidebar .container {
 }
 
 .modal-wide {
-    max-width: 780px;
+    max-width: 920px;
+}
+
+#vehiclePickerTable th,
+#vehiclePickerTable td {
+    white-space: nowrap;
 }
 
 .table-scroll {

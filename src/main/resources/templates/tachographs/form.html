@@ -6,7 +6,7 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div th:replace="~{fragments/topbar :: topbar(active='tachographs')}"></div>
+    <div th:replace="~{fragments/topbar :: topbar(active='vehicles')}"></div>
 
     <div class="container">
         <div class="card">
@@ -39,12 +39,7 @@
                 </div>
 
                 <div class="field">
-                    <label for="firmwareVersion">Версія ПЗ</label>
-                    <input type="text" id="firmwareVersion" th:field="*{firmwareVersion}">
-                </div>
-
-                <div class="field">
-                    <label for="serialNumber">Серійний номер *</label>
+                    <label for="serialNumber">Заводський номер *</label>
                     <input type="text" id="serialNumber" th:field="*{serialNumber}">
                     <div class="field-error" th:if="${#fields.hasErrors('serialNumber')}" th:errors="*{serialNumber}"></div>
                 </div>
@@ -56,7 +51,7 @@
 
                 <div class="form-actions">
                     <button type="submit" class="btn">Зберегти</button>
-                    <a class="btn-outline" th:href="@{/tachographs}">Скасувати</a>
+                    <a class="btn-outline" th:href="@{/vehicles(tab='tachographs')}">Скасувати</a>
                 </div>
             </form>
         </div>

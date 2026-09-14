@@ -4,9 +4,11 @@ import com.example.protaxo.audit.entity.AuditAction;
 import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.security.dto.ProfileFormData;
 import com.example.protaxo.security.entity.User;
 import com.example.protaxo.security.repository.UserRepository;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,6 +33,9 @@ public class ProfileService {
 
     public void updateProfile(ProfileFormData form) {
         User user = getCurrentUser();
+        Map<String, String[]> changes = FieldDiff.builder()
+                .add("ПІБ", user.getFullName(), form.getFullName())
+                .build();
         user.setFullName(form.getFullName());
 
         boolean changingPassword = form.getNewPassword() != null && !form.getNewPassword().isBlank();
@@ -45,9 +50,11 @@ public class ProfileService {
                 throw new BusinessRuleException("Нові паролі не збігаються");
             }
             user.setPasswordHash(passwordEncoder.encode(form.getNewPassword()));
+            // Never log actual password values - just flag that it changed.
+            changes.put("Пароль", new String[]{"***", "***"});
         }
 
         userRepository.save(user);
-        auditLogService.record(AuditAction.UPDATE, "User", user.getId());
+        auditLogService.record(AuditAction.UPDATE, "User", user.getId(), changes);
     }
 }

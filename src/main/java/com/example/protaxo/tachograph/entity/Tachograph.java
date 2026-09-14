@@ -36,9 +36,6 @@ public class Tachograph extends BaseEntity {
     @Column(nullable = false)
     private String model;
 
-    @Column(name = "firmware_version")
-    private String firmwareVersion;
-
     @Column(name = "serial_number", nullable = false, unique = true)
     private String serialNumber;
 

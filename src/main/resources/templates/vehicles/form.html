@@ -34,6 +34,13 @@
                 </div>
 
                 <div class="field">
+                    <label for="chassisNumber">Номер кузова</label>
+                    <input type="text" id="chassisNumber" th:field="*{chassisNumber}">
+                    <button type="button" class="link-btn" id="chassisFromVinBtn">VIN номер дорівнює номеру кузова</button>
+                    <div class="field-error" th:if="${#fields.hasErrors('chassisNumber')}" th:errors="*{chassisNumber}"></div>
+                </div>
+
+                <div class="field">
                     <label for="registrationNumber">Держномер *</label>
                     <input type="text" id="registrationNumber" th:field="*{registrationNumber}">
                     <div class="field-error" th:if="${#fields.hasErrors('registrationNumber')}" th:errors="*{registrationNumber}"></div>
@@ -104,6 +111,10 @@
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('chassisFromVinBtn').addEventListener('click', function () {
+                document.getElementById('chassisNumber').value = document.getElementById('vin').value;
+            });
+
             var makeSelect = document.getElementById('make');
             var modelSelect = document.getElementById('model');
             var addModelBtn = document.getElementById('addModelBtn');

@@ -7,7 +7,6 @@ public record TachographResponse(
         Long vehicleId,
         String manufacturer,
         String model,
-        String firmwareVersion,
         String serialNumber,
         LocalDate productionDate
 ) {

@@ -8,7 +8,7 @@ public record DriverRequest(
         @NotNull Long clientId,
         @NotBlank(message = "ПІБ обов'язкове") String fullName,
         @NotBlank(message = "Телефон обов'язковий")
-        @Pattern(regexp = "^\\+380\\d{9}$", message = "Телефон має бути у форматі +380XXXXXXXXX")
+        @Pattern(regexp = "^\\+38\\(0\\d{2}\\)-\\d{3}-\\d{2}-\\d{2}$", message = "Телефон має бути у форматі +38(0XX)-XXX-XX-XX")
         String phone
 ) {
 }
