@@ -8,6 +8,6 @@ public record CatalogItemResponse(
         CatalogItemType type,
         String name,
         BigDecimal basePrice,
-        BigDecimal stockQuantity
+        Integer stockQuantity
 ) {
 }

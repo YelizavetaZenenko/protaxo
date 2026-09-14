@@ -41,4 +41,8 @@ public class AuditLog {
 
     @Column(name = "occurred_at", nullable = false)
     private Instant occurredAt;
+
+    /** JSON map of {@code {"fieldName": ["old value", "new value"]}} — null when nothing tracked (CREATE/DELETE, or an UPDATE with no field-level diff captured). */
+    @Column(columnDefinition = "TEXT")
+    private String changes;
 }

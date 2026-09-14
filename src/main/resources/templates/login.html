@@ -2,12 +2,14 @@
 <html lang="uk" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ProTaxo — Вхід</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body class="auth-page">
     <div class="auth-card card">
-        <h1>ProTaxo ERP</h1>
+        <img class="auth-logo" th:src="@{/images/logo.png}" alt="ProTaxo">
+        <h1>Вхід до системи</h1>
 
         <div class="alert alert-error" th:if="${param.error}">
             Невірний email або пароль
@@ -22,7 +24,7 @@
         <form th:action="@{/login}" method="post">
             <div class="field">
                 <label for="username">Email</label>
-                <input type="email" id="username" name="username" autocomplete="username" required>
+                <input type="email" id="username" name="username" autocomplete="username" required autofocus>
             </div>
             <div class="field">
                 <label for="password">Пароль</label>
@@ -30,6 +32,8 @@
             </div>
             <button type="submit" class="btn btn-block">Увійти</button>
         </form>
+
+        <div class="auth-footer">ProTaxo &middot; Ремонт та калібрування тахографів</div>
     </div>
 </body>
 </html>

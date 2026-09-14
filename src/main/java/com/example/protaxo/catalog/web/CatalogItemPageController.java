@@ -25,12 +25,30 @@ public class CatalogItemPageController {
     private final CatalogItemService catalogItemService;
 
     @GetMapping
-    public String list(@RequestParam(defaultValue = "MATERIAL") CatalogItemType activeType, Model model) {
+    public String list(@RequestParam(defaultValue = "MATERIAL") CatalogItemType activeType,
+                        @RequestParam(required = false) String filterName,
+                        Model model) {
         model.addAttribute("catalogItems", catalogItemService.findAll().stream()
                 .filter(ci -> ci.type() == activeType)
+                .filter(ci -> isBlank(filterName) || containsIgnoreCase(ci.name(), filterName))
                 .toList());
         model.addAttribute("activeType", activeType);
+        model.addAttribute("filterName", filterName);
         return "catalog-items/list";
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private boolean containsIgnoreCase(String value, String search) {
+        return value != null && value.toLowerCase().contains(search.toLowerCase());
+    }
+
+    @GetMapping("/{id}")
+    public String view(@PathVariable Long id, Model model) {
+        model.addAttribute("catalogItem", catalogItemService.findById(id));
+        return "catalog-items/view";
     }
 
     @GetMapping("/new")

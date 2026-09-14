@@ -11,6 +11,7 @@ public record ClientRequest(
         String edrpou,
         String fullName,
         String contactPersonName,
+        @Pattern(regexp = "^(\\+38\\(0\\d{2}\\)-\\d{3}-\\d{2}-\\d{2})?$", message = "Телефон має бути у форматі +38(0XX)-XXX-XX-XX")
         String contactPersonPhone,
         @Pattern(regexp = "^(\\d{9})?$", message = "Код має складатись рівно з 9 цифр")
         String code,
@@ -21,6 +22,7 @@ public record ClientRequest(
         Gender gender,
         Long employerClientId,
         String position,
+        @Pattern(regexp = "^(\\+38\\(0\\d{2}\\)-\\d{3}-\\d{2}-\\d{2})?$", message = "Телефон має бути у форматі +38(0XX)-XXX-XX-XX")
         String phone,
         @Email(message = "Некоректний email") String email
 ) {

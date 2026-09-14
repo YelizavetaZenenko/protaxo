@@ -9,8 +9,10 @@ import com.example.protaxo.client.mapper.ClientMapper;
 import com.example.protaxo.client.repository.ClientRepository;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.common.util.FieldDiff;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,10 +48,26 @@ public class ClientService {
 
     public ClientResponse update(Long id, ClientRequest request) {
         Client client = getOrThrow(id);
+        Map<String, String[]> changes = FieldDiff.builder()
+                .add("Назва", client.getName(), request.name())
+                .add("Повна назва", client.getFullName(), request.fullName())
+                .add("Код ЄДРПОУ", client.getEdrpou(), request.edrpou())
+                .add("Код", client.getCode(), request.code())
+                .add("Прізвище", client.getLastName(), request.lastName())
+                .add("Ім'я", client.getFirstName(), request.firstName())
+                .add("По батькові", client.getMiddleName(), request.middleName())
+                .add("Дата народження", client.getBirthDate(), request.birthDate())
+                .add("Стать", client.getGender(), request.gender())
+                .add("Посада", client.getPosition(), request.position())
+                .add("Ім'я контактної особи", client.getContactPersonName(), request.contactPersonName())
+                .add("Телефон контактної особи", client.getContactPersonPhone(), request.contactPersonPhone())
+                .add("Телефон", client.getPhone(), request.phone())
+                .add("Email", client.getEmail(), request.email())
+                .build();
         clientMapper.updateEntity(request, client);
         client.setEmployerClient(resolveEmployer(request.employerClientId(), id));
         Client saved = clientRepository.save(client);
-        auditLogService.record(AuditAction.UPDATE, "Client", saved.getId());
+        auditLogService.record(AuditAction.UPDATE, "Client", saved.getId(), changes);
         return clientMapper.toResponse(saved);
     }
 

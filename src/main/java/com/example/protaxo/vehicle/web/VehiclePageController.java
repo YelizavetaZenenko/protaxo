@@ -1,6 +1,9 @@
 package com.example.protaxo.vehicle.web;
 
+import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.client.service.ClientService;
+import com.example.protaxo.tachograph.dto.TachographResponse;
+import com.example.protaxo.tachograph.service.TachographService;
 import com.example.protaxo.vehicle.dto.VehicleFormData;
 import com.example.protaxo.vehicle.dto.VehicleRequest;
 import com.example.protaxo.vehicle.dto.VehicleResponse;
@@ -25,13 +28,33 @@ public class VehiclePageController {
 
     private final VehicleService vehicleService;
     private final ClientService clientService;
+    private final TachographService tachographService;
+    private final AuditLogService auditLogService;
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("vehicles", vehicleService.findAll());
+        var vehicles = vehicleService.findAll();
+        var tachographs = tachographService.findAll();
+        model.addAttribute("vehicles", vehicles);
         model.addAttribute("clientNames", clientService.findAll().stream()
                 .collect(Collectors.toMap(c -> c.id(), c -> c.name(), (a, b) -> a)));
+        model.addAttribute("tachographs", tachographs);
+        model.addAttribute("vehicleLabels", vehicles.stream()
+                .collect(Collectors.toMap(VehicleResponse::id, v -> v.vin() + " (" + v.registrationNumber() + ")", (a, b) -> a)));
+        model.addAttribute("vehicleChanges", vehicles.stream()
+                .collect(Collectors.toMap(VehicleResponse::id, v -> auditLogService.findLatestChanges("Vehicle", v.id()))));
+        model.addAttribute("tachographChanges", tachographs.stream()
+                .collect(Collectors.toMap(TachographResponse::id, t -> auditLogService.findLatestChanges("Tachograph", t.id()))));
         return "vehicles/list";
+    }
+
+    @GetMapping("/{id}")
+    public String view(@PathVariable Long id, Model model) {
+        VehicleResponse vehicle = vehicleService.findById(id);
+        model.addAttribute("vehicle", vehicle);
+        model.addAttribute("clientName", clientService.findById(vehicle.clientId()).name());
+        model.addAttribute("tachographs", tachographService.findByVehicleId(id));
+        return "vehicles/view";
     }
 
     @GetMapping("/new")
@@ -92,7 +115,7 @@ public class VehiclePageController {
 
     private VehicleRequest toRequest(VehicleFormData form) {
         return new VehicleRequest(form.getClientId(), form.getVin(), form.getRegistrationNumber(),
-                form.getMake(), form.getModel(), form.getYear());
+                form.getChassisNumber(), form.getMake(), form.getModel(), form.getYear());
     }
 
     private VehicleFormData toFormData(VehicleResponse response) {
@@ -100,6 +123,7 @@ public class VehiclePageController {
         form.setClientId(response.clientId());
         form.setVin(response.vin());
         form.setRegistrationNumber(response.registrationNumber());
+        form.setChassisNumber(response.chassisNumber());
         form.setMake(response.make());
         form.setModel(response.model());
         form.setYear(response.year());

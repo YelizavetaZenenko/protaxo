@@ -97,7 +97,7 @@
                 <p class="supplier-details placeholder">
                     п/р UA213223130000026007233566001 у банку АТ КБ «ПриватБанк»,<br/>
                     01001, м. Київ, вул. Хрещатика, буд. 1,<br/>
-                    тел.: +380 XX XXX XX XX,<br/>
+                    тел.: +38(0XX)-XXX-XX-XX,<br/>
                     код за ЄДРПОУ 1234567890
                 </p>
             </td>
@@ -112,14 +112,17 @@
                 <p class="supplier-details">
                     <th:block th:if="${not #strings.isEmpty(client.edrpou)}">код за ЄДРПОУ <span th:text="${client.edrpou}">1234567890</span><br/></th:block>
                     <th:block th:if="${not #strings.isEmpty(client.code)}">РНОКПП <span th:text="${client.code}">1234567890</span><br/></th:block>
-                    <th:block th:if="${not #strings.isEmpty(client.phone)}">тел.: <span th:text="${client.phone}">+380 XX XXX XX XX</span><br/></th:block>
-                    <th:block th:if="${not #strings.isEmpty(client.contactPersonName)}">контактна особа: <span th:text="${client.contactPersonName}">Іванов Іван</span><th:block th:if="${not #strings.isEmpty(client.contactPersonPhone)}">, тел.: <span th:text="${client.contactPersonPhone}">+380 XX XXX XX XX</span></th:block></th:block>
+                    <th:block th:if="${not #strings.isEmpty(client.phone)}">тел.: <span th:text="${client.phone}">+38(0XX)-XXX-XX-XX</span><br/></th:block>
+                    <th:block th:if="${not #strings.isEmpty(client.contactPersonName)}">контактна особа: <span th:text="${client.contactPersonName}">Іванов Іван</span><th:block th:if="${not #strings.isEmpty(client.contactPersonPhone)}">, тел.: <span th:text="${client.contactPersonPhone}">+38(0XX)-XXX-XX-XX</span></th:block></th:block>
                 </p>
             </td>
         </tr>
         <tr class="spacer">
             <td class="label">Договір:</td>
-            <td class="value">№ <span class="fill-line"></span></td>
+            <td class="value">
+                <th:block th:if="${contractNumber} != null">№ <span th:text="${contractNumber}">000001</span></th:block>
+                <th:block th:if="${contractNumber} == null">№ <span class="fill-line"></span></th:block>
+            </td>
         </tr>
     </table>
 

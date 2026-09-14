@@ -8,18 +8,19 @@
 <body>
     <div th:replace="~{fragments/topbar :: topbar(active='audit')}"></div>
 
-    <div class="container">
+    <div class="container container-wide">
         <div class="card">
             <div class="toolbar">
                 <h1>Журнал дій</h1>
             </div>
-            <table class="clean-table">
+            <table class="clean-table clean-table--fixed">
                 <colgroup>
-                    <col style="width:18%">
-                    <col style="width:20%">
-                    <col style="width:14%">
-                    <col style="width:28%">
-                    <col style="width:20%">
+                    <col style="width:11%">
+                    <col style="width:17.5%">
+                    <col style="width:8%">
+                    <col style="width:12%">
+                    <col style="width:12%">
+                    <col style="width:39.5%">
                 </colgroup>
                 <thead>
                 <tr>
@@ -27,19 +28,34 @@
                     <th>Користувач</th>
                     <th>Дія</th>
                     <th>Сутність</th>
-                    <th>ID</th>
+                    <th>Елемент</th>
+                    <th>Зміни</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="e : ${entries}">
+                <tr th:each="e : ${entries}"
+                    th:with="changes=${@auditLogService.parseChanges(e.changes)},
+                              entityRef=${@auditEntityLabelResolver.resolve(e.entityType, e.entityId)}">
                     <td th:text="${#temporals.format(e.occurredAt, 'dd.MM.yyyy HH:mm:ss')}"></td>
-                    <td th:text="${e.username}"></td>
-                    <td><span class="badge" th:text="${e.action}"></span></td>
-                    <td th:text="${e.entityType}"></td>
-                    <td th:text="${e.entityId}"></td>
+                    <td class="nowrap-cell" th:text="${e.username}" th:title="${e.username}"></td>
+                    <td><span class="badge" th:text="${@auditLogService.translateAction(e.action)}"></span></td>
+                    <td th:text="${@auditLogService.translateEntityType(e.entityType)}"></td>
+                    <td>
+                        <a th:if="${entityRef.url != null}" class="link-btn" th:href="@{${entityRef.url}}" th:text="${entityRef.label}"></a>
+                        <span th:unless="${entityRef.url != null}" th:text="${entityRef.label}"></span>
+                    </td>
+                    <td>
+                        <div th:each="c : ${changes}" class="audit-change-row">
+                            <strong th:text="${c.key}"></strong>:
+                            <span th:text="${#strings.isEmpty(c.value[0]) ? '—' : c.value[0]}"></span>
+                            <span>→</span>
+                            <span th:text="${#strings.isEmpty(c.value[1]) ? '—' : c.value[1]}"></span>
+                        </div>
+                        <span th:if="${#maps.isEmpty(changes)}" class="muted">—</span>
+                    </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(entries)}">
-                    <td colspan="5">Записів ще немає</td>
+                    <td colspan="6">Записів ще немає</td>
                 </tr>
                 </tbody>
             </table>

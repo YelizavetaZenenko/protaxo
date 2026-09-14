@@ -8,7 +8,6 @@ public record TachographRequest(
         @NotNull Long vehicleId,
         @NotBlank String manufacturer,
         @NotBlank String model,
-        String firmwareVersion,
         @NotBlank String serialNumber,
         LocalDate productionDate
 ) {

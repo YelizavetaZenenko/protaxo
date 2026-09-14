@@ -5,6 +5,7 @@ import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.client.entity.Client;
 import com.example.protaxo.client.repository.ClientRepository;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.contract.dto.ContractRequest;
 import com.example.protaxo.contract.dto.ContractResponse;
 import com.example.protaxo.contract.entity.Contract;
@@ -12,6 +13,8 @@ import com.example.protaxo.contract.mapper.ContractMapper;
 import com.example.protaxo.contract.repository.ContractRepository;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,8 +41,16 @@ public class ContractService {
         return contractMapper.toResponse(getOrThrow(id));
     }
 
+    /** Latest contract for a client, used to auto-fill "Договір" on the invoice bill PDF. */
+    @Transactional(readOnly = true)
+    public Optional<ContractResponse> findLatestByClientId(Long clientId) {
+        return contractRepository.findFirstByClient_IdOrderByIdDesc(clientId)
+                .map(contractMapper::toResponse);
+    }
+
     public ContractResponse create(ContractRequest request) {
         Contract contract = contractMapper.toEntity(request);
+        contract.setContractNumber("%06d".formatted(contractRepository.nextNumberValue()));
         contract.setClient(getClientOrThrow(request.clientId()));
         Contract saved = contractRepository.save(contract);
         auditLogService.record(AuditAction.CREATE, "Contract", saved.getId());
@@ -48,10 +59,14 @@ public class ContractService {
 
     public ContractResponse update(Long id, ContractRequest request) {
         Contract contract = getOrThrow(id);
+        Client newClient = getClientOrThrow(request.clientId());
+        Map<String, String[]> changes = FieldDiff.builder()
+                .add("Контрагент", contract.getClient().getName(), newClient.getName())
+                .build();
         contractMapper.updateEntity(request, contract);
-        contract.setClient(getClientOrThrow(request.clientId()));
+        contract.setClient(newClient);
         Contract saved = contractRepository.save(contract);
-        auditLogService.record(AuditAction.UPDATE, "Contract", saved.getId());
+        auditLogService.record(AuditAction.UPDATE, "Contract", saved.getId(), changes);
         return contractMapper.toResponse(saved);
     }
 

@@ -35,6 +35,9 @@ public class Vehicle extends BaseEntity {
     @Column(name = "registration_number", nullable = false)
     private String registrationNumber;
 
+    @Column(name = "chassis_number")
+    private String chassisNumber;
+
     private String make;
 
     private String model;

@@ -34,6 +34,6 @@ public class CatalogItem extends BaseEntity {
     @Column(name = "base_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal basePrice;
 
-    @Column(name = "stock_quantity", precision = 12, scale = 3)
-    private BigDecimal stockQuantity;
+    @Column(name = "stock_quantity")
+    private Integer stockQuantity;
 }

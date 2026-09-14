@@ -7,7 +7,6 @@
             <a th:href="@{/clients}" th:classappend="${active == 'clients'} ? 'active'">Контрагенти</a>
             <a th:href="@{/vehicles}" th:classappend="${active == 'vehicles'} ? 'active'">Автомобілі</a>
             <a th:href="@{/contracts}" th:classappend="${active == 'contracts'} ? 'active'">Договори</a>
-            <a th:href="@{/tachographs}" th:classappend="${active == 'tachographs'} ? 'active'">Тахографи</a>
             <a th:href="@{/invoices}" th:classappend="${active == 'invoices'} ? 'active'">Наряд-заказ</a>
             <a th:href="@{/catalog-items}" th:classappend="${active == 'catalog'} ? 'active'">Каталог</a>
             <a th:href="@{/calibration-protocols}" th:classappend="${active == 'calibration'} ? 'active'">Протоколи</a>
@@ -49,6 +48,32 @@
                     }
                 });
             });
+        </script>
+
+        <script>
+            /**
+             * Live-formats a phone <input> to +38(0XX)-XXX-XX-XX as the user types — letters
+             * and any other non-digit characters are dropped, punctuation is inserted
+             * automatically. Shared globally (unlike most small per-page scripts here) because
+             * it's wired to every phone field across the site (Контрагенти, Водії).
+             */
+            window.ProtaxoPhone = {
+                PATTERN: /^\+38\(0\d{2}\)-\d{3}-\d{2}-\d{2}$/,
+                mask: function (input) {
+                    input.addEventListener('input', function () {
+                        var digits = input.value.replace(/\D/g, '');
+                        if (digits.indexOf('38') === 0) digits = digits.slice(2);
+                        digits = digits.slice(0, 10);
+                        var out = '+38';
+                        if (digits.length > 0) out += '(' + digits.slice(0, 3);
+                        if (digits.length >= 3) out += ')';
+                        if (digits.length > 3) out += '-' + digits.slice(3, 6);
+                        if (digits.length > 6) out += '-' + digits.slice(6, 8);
+                        if (digits.length > 8) out += '-' + digits.slice(8, 10);
+                        input.value = out;
+                    });
+                }
+            };
         </script>
 
         <div id="invoiceDraftsSidebar" class="drafts-sidebar drafts-sidebar-left" hidden>

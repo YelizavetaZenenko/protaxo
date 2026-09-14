@@ -2,45 +2,340 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Протокол калібрування</title>
+    <title>Протокол перевірки та адаптації тахографа</title>
     <style>
-        @page { size: A4; margin: 2cm; }
-        body { font-family: 'DejaVu Sans'; font-size: 11pt; color: #111111; }
-        h1 { font-size: 16pt; margin: 0 0 10pt 0; }
-        h2 { font-size: 12pt; margin: 18pt 0 6pt 0; }
-        .meta div { margin: 2pt 0; }
-        .signatures { margin-top: 40pt; }
-        .signatures div { margin-top: 24pt; }
-        .line { display: inline-block; border-bottom: 1px solid #333333; width: 220pt; margin-left: 10pt; }
+        @page { size: A4; margin: 1.5cm; }
+        body { font-family: 'Times New Roman'; font-size: 11pt; color: #111111; }
+        table.title-block { width: 100%; border-collapse: collapse; margin-bottom: 10pt; }
+        table.title-block td { padding: 0 0 7pt 0; vertical-align: middle; border-bottom: 1px solid #333333; }
+        td.logo-cell { width: 24%; border-right: 1px solid #333333; padding-right: 10pt; text-align: center; }
+        .logo-img { width: 110pt; }
+        td.title-cell { text-align: center; padding-left: 14pt; }
+        td.title-cell h1 { font-size: 18pt; margin: 0 0 4pt 0; padding-bottom: 4pt; border-bottom: 1px solid #333333; letter-spacing: 1pt; }
+        .subtitle { font-size: 12.5pt; font-weight: bold; margin: 0 0 4pt 0; padding-bottom: 4pt; border-bottom: 1px solid #333333; }
+        .ident { font-size: 10.5pt; margin: 0; }
+        .field-block { margin: 5pt 0; }
+        .field-num { font-weight: bold; }
+        .field-hint { font-size: 9pt; color: #555555; margin: 1pt 0 0 0; }
+        .fill-line { display: block; border-bottom: 1px solid #333333; min-height: 13pt; padding: 1pt 2pt 0 2pt; }
+        table.field-row { width: 100%; border-collapse: collapse; margin: 5pt 0; }
+        table.field-row td { border: none; padding: 0; font-size: 10.5pt; vertical-align: bottom; }
+        table.field-row td.field-label { white-space: nowrap; padding-right: 4pt; }
+        table.field-row td.field-value { border-bottom: 1px solid #333333; width: 100%; }
+        .section-title { font-weight: bold; margin: 12pt 0 5pt 0; }
+        table.results { width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 5pt; }
+        table.results thead { display: table-header-group; }
+        table.results tr { page-break-inside: avoid; }
+        table.results th, table.results td { border: 1px solid #333333; padding: 2pt 4pt; font-size: 8pt; vertical-align: middle; }
+        table.results th { background-color: #eeeeee; text-align: center; }
+        table.results td.center { text-align: center; }
+        table.results td.stack-cell { padding: 0; }
+        table.results td.stack-cell div { padding: 2pt 4pt; }
+        table.results td.stack-cell div + div { border-top: 1px solid #333333; }
+        .footnote { font-size: 9pt; color: #333333; margin-top: 10pt; }
+        .conclusion { margin-top: 10pt; page-break-inside: avoid; }
+        .sig-group { margin: 10pt 0 0 0; page-break-inside: avoid; }
+        .sig-group p { margin: 0 0 2pt 0; }
+        table.sig-table { width: 100%; border-collapse: separate; border-spacing: 14pt 0; }
+        table.sig-table td { border: none; padding: 0; }
+        table.sig-table td.sig-line-cell { border-bottom: 1px solid #333333; height: 13pt; font-size: 10.5pt; text-align: center; }
+        table.sig-table td.claim-text-cell { font-size: 10.5pt; text-align: left; vertical-align: bottom; padding-bottom: 1pt; }
+        table.sig-table td.sig-caption-cell { font-size: 9pt; color: #555555; text-align: center; padding-top: 1pt; }
+        table.name-table { border-collapse: collapse; margin-top: 10pt; }
+        table.name-table td { border: none; padding: 0; font-size: 11pt; vertical-align: bottom; }
+        table.name-table td.name-label-cell { white-space: nowrap; padding-right: 4pt; }
+        table.name-table td.name-line-cell { border-bottom: 1px solid #333333; width: 100%; text-align: center; min-width: 160pt; }
+        table.name-table td.sig-caption-cell { font-size: 9pt; color: #555555; text-align: center; padding-top: 1pt; }
     </style>
 </head>
 <body>
-    <h1 th:text="'ПРОТОКОЛ КАЛІБРУВАННЯ ' + ${protocol.protocolNumber}">ПРОТОКОЛ КАЛІБРУВАННЯ</h1>
 
-    <div class="meta">
-        <div th:text="'Дата: ' + ${#temporals.format(protocol.protocolDate, 'dd.MM.yyyy HH:mm')}">Дата</div>
-        <div th:text="'Внутрішній номер: ' + ${protocol.internalNumber}">Внутрішній номер</div>
-        <div th:if="${not #strings.isEmpty(protocol.stampNumber)}" th:text="'Номер штампу: ' + ${protocol.stampNumber}">Номер штампу</div>
-        <div th:text="'Контрагент: ' + ${clientName}">Контрагент</div>
-        <div th:if="${not #strings.isEmpty(protocol.vehicleName)}" th:text="'Транспортний засіб: ' + ${protocol.vehicleName}">ТЗ</div>
-        <div th:text="${protocol.orderLabel}">Наряд</div>
-        <div th:text="'Номер картки: ' + ${protocol.cardNumber}">Номер картки</div>
-        <div th:if="${not #strings.isEmpty(protocol.representativeName)}" th:text="'Представник: ' + ${protocol.representativeName}">Представник</div>
+    <table class="title-block">
+        <tr>
+            <td class="logo-cell">
+                <img class="logo-img" th:src="${logoDataUri}" alt="ProTaxo" />
+            </td>
+            <td class="title-cell">
+                <h1>ПРОТОКОЛ</h1>
+                <div class="subtitle">ПЕРЕВІРКИ ТА АДАПТАЦІЇ ТАХОГРАФА ДО ТРАНСПОРТНОГО ЗАСОБУ</div>
+                <div class="ident" th:text="'Ідентифікаційний № UA-999 ' + ${protocol.protocolNumber}">Ідентифікаційний № UA-999 №000001</div>
+                <div class="ident" th:text="'від ' + ${#temporals.format(protocol.protocolDate, 'dd.MM.yyyy')}">від 01.01.2026</div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="field-block">
+        <span class="field-num">1.</span> Найменування та місцезнаходження пункту сервісу тахографів
+        <div class="fill-line">ФОП Вишивата Діана Олександрівна</div>
+        <div class="fill-line">Україна, 11709, Житомирська обл., Звягельський р-н, місто Звягель, пров. Богуна, будинок 19-Б, квартира 2</div>
     </div>
 
-    <h2>Дані тахографа</h2>
-    <div class="meta">
-        <div th:if="${not #strings.isEmpty(protocol.tachographBrand)}" th:text="'Марка: ' + ${protocol.tachographBrand}">Марка</div>
-        <div th:if="${not #strings.isEmpty(protocol.tachographModel)}" th:text="'Модель: ' + ${protocol.tachographModel}">Модель</div>
-        <div th:if="${not #strings.isEmpty(protocol.tachographType)}" th:text="'Тип: ' + ${protocol.tachographType}">Тип</div>
-        <div th:if="${not #strings.isEmpty(protocol.tachographManufacturer)}" th:text="'Виробник: ' + ${protocol.tachographManufacturer}">Виробник</div>
-        <div th:if="${protocol.previousInspectionDate} != null"
-             th:text="'Дата попередньої перевірки: ' + ${#temporals.format(protocol.previousInspectionDate, 'dd.MM.yyyy')}">Попередня перевірка</div>
+    <div class="field-block">
+        <span class="field-num">2.</span> Порядковий номер пункту сервісу тахографів у Переліку суб'єктів господарювання, що здійснюють установлення та технічне обслуговування контрольних пристроїв (тахографів) в автомобільних транспортних засобах
+        <div class="fill-line">UA-999</div>
     </div>
+
+    <div class="field-block">
+        <span class="field-num">3.</span> Номер картки майстерні (у разі обслуговування цифрових тахографів)
+        <div class="fill-line" th:text="${protocol.cardNumber}"></div>
+    </div>
+
+    <div class="field-block">
+        <span class="field-num">4.</span> Найменування (прізвище, ім'я, по батькові) автомобільного перевізника
+        <div class="fill-line" th:text="${clientName}"></div>
+        Уповноважена особа (прізвище, ім'я, по батькові)
+        <div class="fill-line" th:text="${protocol.representativeName}"></div>
+    </div>
+
+    <div class="section-title">5. Дані транспортного засобу:</div>
+    <table class="field-row"><tr>
+        <td class="field-label">5.1. Марка, модель, рік випуску</td>
+        <td class="field-value" th:text="${protocol.vehicleName}"></td>
+    </tr></table>
+    <table class="field-row"><tr>
+        <td class="field-label">5.2. Реєстраційний номер транспортного засобу (VRN)</td>
+        <td class="field-value" th:text="${protocol.vehicleVrn}"></td>
+    </tr></table>
+    <table class="field-row"><tr>
+        <td class="field-label">5.3. Ідентифікаційний номер (VIN)</td>
+        <td class="field-value" th:text="${protocol.vehicleVin}"></td>
+    </tr></table>
+
+    <div class="section-title">6. Дані тахографа:</div>
+    <table class="field-row"><tr>
+        <td class="field-label">6.1. Марка, модель</td>
+        <td class="field-value" th:text="${protocol.tachographBrand}"></td>
+    </tr></table>
+    <table class="field-row"><tr>
+        <td class="field-label">6.2. Тип</td>
+        <td class="field-value" th:text="${protocol.tachographType}"></td>
+    </tr></table>
+    <table class="field-row"><tr>
+        <td class="field-label">6.3. Виробник</td>
+        <td class="field-value" th:text="${protocol.tachographManufacturer}"></td>
+    </tr></table>
+    <table class="field-row"><tr>
+        <td class="field-label">6.4. Заводський номер</td>
+        <td class="field-value" th:text="${protocol.tachographSerialNumber}"></td>
+    </tr></table>
+    <table class="field-row"><tr>
+        <td class="field-label">6.5. Дата виготовлення</td>
+        <td class="field-value" th:text="${protocol.tachographManufactureYear}"></td>
+    </tr></table>
+    <table class="field-row"><tr>
+        <td class="field-label">6.6. Підстава для перевірки та адаптації</td>
+        <td class="field-value" th:text="${protocol.inspectionReason}"></td>
+    </tr></table>
+    <div class="field-hint">(установлення, дотримання періодичності перевірки, ремонт, заміна трансмісійних агрегатів або пневматичних шин іншого розміру, інші підстави)</div>
+    <table class="field-row"><tr>
+        <td class="field-label">6.7. Дата попередньої перевірки та адаптації</td>
+        <td class="field-value" th:text="${protocol.previousInspectionDate} != null ? ${#temporals.format(protocol.previousInspectionDate, 'dd.MM.yyyy')} : ''"></td>
+    </tr></table>
+
+    <div class="field-block">
+        <span class="field-num">7.</span> Перевірка та адаптація тахографа до транспортного засобу здійснюються за допомогою:
+        <div class="fill-line" th:text="${protocol.checkMethod}"></div>
+    </div>
+
+    <div class="section-title" style="page-break-before: always;">8. Результати перевірки та адаптації тахографа</div>
+    <table class="results">
+        <colgroup>
+            <col style="width:5%"/>
+            <col style="width:27%"/>
+            <col style="width:14%"/>
+            <col style="width:16%"/>
+            <col style="width:17%"/>
+            <col style="width:21%"/>
+        </colgroup>
+        <thead>
+        <tr>
+            <th style="white-space:nowrap;">№<br/>З/п</th>
+            <th colspan="2">Назва параметру</th>
+            <th>Одиниця<br/>вимірювання</th>
+            <th>Норма</th>
+            <th>Фактичне<br/>значення</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td class="center">1</td>
+            <td>Пробіг</td>
+            <td class="stack-cell">
+                <div>До перевірки та адаптації</div>
+                <div>Після перевірки та адаптації</div>
+            </td>
+            <td class="center">Кілометри</td>
+            <td class="center">—</td>
+            <td class="stack-cell">
+                <div th:text="${protocol.mileageBefore}"></div>
+                <div th:text="${protocol.mileageAfter}"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="center">2</td>
+            <td colspan="2">Розмір пневматичних шин (1)</td>
+            <td class="center">—</td>
+            <td class="center">—</td>
+            <td class="center" th:text="${protocol.tireSize}"></td>
+        </tr>
+        <tr>
+            <td class="center">3</td>
+            <td colspan="2">Тиск в пневматичних шинах (1)</td>
+            <td class="center">МПа</td>
+            <td class="center">—</td>
+            <td class="center" th:text="${protocol.tirePressure}"></td>
+        </tr>
+        <tr>
+            <td class="center">4</td>
+            <td colspan="2">Ефективна довжина кола пневматичних шин, L</td>
+            <td class="center">Міліметри</td>
+            <td class="center">—</td>
+            <td class="center" th:text="${protocol.tireCircumferenceL}"></td>
+        </tr>
+        <tr>
+            <td class="center">5</td>
+            <td colspan="2">Характеристичний коефіцієнт транспортного засобу (w)</td>
+            <td class="center">Оберти або імпульси на кілометр</td>
+            <td class="center">—</td>
+            <td class="center" th:text="${protocol.coefficientW}"></td>
+        </tr>
+        <tr>
+            <td class="center">6</td>
+            <td colspan="2">Константа тахографа, k</td>
+            <td class="center">Оберти або імпульси на кілометр</td>
+            <td class="center">—</td>
+            <td class="center" th:text="${protocol.constantK}"></td>
+        </tr>
+        <tr>
+            <td class="center">7</td>
+            <td>Відхилення реєстрування шляху, не більш ніж, на ділянці дороги довжиною щонайменше 1 кілометр</td>
+            <td class="stack-cell">
+                <div>Після встановлення</div>
+                <div>В експлуатації</div>
+            </td>
+            <td class="center">Відсотки</td>
+            <td class="center stack-cell">
+                <div>+/- 2,0</div>
+                <div>+/- 4,0</div>
+            </td>
+            <td class="stack-cell">
+                <div th:text="${protocol.pathDeviationAfterInstall}"></div>
+                <div th:text="${protocol.pathDeviationInService}"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="center">8</td>
+            <td>Відхилення реєстрування швидкості, не більш ніж</td>
+            <td class="stack-cell">
+                <div>Після встановлення</div>
+                <div>В експлуатації</div>
+            </td>
+            <td class="center">Кілометри за годину</td>
+            <td class="center stack-cell">
+                <div>+/- 4,0</div>
+                <div>+/- 6,0</div>
+            </td>
+            <td class="stack-cell">
+                <div th:text="${protocol.speedDeviationAfterInstall}"></div>
+                <div th:text="${protocol.speedDeviationInService}"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="center">9</td>
+            <td>Відхилення реєстрування часу, не більш ніж</td>
+            <td class="stack-cell">
+                <div>Після встановлення</div>
+                <div>В експлуатації</div>
+            </td>
+            <td class="center">Хвилин за добу та за 7 діб</td>
+            <td class="center stack-cell">
+                <div>+/- 2,0 та +/- 10,0</div>
+                <div>+/- 2,0 та +/- 10,0</div>
+            </td>
+            <td class="stack-cell">
+                <div th:text="${protocol.timeDeviationAfterInstall}"></div>
+                <div th:text="${protocol.timeDeviationInService}"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="center">10</td>
+            <td colspan="2">Фактичне значення спрацювання обмежувача швидкості (за наявності обмежувача) (1)</td>
+            <td class="center">Кілометри за годину</td>
+            <td class="center">—</td>
+            <td class="center" th:text="${protocol.speedLimiterValue}"></td>
+        </tr>
+        <tr>
+            <td class="center">11</td>
+            <td colspan="2">Реєстрування факту відкриття кришки аналогового тахографа (виймання тахокарти)</td>
+            <td class="center">—</td>
+            <td class="center">Має бути зареєстровано тахографом</td>
+            <td class="center" th:text="${protocol.coverOpeningRegistered}"></td>
+        </tr>
+        <tr>
+            <td class="center">12</td>
+            <td colspan="2">Реєстрування факту вимкнення живлення на час, довший ніж 100 мс</td>
+            <td class="center">—</td>
+            <td class="center">Має бути зареєстровано тахографом</td>
+            <td class="center" th:text="${protocol.powerCutoffRegistered}"></td>
+        </tr>
+        <tr>
+            <td class="center">13</td>
+            <td colspan="2">Реєстрування факту перерви з'єднання давача імпульсів з тахографом</td>
+            <td class="center">—</td>
+            <td class="center">Має бути зареєстровано тахографом</td>
+            <td class="center" th:text="${protocol.pulseSensorInterruptionRegistered}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p class="conclusion"><span class="field-num">9. Висновок:</span> зазначений у пункті 6 цього протоколу тахограф, установлений на транспортному засобі, ідентифікаційні ознаки якого наведено в пункті 5 цього протоколу, придатний до експлуатації.</p>
 
     <div class="signatures">
-        <div>Виконавець: <span class="line"> </span></div>
-        <div>Представник контрагента: <span class="line"> </span></div>
+        <div class="sig-group">
+            <p>10. Роботи виконав</p>
+            <table class="sig-table">
+                <tr>
+                    <td class="sig-line-cell" style="width:30%;" th:text="${protocol.executorPosition}"></td>
+                    <td class="sig-line-cell" style="width:35%;"></td>
+                    <td class="sig-line-cell" style="width:35%;" th:text="${protocol.executorName}"></td>
+                </tr>
+                <tr>
+                    <td class="sig-caption-cell">(посада)</td>
+                    <td class="sig-caption-cell">(підпис)</td>
+                    <td class="sig-caption-cell">(прізвище, ініціали)</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="sig-group">
+            <table class="name-table">
+                <tr>
+                    <td class="name-label-cell">11. Підтверджую, що я,</td>
+                    <td class="name-line-cell" th:text="${protocol.representativeName}"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class="sig-caption-cell">(прізвище, ініціали уповноваженої особи автомобільного перевізника)</td>
+                </tr>
+            </table>
+        </div>
+        <p>ознайомлений з результатами перевірки та адаптації тахографа, з місцями нанесення та кількістю пломб.</p>
+        <div class="sig-group">
+            <table class="sig-table">
+                <tr>
+                    <td class="claim-text-cell" style="width:48%; white-space:nowrap;">Претензій до виконаних робіт не маю / маю.</td>
+                    <td class="sig-line-cell" style="width:26%;"></td>
+                    <td class="sig-line-cell" style="width:26%;" th:text="${#temporals.format(protocol.protocolDate, 'dd.MM.yyyy')}"></td>
+                </tr>
+                <tr>
+                    <td class="sig-caption-cell">(непотрібне закреслити)</td>
+                    <td class="sig-caption-cell">(підпис)</td>
+                    <td class="sig-caption-cell">(дата)</td>
+                </tr>
+            </table>
+        </div>
     </div>
+
+    <p class="footnote">(1) Згідно з вимогами виробника транспортного засобу або відповідно до законодавства.</p>
 </body>
 </html>

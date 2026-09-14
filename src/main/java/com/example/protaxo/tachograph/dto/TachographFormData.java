@@ -17,9 +17,7 @@ public class TachographFormData {
     @NotBlank(message = "Модель обов'язкова")
     private String model;
 
-    private String firmwareVersion;
-
-    @NotBlank(message = "Серійний номер обов'язковий")
+    @NotBlank(message = "Заводський номер обов'язковий")
     private String serialNumber;
 
     private LocalDate productionDate;

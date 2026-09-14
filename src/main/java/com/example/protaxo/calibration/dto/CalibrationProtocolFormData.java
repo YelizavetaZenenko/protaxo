@@ -38,5 +38,55 @@ public class CalibrationProtocolFormData {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate previousInspectionDate;
 
+    private String vehicleVrn;
+
+    private String vehicleVin;
+
+    private String tachographSerialNumber;
+
+    private String tachographManufactureYear;
+
+    private String inspectionReason;
+
+    private String checkMethod;
+
+    private String mileageBefore;
+
+    private String mileageAfter;
+
+    private String tireSize;
+
+    private String tirePressure;
+
+    private String tireCircumferenceL;
+
+    private String coefficientW;
+
+    private String constantK;
+
+    private String pathDeviationAfterInstall;
+
+    private String pathDeviationInService;
+
+    private String speedDeviationAfterInstall;
+
+    private String speedDeviationInService;
+
+    private String timeDeviationAfterInstall;
+
+    private String timeDeviationInService;
+
+    private String speedLimiterValue;
+
+    private String coverOpeningRegistered;
+
+    private String powerCutoffRegistered;
+
+    private String pulseSensorInterruptionRegistered;
+
+    private String executorPosition;
+
+    private String executorName;
+
     private Long invoiceId;
 }

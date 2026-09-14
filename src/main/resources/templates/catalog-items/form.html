@@ -20,7 +20,8 @@
                     <label for="type">Тип *</label>
                     <select id="type" th:field="*{type}">
                         <option value="">— оберіть тип —</option>
-                        <option th:each="t : ${types}" th:value="${t}" th:text="${t}"></option>
+                        <option th:each="t : ${types}" th:value="${t}"
+                                th:text="${t.name() == 'MATERIAL'} ? 'Товар' : 'Послуга'"></option>
                     </select>
                     <div class="field-error" th:if="${#fields.hasErrors('type')}" th:errors="*{type}"></div>
                 </div>
@@ -39,8 +40,9 @@
 
                 <div class="field">
                     <label for="stockQuantity">Залишок на складі</label>
-                    <input type="number" step="0.001" min="0" id="stockQuantity" th:field="*{stockQuantity}">
-                    <div class="muted">Залиште порожнім для послуг</div>
+                    <input type="number" step="1" min="0" inputmode="numeric" id="stockQuantity" th:field="*{stockQuantity}">
+                    <div class="field-error" th:if="${#fields.hasErrors('stockQuantity')}" th:errors="*{stockQuantity}"></div>
+                    <div class="muted" id="stockQuantityHint">Недоступно для послуг</div>
                 </div>
 
                 <div class="form-actions">
@@ -50,5 +52,26 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var typeSelect = document.getElementById('type');
+            var stockInput = document.getElementById('stockQuantity');
+
+            /** Only whole digits pass through as the user types — no decimal point, no letters. */
+            stockInput.addEventListener('input', function () {
+                stockInput.value = stockInput.value.replace(/\D/g, '');
+            });
+
+            function updateStockAvailability() {
+                var isService = typeSelect.value === 'SERVICE';
+                stockInput.disabled = isService;
+                if (isService) stockInput.value = '';
+            }
+
+            typeSelect.addEventListener('change', updateStockAvailability);
+            updateStockAvailability();
+        });
+    </script>
 </body>
 </html>

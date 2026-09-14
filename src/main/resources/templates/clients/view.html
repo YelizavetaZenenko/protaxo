@@ -147,7 +147,7 @@
             </div>
             <div class="field field-full">
                 <label for="driverPhone">Телефон</label>
-                <input type="tel" id="driverPhone" placeholder="+380XXXXXXXXX">
+                <input type="tel" id="driverPhone" placeholder="+38(0XX)-XXX-XX-XX" maxlength="19">
             </div>
             <div class="form-actions">
                 <button type="button" class="btn" id="saveDriverBtn">Зберегти</button>
@@ -189,6 +189,7 @@
             var driverFullName = document.getElementById('driverFullName');
             var driverPhone = document.getElementById('driverPhone');
             var editingDriverId = null;
+            ProtaxoPhone.mask(driverPhone);
 
             function openModal(title, id, fullName, phone) {
                 editingDriverId = id;
@@ -269,7 +270,7 @@
             document.getElementById('saveDriverBtn').addEventListener('click', function () {
                 var fullName = driverFullName.value.trim();
                 var phone = driverPhone.value.trim();
-                var phonePattern = /^\+380\d{9}$/;
+                var phonePattern = ProtaxoPhone.PATTERN;
                 if (!fullName) {
                     driverModalError.textContent = "ПІБ обов'язкове";
                     driverModalError.hidden = false;
@@ -281,7 +282,7 @@
                     return;
                 }
                 if (!phonePattern.test(phone)) {
-                    driverModalError.textContent = 'Телефон має бути у форматі +380XXXXXXXXX';
+                    driverModalError.textContent = 'Телефон має бути у форматі +38(0XX)-XXX-XX-XX';
                     driverModalError.hidden = false;
                     return;
                 }

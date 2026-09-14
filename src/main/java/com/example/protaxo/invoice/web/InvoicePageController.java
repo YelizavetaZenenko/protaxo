@@ -7,6 +7,8 @@ import com.example.protaxo.catalog.entity.CatalogItemType;
 import com.example.protaxo.catalog.service.CatalogItemService;
 import com.example.protaxo.client.service.ClientService;
 import com.example.protaxo.common.util.UkrainianAmountWords;
+import com.example.protaxo.contract.dto.ContractResponse;
+import com.example.protaxo.contract.service.ContractService;
 import com.example.protaxo.invoice.dto.BillItemRow;
 import com.example.protaxo.invoice.dto.InvoiceFormData;
 import com.example.protaxo.invoice.dto.InvoiceItemFormData;
@@ -63,21 +65,24 @@ public class InvoicePageController {
     private final CatalogItemService catalogItemService;
     private final VehicleService vehicleService;
     private final CalibrationProtocolService calibrationProtocolService;
+    private final ContractService contractService;
     private final PdfRenderService pdfRenderService;
 
     @GetMapping
     public String list(@RequestParam(defaultValue = "date") String sort,
                         @RequestParam(defaultValue = "desc") String dir,
-                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate filterDate,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate filterDateFrom,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate filterDateTo,
                         @RequestParam(required = false) InvoicePaymentType filterPaymentType,
                         Model model) {
-        List<InvoiceResponse> invoices = filterInvoices(invoiceService.findAll(), filterDate, filterPaymentType);
+        List<InvoiceResponse> invoices = filterInvoices(invoiceService.findAll(), filterDateFrom, filterDateTo, filterPaymentType);
         model.addAttribute("invoices", sortInvoices(invoices, sort, dir));
         model.addAttribute("clientNames", clientService.findAll().stream()
                 .collect(Collectors.toMap(c -> c.id(), c -> c.name(), (a, b) -> a)));
         model.addAttribute("sort", sort);
         model.addAttribute("dir", dir);
-        model.addAttribute("filterDate", filterDate);
+        model.addAttribute("filterDateFrom", filterDateFrom);
+        model.addAttribute("filterDateTo", filterDateTo);
         model.addAttribute("filterPaymentType", filterPaymentType);
         model.addAttribute("paymentTypes", InvoicePaymentType.values());
         return "invoices/list";
@@ -118,10 +123,11 @@ public class InvoicePageController {
         return "invoices/view";
     }
 
-    private List<InvoiceResponse> filterInvoices(List<InvoiceResponse> invoices, LocalDate filterDate,
-                                                  InvoicePaymentType filterPaymentType) {
+    private List<InvoiceResponse> filterInvoices(List<InvoiceResponse> invoices, LocalDate filterDateFrom,
+                                                  LocalDate filterDateTo, InvoicePaymentType filterPaymentType) {
         return invoices.stream()
-                .filter(inv -> filterDate == null || inv.documentDate().toLocalDate().equals(filterDate))
+                .filter(inv -> filterDateFrom == null || !inv.documentDate().toLocalDate().isBefore(filterDateFrom))
+                .filter(inv -> filterDateTo == null || !inv.documentDate().toLocalDate().isAfter(filterDateTo))
                 .filter(inv -> filterPaymentType == null || inv.paymentType() == filterPaymentType)
                 .toList();
     }
@@ -153,7 +159,14 @@ public class InvoicePageController {
             addReferenceData(model);
             return "invoices/form";
         }
-        invoiceService.create(toRequest(form));
+        InvoiceResponse created = invoiceService.create(toRequest(form));
+        boolean hasCalibrationService = created.items().stream()
+                .anyMatch(i -> i.itemName() != null && i.itemName().startsWith(CALIBRATION_SERVICE_PREFIX));
+        if (hasCalibrationService) {
+            // Straight into the matching protocol — no need to detour through the invoice view
+            // page just to click "Створити протокол" a second later.
+            return "redirect:/calibration-protocols/new?invoiceId=" + created.id();
+        }
         return "redirect:/invoices";
     }
 
@@ -228,6 +241,10 @@ public class InvoicePageController {
         BigDecimal totalWithoutVat = totalAmount.subtract(totalVat);
         String amountInWords = UkrainianAmountWords.amountToWords(totalAmount);
 
+        String contractNumber = contractService.findLatestByClientId(invoice.clientId())
+                .map(ContractResponse::contractNumber)
+                .orElse(null);
+
         Context context = new Context(new Locale("uk"));
         context.setVariable("invoice", invoice);
         context.setVariable("client", clientService.findById(invoice.clientId()));
@@ -236,6 +253,7 @@ public class InvoicePageController {
         context.setVariable("totalVat", totalVat);
         context.setVariable("totalWithoutVat", totalWithoutVat);
         context.setVariable("amountInWords", amountInWords);
+        context.setVariable("contractNumber", contractNumber);
         byte[] pdf = pdfRenderService.render("invoice-bill", context);
 
         response.setContentType(MediaType.APPLICATION_PDF_VALUE);

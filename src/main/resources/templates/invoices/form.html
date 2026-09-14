@@ -222,7 +222,7 @@
             </div>
             <div class="field field-full">
                 <label for="newClientPhone">Телефон</label>
-                <input type="tel" id="newClientPhone" placeholder="+380XXXXXXXXX">
+                <input type="tel" id="newClientPhone" placeholder="+38(0XX)-XXX-XX-XX" maxlength="19">
             </div>
             <div class="field field-full">
                 <label for="newClientEmail">Email</label>
@@ -241,22 +241,29 @@
             <h2>Автомобілі контрагента</h2>
             <div class="alert alert-error" id="vehiclePickerError" hidden></div>
 
-            <div class="table-scroll">
-                <table class="clean-table" id="vehiclePickerTable">
-                    <thead>
-                    <tr>
-                        <th>Держ. номер</th>
-                        <th>VIN</th>
-                        <th>Марка</th>
-                        <th>Модель</th>
-                        <th>Рік</th>
-                        <th>Останній візит</th>
-                        <th></th>
-                    </tr>
-                    </thead>
-                    <tbody id="vehiclePickerBody"></tbody>
-                </table>
-            </div>
+            <table class="clean-table clean-table--fixed" id="vehiclePickerTable">
+                <colgroup>
+                    <col style="width:13%">
+                    <col style="width:20%">
+                    <col style="width:14%">
+                    <col style="width:14%">
+                    <col style="width:7%">
+                    <col style="width:20%">
+                    <col style="width:12%">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th>Держ. номер</th>
+                    <th>VIN</th>
+                    <th>Марка</th>
+                    <th>Модель</th>
+                    <th>Рік</th>
+                    <th>Останній візит</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="vehiclePickerBody"></tbody>
+            </table>
             <div class="muted" id="vehiclePickerEmpty" hidden>У цього контрагента ще немає жодного автомобіля.</div>
 
             <div class="form-actions">
@@ -341,7 +348,7 @@
             </div>
             <div class="field field-full">
                 <label for="newDriverPhone">Телефон</label>
-                <input type="tel" id="newDriverPhone" placeholder="+380XXXXXXXXX">
+                <input type="tel" id="newDriverPhone" placeholder="+38(0XX)-XXX-XX-XX" maxlength="19">
             </div>
             <div class="form-actions">
                 <button type="button" class="btn" id="saveNewDriverBtn">Зберегти</button>
@@ -605,6 +612,7 @@
             var clientModalError = document.getElementById('clientModalError');
             var newClientName = document.getElementById('newClientName');
             var newClientPhone = document.getElementById('newClientPhone');
+            ProtaxoPhone.mask(newClientPhone);
             var newClientEmail = document.getElementById('newClientEmail');
 
             document.getElementById('addClientBtn').addEventListener('click', function () {
@@ -962,6 +970,7 @@
             var addDriverError = document.getElementById('addDriverError');
             var newDriverFullName = document.getElementById('newDriverFullName');
             var newDriverPhone = document.getElementById('newDriverPhone');
+            ProtaxoPhone.mask(newDriverPhone);
 
             document.getElementById('addDriverBtn').addEventListener('click', function () {
                 driverDropdown.hidden = true;

@@ -41,8 +41,8 @@
                 </div>
 
                 <div class="field">
-                    <label for="stampNumber">Номер штампу</label>
-                    <input type="text" id="stampNumber" th:field="*{stampNumber}">
+                    <label>Номер штампу</label>
+                    <div>UA-999</div>
                 </div>
 
                 <div class="field">
@@ -64,16 +64,32 @@
                     </datalist>
                 </div>
 
+                <div class="field">
+                    <label for="vehicleVrn">Реєстраційний номер ТЗ (VRN)</label>
+                    <input type="text" id="vehicleVrn" th:field="*{vehicleVrn}">
+                </div>
+
+                <div class="field">
+                    <label for="vehicleVin">Ідентифікаційний номер (VIN)</label>
+                    <input type="text" id="vehicleVin" th:field="*{vehicleVin}">
+                </div>
+
                 <div class="field field-full">
                     <label>Наряд</label>
                     <div th:if="${orderLabel} != null" th:text="${orderLabel}"></div>
                     <div th:if="${orderLabel} == null" class="muted">Наряд-заказ та внутрішній номер з датою та часом — з'явиться після збереження</div>
                 </div>
 
-                <div class="field">
+                <div class="field combobox-field">
                     <label for="cardNumber">Номер картки *</label>
-                    <input type="text" id="cardNumber" th:field="*{cardNumber}" placeholder="XXX123456789012" style="text-transform:uppercase">
-                    <div class="muted">3 великі латинські літери та 12 цифр</div>
+                    <div class="combobox">
+                        <input type="text" id="cardNumber" th:field="*{cardNumber}" readonly class="picker-input"
+                               placeholder="— оберіть картку —">
+                        <div class="combobox-dropdown" id="cardNumberDropdown" hidden>
+                            <div class="combobox-options" id="cardNumberOptions"></div>
+                            <button type="button" class="combobox-add-btn" id="addCardBtn" sec:authorize="hasRole('ADMIN')">+ Додати картку</button>
+                        </div>
+                    </div>
                     <div class="field-error" th:if="${#fields.hasErrors('cardNumber')}" th:errors="*{cardNumber}"></div>
                 </div>
 
@@ -92,27 +108,157 @@
 
                 <div class="field">
                     <label for="tachographBrand">Марка</label>
-                    <input type="text" id="tachographBrand" th:field="*{tachographBrand}">
+                    <select id="tachographBrand" th:field="*{tachographBrand}"></select>
+                    <button type="button" class="link-btn" data-category="BRAND" data-target="tachographBrand">+ Додати марку</button>
                 </div>
 
                 <div class="field">
                     <label for="tachographModel">Модель</label>
-                    <input type="text" id="tachographModel" th:field="*{tachographModel}">
+                    <select id="tachographModel" th:field="*{tachographModel}"></select>
+                    <button type="button" class="link-btn" data-category="MODEL" data-target="tachographModel">+ Додати модель</button>
                 </div>
 
                 <div class="field">
                     <label for="tachographType">Тип</label>
-                    <input type="text" id="tachographType" th:field="*{tachographType}">
+                    <select id="tachographType" th:field="*{tachographType}"></select>
+                    <button type="button" class="link-btn" data-category="TYPE" data-target="tachographType">+ Додати тип</button>
                 </div>
 
                 <div class="field">
                     <label for="tachographManufacturer">Виробник</label>
-                    <input type="text" id="tachographManufacturer" th:field="*{tachographManufacturer}">
+                    <select id="tachographManufacturer" th:field="*{tachographManufacturer}"></select>
+                    <button type="button" class="link-btn" data-category="MANUFACTURER" data-target="tachographManufacturer">+ Додати виробника</button>
+                </div>
+
+                <div class="field">
+                    <label for="tachographSerialNumber">Заводський номер</label>
+                    <input type="text" id="tachographSerialNumber" th:field="*{tachographSerialNumber}">
+                </div>
+
+                <div class="field">
+                    <label for="tachographManufactureYear">Дата виготовлення</label>
+                    <input type="text" id="tachographManufactureYear" th:field="*{tachographManufactureYear}" placeholder="напр. 2014">
+                </div>
+
+                <div class="field field-full">
+                    <label for="inspectionReason">Підстава для перевірки та адаптації</label>
+                    <input type="text" id="inspectionReason" th:field="*{inspectionReason}"
+                           placeholder="установлення, дотримання періодичності перевірки, ремонт, заміна трансмісійних агрегатів або пневматичних шин іншого розміру, інші підстави">
                 </div>
 
                 <div class="field">
                     <label for="previousInspectionDate">Дата попередньої перевірки</label>
                     <input type="date" id="previousInspectionDate" th:field="*{previousInspectionDate}">
+                </div>
+
+                <div class="field-full" style="grid-column:1/-1;margin-top:0.5rem;">
+                    <h2 style="font-size:1.05rem;margin-bottom:0.25rem;">Результати перевірки та адаптації тахографа</h2>
+                </div>
+
+                <div class="field">
+                    <label for="mileageBefore">Пробіг до перевірки (км)</label>
+                    <input type="text" id="mileageBefore" th:field="*{mileageBefore}">
+                </div>
+
+                <div class="field">
+                    <label for="mileageAfter">Пробіг після перевірки (км)</label>
+                    <input type="text" id="mileageAfter" th:field="*{mileageAfter}">
+                </div>
+
+                <div class="field">
+                    <label for="tireSize">Розмір пневматичних шин</label>
+                    <input type="text" id="tireSize" th:field="*{tireSize}" placeholder="напр. 315/70 R22,5">
+                </div>
+
+                <div class="field">
+                    <label for="tirePressure">Тиск в пневматичних шинах (МПа)</label>
+                    <input type="text" id="tirePressure" th:field="*{tirePressure}">
+                </div>
+
+                <div class="field">
+                    <label for="tireCircumferenceL">Ефективна довжина кола шин, L (мм)</label>
+                    <input type="text" id="tireCircumferenceL" th:field="*{tireCircumferenceL}">
+                </div>
+
+                <div class="field">
+                    <label for="coefficientW">Характеристичний коефіцієнт, w</label>
+                    <input type="text" id="coefficientW" th:field="*{coefficientW}">
+                </div>
+
+                <div class="field">
+                    <label for="constantK">Константа тахографа, k</label>
+                    <input type="text" id="constantK" th:field="*{constantK}">
+                </div>
+
+                <div class="field">
+                    <label for="pathDeviationAfterInstall">Відхилення шляху — після встановлення (%)</label>
+                    <input type="text" id="pathDeviationAfterInstall" th:field="*{pathDeviationAfterInstall}">
+                </div>
+
+                <div class="field">
+                    <label for="pathDeviationInService">Відхилення шляху — в експлуатації (%)</label>
+                    <input type="text" id="pathDeviationInService" th:field="*{pathDeviationInService}">
+                </div>
+
+                <div class="field">
+                    <label for="speedDeviationAfterInstall">Відхилення швидкості — після встановлення (км/год)</label>
+                    <input type="text" id="speedDeviationAfterInstall" th:field="*{speedDeviationAfterInstall}">
+                </div>
+
+                <div class="field">
+                    <label for="speedDeviationInService">Відхилення швидкості — в експлуатації (км/год)</label>
+                    <input type="text" id="speedDeviationInService" th:field="*{speedDeviationInService}">
+                </div>
+
+                <div class="field">
+                    <label for="timeDeviationAfterInstall">Відхилення часу — після встановлення</label>
+                    <input type="text" id="timeDeviationAfterInstall" th:field="*{timeDeviationAfterInstall}">
+                </div>
+
+                <div class="field">
+                    <label for="timeDeviationInService">Відхилення часу — в експлуатації</label>
+                    <input type="text" id="timeDeviationInService" th:field="*{timeDeviationInService}">
+                </div>
+
+                <div class="field">
+                    <label for="speedLimiterValue">Спрацювання обмежувача швидкості (км/год)</label>
+                    <input type="text" id="speedLimiterValue" th:field="*{speedLimiterValue}">
+                </div>
+
+                <div class="field">
+                    <label for="coverOpeningRegistered">Відкриття кришки зареєстровано</label>
+                    <input type="text" id="coverOpeningRegistered" th:field="*{coverOpeningRegistered}" placeholder="Так / Ні">
+                </div>
+
+                <div class="field">
+                    <label for="powerCutoffRegistered">Вимкнення живлення зареєстровано</label>
+                    <input type="text" id="powerCutoffRegistered" th:field="*{powerCutoffRegistered}" placeholder="Так / Ні">
+                </div>
+
+                <div class="field">
+                    <label for="pulseSensorInterruptionRegistered">Перерва давача імпульсів зареєстрована</label>
+                    <input type="text" id="pulseSensorInterruptionRegistered" th:field="*{pulseSensorInterruptionRegistered}" placeholder="Так / Ні">
+                </div>
+
+                <div class="field-full" style="grid-column:1/-1;margin-top:0.5rem;">
+                    <h2 style="font-size:1.05rem;margin-bottom:0.25rem;">Роботи виконав</h2>
+                </div>
+
+                <div class="field combobox-field">
+                    <label for="executorName">Робітник (ПІБ) *</label>
+                    <div class="combobox">
+                        <input type="text" id="executorName" th:field="*{executorName}" readonly class="picker-input"
+                               placeholder="— оберіть робітника —">
+                        <div class="combobox-dropdown" id="executorDropdown" hidden>
+                            <div class="combobox-options" id="executorOptions"></div>
+                            <button type="button" class="combobox-add-btn" id="addExecutorBtn" sec:authorize="hasRole('ADMIN')">+ Додати нового робітника</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="executorPosition">Посада</label>
+                    <input type="text" id="executorPosition" th:field="*{executorPosition}" readonly>
                 </div>
 
                 <div class="form-actions">
@@ -125,13 +271,350 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="cardModalOverlay" hidden>
+        <div class="modal">
+            <h2>Нова картка</h2>
+            <div class="alert alert-error" id="cardModalError" hidden></div>
+            <div class="field field-full">
+                <label for="newCardNumber">Номер картки *</label>
+                <input type="text" id="newCardNumber" placeholder="XXX123456789012" style="text-transform:uppercase">
+                <div class="muted">3 великі латинські літери та 12 цифр</div>
+            </div>
+            <div class="field field-full">
+                <label for="newCardHolderName">Власник картки *</label>
+                <input type="text" id="newCardHolderName" placeholder="Прізвище І.П.">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveCardBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelCardBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="attributeModalOverlay" hidden>
+        <div class="modal">
+            <h2 id="attributeModalTitle">Нове значення</h2>
+            <div class="alert alert-error" id="attributeModalError" hidden></div>
+            <div class="field field-full">
+                <label for="newAttributeName">Назва *</label>
+                <input type="text" id="newAttributeName">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveAttributeBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelAttributeBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="executorModalOverlay" hidden>
+        <div class="modal">
+            <h2>Новий робітник</h2>
+            <div class="alert alert-error" id="executorModalError" hidden></div>
+            <div class="field field-full">
+                <label for="newExecutorFullName">ПІБ *</label>
+                <input type="text" id="newExecutorFullName">
+            </div>
+            <div class="field field-full">
+                <label for="newExecutorPosition">Посада *</label>
+                <input type="text" id="newExecutorPosition">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveExecutorBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelExecutorBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        var initialTachographBrand = /*[[${protocol.tachographBrand}]]*/ '';
+        var initialTachographModel = /*[[${protocol.tachographModel}]]*/ '';
+        var initialTachographType = /*[[${protocol.tachographType}]]*/ '';
+        var initialTachographManufacturer = /*[[${protocol.tachographManufacturer}]]*/ '';
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // pendingSelectValues lets a restored draft (see below) win over the server-rendered
+            // initial* values for the four <select> fields, which are populated asynchronously
+            // after fetch() resolves — long after th:field would normally have marked "selected".
+            var pendingSelectValues = {};
+
+            // --- "Номер картки": readonly combobox picker backed by /api/master-cards ---
+            var masterCards = [];
             var cardNumberInput = document.getElementById('cardNumber');
-            cardNumberInput.addEventListener('input', function () {
-                var pos = cardNumberInput.selectionStart;
-                cardNumberInput.value = cardNumberInput.value.toUpperCase();
-                cardNumberInput.setSelectionRange(pos, pos);
+            var cardNumberDropdown = document.getElementById('cardNumberDropdown');
+            var cardNumberOptions = document.getElementById('cardNumberOptions');
+            var addCardBtn = document.getElementById('addCardBtn');
+
+            function renderCardOptions() {
+                cardNumberOptions.innerHTML = '';
+                if (masterCards.length === 0) {
+                    var empty = document.createElement('div');
+                    empty.className = 'combobox-empty';
+                    empty.textContent = 'Довідник карток ще порожній';
+                    cardNumberOptions.appendChild(empty);
+                }
+                masterCards.forEach(function (c) {
+                    var opt = document.createElement('div');
+                    opt.className = 'combobox-option';
+                    opt.textContent = c.cardNumber + ' — ' + c.holderName;
+                    opt.addEventListener('click', function () {
+                        cardNumberInput.value = c.cardNumber;
+                        cardNumberDropdown.hidden = true;
+                    });
+                    cardNumberOptions.appendChild(opt);
+                });
+            }
+
+            cardNumberInput.addEventListener('click', function () {
+                renderCardOptions();
+                cardNumberDropdown.hidden = false;
+            });
+            document.addEventListener('click', function (e) {
+                if (!cardNumberDropdown.contains(e.target) && e.target !== cardNumberInput) {
+                    cardNumberDropdown.hidden = true;
+                }
+            });
+
+            fetch('/api/master-cards', { credentials: 'same-origin' })
+                .then(function (resp) { return resp.ok ? resp.json() : []; })
+                .then(function (cards) { masterCards = cards; });
+
+            var cardModalOverlay = document.getElementById('cardModalOverlay');
+            var cardModalError = document.getElementById('cardModalError');
+            var newCardNumber = document.getElementById('newCardNumber');
+            var newCardHolderName = document.getElementById('newCardHolderName');
+
+            newCardNumber.addEventListener('input', function () {
+                var pos = newCardNumber.selectionStart;
+                newCardNumber.value = newCardNumber.value.toUpperCase();
+                newCardNumber.setSelectionRange(pos, pos);
+            });
+
+            if (addCardBtn) {
+                addCardBtn.addEventListener('click', function () {
+                    cardNumberDropdown.hidden = true;
+                    cardModalError.hidden = true;
+                    newCardNumber.value = '';
+                    newCardHolderName.value = '';
+                    cardModalOverlay.hidden = false;
+                    newCardNumber.focus();
+                });
+            }
+            document.getElementById('cancelCardBtn').addEventListener('click', function () {
+                cardModalOverlay.hidden = true;
+            });
+            document.getElementById('saveCardBtn').addEventListener('click', function () {
+                var cardNumber = newCardNumber.value.trim();
+                var holderName = newCardHolderName.value.trim();
+                if (!cardNumber || !holderName) {
+                    cardModalError.textContent = "Номер картки і власник обов'язкові";
+                    cardModalError.hidden = false;
+                    return;
+                }
+                fetch('/api/master-cards', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cardNumber: cardNumber, holderName: holderName })
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (body) { throw new Error(body.message || 'Не вдалося створити картку'); });
+                    }
+                    return resp.json();
+                }).then(function (created) {
+                    masterCards.push(created);
+                    cardNumberInput.value = created.cardNumber;
+                    cardModalOverlay.hidden = true;
+                }).catch(function (err) {
+                    cardModalError.textContent = err.message;
+                    cardModalError.hidden = false;
+                });
+            });
+
+            // --- "Дані тахографа": four independent <select> fields backed by
+            // /api/tachograph-attributes?category=X, each with its own "+ Додати" trigger
+            // sharing one modal (attributeModalOverlay) parameterized by category/target. ---
+            var attributeCache = {};
+            var attributeLabels = {
+                BRAND: 'марку', MODEL: 'модель', TYPE: 'тип', MANUFACTURER: 'виробника'
+            };
+            var attributeTitles = {
+                BRAND: 'Нова марка тахографа', MODEL: 'Нова модель тахографа',
+                TYPE: 'Новий тип тахографа', MANUFACTURER: 'Новий виробник тахографа'
+            };
+            var attributeInitial = {
+                tachographBrand: initialTachographBrand, tachographModel: initialTachographModel,
+                tachographType: initialTachographType, tachographManufacturer: initialTachographManufacturer
+            };
+
+            function populateAttributeSelect(selectId, category, selectName) {
+                var select = document.getElementById(selectId);
+                var items = attributeCache[category] || [];
+                select.innerHTML = '<option value="">— оберіть ' + attributeLabels[category] + ' —</option>';
+                items.forEach(function (a) {
+                    var opt = document.createElement('option');
+                    opt.value = a.name;
+                    opt.textContent = a.name;
+                    if (a.name === selectName) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            }
+
+            function loadAttributeCategory(category, selects) {
+                fetch('/api/tachograph-attributes?category=' + category, { credentials: 'same-origin' })
+                    .then(function (resp) { return resp.ok ? resp.json() : []; })
+                    .then(function (items) {
+                        attributeCache[category] = items;
+                        selects.forEach(function (selectId) {
+                            populateAttributeSelect(selectId, category, pendingSelectValues[selectId] || attributeInitial[selectId]);
+                        });
+                    });
+            }
+
+            loadAttributeCategory('BRAND', ['tachographBrand']);
+            loadAttributeCategory('MODEL', ['tachographModel']);
+            loadAttributeCategory('TYPE', ['tachographType']);
+            loadAttributeCategory('MANUFACTURER', ['tachographManufacturer']);
+
+            var attributeModalOverlay = document.getElementById('attributeModalOverlay');
+            var attributeModalTitle = document.getElementById('attributeModalTitle');
+            var attributeModalError = document.getElementById('attributeModalError');
+            var newAttributeName = document.getElementById('newAttributeName');
+            var attributeTargetCategory = null;
+            var attributeTargetSelectId = null;
+
+            document.querySelectorAll('.link-btn[data-category]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    attributeTargetCategory = btn.dataset.category;
+                    attributeTargetSelectId = btn.dataset.target;
+                    attributeModalTitle.textContent = attributeTitles[attributeTargetCategory];
+                    attributeModalError.hidden = true;
+                    newAttributeName.value = '';
+                    attributeModalOverlay.hidden = false;
+                    newAttributeName.focus();
+                });
+            });
+            document.getElementById('cancelAttributeBtn').addEventListener('click', function () {
+                attributeModalOverlay.hidden = true;
+            });
+            document.getElementById('saveAttributeBtn').addEventListener('click', function () {
+                var name = newAttributeName.value.trim();
+                if (!name) {
+                    attributeModalError.textContent = "Назва обов'язкова";
+                    attributeModalError.hidden = false;
+                    return;
+                }
+                fetch('/api/tachograph-attributes?category=' + attributeTargetCategory, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (body) { throw new Error(body.message || 'Не вдалося зберегти значення'); });
+                    }
+                    return resp.json();
+                }).then(function (created) {
+                    var list = attributeCache[attributeTargetCategory] || [];
+                    list.push(created);
+                    attributeCache[attributeTargetCategory] = list;
+                    populateAttributeSelect(attributeTargetSelectId, attributeTargetCategory, created.name);
+                    attributeModalOverlay.hidden = true;
+                }).catch(function (err) {
+                    attributeModalError.textContent = err.message;
+                    attributeModalError.hidden = false;
+                });
+            });
+
+            // --- "Роботи виконав": readonly combobox picker backed by /api/repair-workers,
+            // selecting a worker fills both executorName and the readonly executorPosition. ---
+            var repairWorkers = [];
+            var executorNameInput = document.getElementById('executorName');
+            var executorPositionInput = document.getElementById('executorPosition');
+            var executorDropdown = document.getElementById('executorDropdown');
+            var executorOptions = document.getElementById('executorOptions');
+            var addExecutorBtn = document.getElementById('addExecutorBtn');
+
+            function renderExecutorOptions() {
+                executorOptions.innerHTML = '';
+                if (repairWorkers.length === 0) {
+                    var empty = document.createElement('div');
+                    empty.className = 'combobox-empty';
+                    empty.textContent = 'Довідник робітників ще порожній';
+                    executorOptions.appendChild(empty);
+                }
+                repairWorkers.forEach(function (w) {
+                    var opt = document.createElement('div');
+                    opt.className = 'combobox-option';
+                    opt.textContent = w.fullName + ' — ' + w.position;
+                    opt.addEventListener('click', function () {
+                        executorNameInput.value = w.fullName;
+                        executorPositionInput.value = w.position;
+                        executorDropdown.hidden = true;
+                    });
+                    executorOptions.appendChild(opt);
+                });
+            }
+
+            executorNameInput.addEventListener('click', function () {
+                renderExecutorOptions();
+                executorDropdown.hidden = false;
+            });
+            document.addEventListener('click', function (e) {
+                if (!executorDropdown.contains(e.target) && e.target !== executorNameInput) {
+                    executorDropdown.hidden = true;
+                }
+            });
+
+            fetch('/api/repair-workers', { credentials: 'same-origin' })
+                .then(function (resp) { return resp.ok ? resp.json() : []; })
+                .then(function (workers) { repairWorkers = workers; });
+
+            var executorModalOverlay = document.getElementById('executorModalOverlay');
+            var executorModalError = document.getElementById('executorModalError');
+            var newExecutorFullName = document.getElementById('newExecutorFullName');
+            var newExecutorPosition = document.getElementById('newExecutorPosition');
+
+            if (addExecutorBtn) {
+                addExecutorBtn.addEventListener('click', function () {
+                    executorDropdown.hidden = true;
+                    executorModalError.hidden = true;
+                    newExecutorFullName.value = '';
+                    newExecutorPosition.value = '';
+                    executorModalOverlay.hidden = false;
+                    newExecutorFullName.focus();
+                });
+            }
+            document.getElementById('cancelExecutorBtn').addEventListener('click', function () {
+                executorModalOverlay.hidden = true;
+            });
+            document.getElementById('saveExecutorBtn').addEventListener('click', function () {
+                var fullName = newExecutorFullName.value.trim();
+                var position = newExecutorPosition.value.trim();
+                if (!fullName || !position) {
+                    executorModalError.textContent = "ПІБ і посада обов'язкові";
+                    executorModalError.hidden = false;
+                    return;
+                }
+                fetch('/api/repair-workers', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullName: fullName, position: position })
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (body) { throw new Error(body.message || 'Не вдалося створити робітника'); });
+                    }
+                    return resp.json();
+                }).then(function (created) {
+                    repairWorkers.push(created);
+                    executorNameInput.value = created.fullName;
+                    executorPositionInput.value = created.position;
+                    executorModalOverlay.hidden = true;
+                }).catch(function (err) {
+                    executorModalError.textContent = err.message;
+                    executorModalError.hidden = false;
+                });
             });
 
             // Draft tracking (client-side only, right-hand column — see fragments/topbar.html
@@ -143,9 +626,16 @@
                 var draftStatus = document.getElementById('protocolDraftStatus');
                 var existingDraftId = new URLSearchParams(window.location.search).get('draft');
 
-                var fieldIds = ['internalNumber', 'stampNumber', 'clientId', 'vehicleName', 'cardNumber',
-                    'representativeName', 'tachographBrand', 'tachographModel', 'tachographType',
-                    'tachographManufacturer', 'previousInspectionDate'];
+                var fieldIds = ['internalNumber', 'clientId', 'vehicleName', 'vehicleVrn', 'vehicleVin',
+                    'cardNumber', 'representativeName', 'tachographBrand', 'tachographModel', 'tachographType',
+                    'tachographManufacturer', 'tachographSerialNumber', 'tachographManufactureYear', 'inspectionReason',
+                    'previousInspectionDate', 'mileageBefore', 'mileageAfter', 'tireSize', 'tirePressure',
+                    'tireCircumferenceL', 'coefficientW', 'constantK', 'pathDeviationAfterInstall',
+                    'pathDeviationInService', 'speedDeviationAfterInstall', 'speedDeviationInService',
+                    'timeDeviationAfterInstall', 'timeDeviationInService', 'speedLimiterValue',
+                    'coverOpeningRegistered', 'powerCutoffRegistered', 'pulseSensorInterruptionRegistered',
+                    'executorPosition', 'executorName'];
+                var selectFieldIds = ['tachographBrand', 'tachographModel', 'tachographType', 'tachographManufacturer'];
 
                 function computeDraftLabel() {
                     var vehicle = document.getElementById('vehicleName').value.trim();
@@ -166,6 +656,12 @@
                     fieldIds.forEach(function (id) {
                         if (snapshot[id] !== undefined) {
                             document.getElementById(id).value = snapshot[id];
+                            if (selectFieldIds.indexOf(id) !== -1) {
+                                // The four tachograph <select> fields are populated asynchronously
+                                // (see loadAttributeCategory above) — stash the value so it wins
+                                // over initialTachograph* once options actually exist.
+                                pendingSelectValues[id] = snapshot[id];
+                            }
                         }
                     });
                 }

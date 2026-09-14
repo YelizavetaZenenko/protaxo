@@ -19,8 +19,10 @@
                 <input type="hidden" name="sort" th:value="${sort}">
                 <input type="hidden" name="dir" th:value="${dir}">
                 <div class="field">
-                    <label for="filterDate">Дата</label>
-                    <input type="date" id="filterDate" name="filterDate" th:value="${filterDate}">
+                    <label for="filterDateDisplay">Дата</label>
+                    <input type="text" id="filterDateDisplay" class="picker-input" readonly placeholder="Усі дати">
+                    <input type="hidden" id="filterDateFrom" name="filterDateFrom" th:value="${filterDateFrom}">
+                    <input type="hidden" id="filterDateTo" name="filterDateTo" th:value="${filterDateTo}">
                 </div>
                 <div class="field">
                     <label for="filterPaymentType">Тип оплати</label>
@@ -34,7 +36,7 @@
                     <label>&nbsp;</label>
                     <div class="filter-actions">
                         <button type="submit" class="btn-outline">Фільтрувати</button>
-                        <a class="link-btn" th:if="${filterDate != null or filterPaymentType != null}"
+                        <a class="link-btn" th:if="${filterDateFrom != null or filterDateTo != null or filterPaymentType != null}"
                            th:href="@{/invoices(sort=${sort}, dir=${dir})}">Скинути фільтр</a>
                     </div>
                 </div>
@@ -97,6 +99,25 @@
 
     <button type="button" id="scrollTopBtn" class="scroll-top-btn" title="Нагору, до таблиці" hidden>↑ Нагору</button>
 
+    <div class="modal-overlay" id="dateRangeModalOverlay" hidden>
+        <div class="modal">
+            <h2>Період</h2>
+            <div class="field">
+                <label for="dateRangeFromInput">Дата від</label>
+                <input type="date" id="dateRangeFromInput">
+            </div>
+            <div class="field">
+                <label for="dateRangeToInput">Дата до</label>
+                <input type="date" id="dateRangeToInput">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="applyDateRangeBtn">Застосувати</button>
+                <button type="button" class="btn-outline" id="clearDateRangeBtn">Скинути</button>
+                <button type="button" class="btn-outline" id="cancelDateRangeBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var btn = document.getElementById('scrollTopBtn');
@@ -116,6 +137,68 @@
                     window.location.href = row.dataset.href;
                 });
             });
+        });
+    </script>
+
+    <script>
+        /**
+         * "Дата від"/"Дата до" used to be two separate visible fields in the filter bar — merged
+         * into this single field + modal at the user's request. The two real filter values still
+         * travel to the server as the same filterDateFrom/filterDateTo params (hidden inputs),
+         * only the picker UI changed.
+         */
+        document.addEventListener('DOMContentLoaded', function () {
+            var display = document.getElementById('filterDateDisplay');
+            var fromHidden = document.getElementById('filterDateFrom');
+            var toHidden = document.getElementById('filterDateTo');
+            var overlay = document.getElementById('dateRangeModalOverlay');
+            var fromInput = document.getElementById('dateRangeFromInput');
+            var toInput = document.getElementById('dateRangeToInput');
+
+            function formatDisplayDate(iso) {
+                var parts = iso.split('-');
+                return parts[2] + '.' + parts[1] + '.' + parts[0];
+            }
+
+            function updateDisplay() {
+                var from = fromHidden.value;
+                var to = toHidden.value;
+                if (from && to) {
+                    display.value = formatDisplayDate(from) + ' – ' + formatDisplayDate(to);
+                } else if (from) {
+                    display.value = 'з ' + formatDisplayDate(from);
+                } else if (to) {
+                    display.value = 'по ' + formatDisplayDate(to);
+                } else {
+                    display.value = '';
+                }
+            }
+
+            display.addEventListener('click', function () {
+                fromInput.value = fromHidden.value;
+                toInput.value = toHidden.value;
+                overlay.hidden = false;
+            });
+
+            document.getElementById('applyDateRangeBtn').addEventListener('click', function () {
+                fromHidden.value = fromInput.value;
+                toHidden.value = toInput.value;
+                updateDisplay();
+                overlay.hidden = true;
+            });
+
+            document.getElementById('clearDateRangeBtn').addEventListener('click', function () {
+                fromHidden.value = '';
+                toHidden.value = '';
+                updateDisplay();
+                overlay.hidden = true;
+            });
+
+            document.getElementById('cancelDateRangeBtn').addEventListener('click', function () {
+                overlay.hidden = true;
+            });
+
+            updateDisplay();
         });
     </script>
 </body>

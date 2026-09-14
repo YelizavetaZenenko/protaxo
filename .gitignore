@@ -37,3 +37,6 @@ docs/.obsidian/
 
 ### Logs ###
 logs/
+
+### DB backups ###
+backups/
