@@ -1,0 +1,25 @@
+{
+	# Немає публічного домену, тому вимикаємо звичайний ACME (Let's Encrypt) —
+	# він все одно не спрацює без порту 80/443, відкритого в реальний інтернет.
+	auto_https off
+}
+
+{$APP_DOMAIN} {
+	# Справжній Let's Encrypt-сертифікат для *.ts.net-домену, випущений
+	# `tailscale cert` прямо на хості VPS (не самопідписаний) — без попереджень
+	# браузера. Файли лежать на хості в /opt/protaxo/certs, змонтовані в
+	# контейнер caddy як /certs (див. docker-compose.prod.yml).
+	tls /certs/cert.pem /certs/key.pem
+
+	reverse_proxy app:8080
+
+	# WebSocket для Print Agent (/ws/print-agent) проксується автоматично —
+	# reverse_proxy в Caddy 2 сам розпізнає Upgrade-заголовок, окремих
+	# налаштувань не потрібно. Див. docs/Print Agent.md.
+
+	encode gzip
+
+	log {
+		output file /data/access.log
+	}
+}

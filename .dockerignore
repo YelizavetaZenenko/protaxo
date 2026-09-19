@@ -1,0 +1,9 @@
+target/
+.git/
+.idea/
+logs/
+backups/
+*.log
+docs/
+print-agent/
+samples/
