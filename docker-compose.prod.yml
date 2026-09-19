@@ -17,6 +17,8 @@ services:
       MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
       MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-true}
       PRINT_AGENT_TOKEN: ${PRINT_AGENT_TOKEN}
+    volumes:
+      - app_logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
@@ -74,3 +76,4 @@ volumes:
   pgdata:
   caddy_data:
   caddy_config:
+  app_logs:
