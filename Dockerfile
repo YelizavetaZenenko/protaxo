@@ -13,7 +13,9 @@ RUN ./mvnw -B dependency:go-offline
 
 COPY src/ src/
 RUN ./mvnw -B -DskipTests package
-RUN java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted
+# Spring Boot 4.x перейменував "layertools" на "tools" з іншим синтаксисом
+# (--layers розбиває на шари, --launcher додає spring-boot-loader для JarLauncher).
+RUN java -Djarmode=tools -jar target/*.jar extract --layers --launcher --destination target/extracted
 
 # --- Runtime stage -----------------------------------------------------------
 FROM eclipse-temurin:21-jre AS runtime
