@@ -1,0 +1,76 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: protaxo_app
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/protaxo
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      APP_BASE_URL: ${APP_BASE_URL}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
+      MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-true}
+      PRINT_AGENT_TOKEN: ${PRINT_AGENT_TOKEN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+    # Жодного "ports:" тут навмисно — застосунок недосяжний інакше, ніж через caddy.
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: protaxo_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: protaxo
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+    # Так само без "ports:" — БД слухає лише у внутрішній docker-мережі, нуль
+    # зовнішньої поверхні атаки (див. docs/Варіанти розгортання (сервер).md).
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: protaxo_caddy
+    restart: always
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+    ports:
+      # Прив'язка до Tailscale IP сервера, а не 0.0.0.0 — щоб порт фізично не
+      # слухав звичайний публічний інтерфейс. TAILSCALE_IP береться з
+      # `tailscale ip -4` після приєднання машини до tailnet, задається в .env.
+      # Firewall провайдера (крок 3 плану) — другий, незалежний рубіж захисту.
+      - "${TAILSCALE_IP}:80:80"
+      - "${TAILSCALE_IP}:443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - /opt/protaxo/certs:/certs:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    networks:
+      - internal
+
+networks:
+  internal:
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

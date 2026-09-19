@@ -43,3 +43,6 @@ print-agent/printagent.properties
 
 ### DB backups ###
 backups/
+
+### Продакшн-секрети (пароль БД, PRINT_AGENT_TOKEN, SMTP) — не комітиться, див. .env.example ###
+.env
