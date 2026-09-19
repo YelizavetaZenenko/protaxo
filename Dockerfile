@@ -22,6 +22,10 @@ FROM eclipse-temurin:21-jre AS runtime
 WORKDIR /app
 
 RUN useradd --system --create-home --shell /usr/sbin/nologin app
+# logback-spring.xml пише аудит-лог у відносний шлях "logs/audit.log" —
+# директорія має існувати заздалегідь, бо непривілейований user не створить
+# її сам при першому записі.
+RUN mkdir -p /app/logs && chown -R app:app /app
 USER app
 
 # Шари копіюються окремо (від найстабільнішого до найчастіше змінюваного),
