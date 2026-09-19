@@ -26,6 +26,8 @@ public class CalibrationProtocolFormData {
 
     private String representativeName;
 
+    private Long tachographId;
+
     private String tachographBrand;
 
     private String tachographModel;
@@ -89,4 +91,6 @@ public class CalibrationProtocolFormData {
     private String executorName;
 
     private Long invoiceId;
+
+    private String sealNumbers;
 }

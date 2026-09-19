@@ -1,0 +1,23 @@
+{
+  "id": "conv-1789636028436-r9qynn7bv",
+  "providerId": "claude",
+  "title": "Привет",
+  "titleGenerationStatus": "success",
+  "createdAt": 1789636028440,
+  "lastActivityAt": 1789636038959,
+  "sessionId": "ce5559b8-c435-4b21-9aca-5dcb2bd17b63",
+  "selectedModel": "opus",
+  "providerState": {
+    "providerSessionId": "ce5559b8-c435-4b21-9aca-5dcb2bd17b63"
+  },
+  "usage": {
+    "model": "opus",
+    "inputTokens": 2,
+    "cacheCreationInputTokens": 26669,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 1000000,
+    "contextTokens": 26671,
+    "percentage": 3,
+    "contextWindowIsAuthoritative": true
+  }
+}

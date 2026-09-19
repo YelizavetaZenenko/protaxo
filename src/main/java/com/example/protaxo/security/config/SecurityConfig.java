@@ -23,10 +23,11 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/css/**", "/images/**", "/login", "/accept-invite").permitAll()
+                        .requestMatchers("/css/**", "/images/**", "/login", "/accept-invite", "/ws/print-agent", "/verify/**").permitAll()
                         .requestMatchers("/audit-log/**", "/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/repair-workers").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/repair-workers/*").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/master-cards").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/*/*/delete").hasRole("ADMIN")
                         .anyRequest().authenticated())

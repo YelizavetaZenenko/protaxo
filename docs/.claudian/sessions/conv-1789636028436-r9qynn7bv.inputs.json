@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "conversationId": "conv-1789636028436-r9qynn7bv",
+  "records": [
+    {
+      "schemaVersion": 1,
+      "id": "msg-1789636028711-oyi5o2k",
+      "userTurnOrdinal": 1,
+      "state": "accepted",
+      "localMessageId": "msg-1789636028432-x4p9uy0",
+      "timestamp": 1789636028432,
+      "rawDisplayText": "привет",
+      "canonicalText": "привет",
+      "images": [],
+      "contentDigest": "4616474febdc2b4192bc78f64004aa87dad7458c00a6681f26fbc07eb78fe10b",
+      "providerUserMessageId": "9fcfb1c2-6647-488f-9d80-ebb8ba22bdec",
+      "providerAssistantMessageId": "5236bafe-bc6d-44a5-8257-c3fefd289c0b"
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Акт виконаних робіт</title>
+    <style>
+        @page { size: A4; margin: 1.8cm; }
+        body { font-family: 'DejaVu Sans'; font-size: 10pt; color: #111111; }
+        h1 { font-size: 14pt; text-align: center; margin: 0 0 2pt 0; }
+        .subtitle { text-align: center; font-size: 10pt; margin: 0 0 4pt 0; }
+        .date-line { text-align: center; font-size: 10pt; margin: 0 0 16pt 0; }
+        p.intro { text-align: justify; margin: 0 0 12pt 0; }
+        table.items { width: 100%; border-collapse: collapse; margin-bottom: 10pt; }
+        table.items th, table.items td { border: 1px solid #333333; padding: 4pt 5pt; font-size: 9pt; }
+        table.items th { background-color: #eeeeee; text-align: center; }
+        table.items td.num { text-align: right; }
+        table.items td.center { text-align: center; }
+        p.summary { margin: 4pt 0 2pt 0; font-size: 9.5pt; }
+        p.summary-words { margin: 0 0 16pt 0; font-weight: bold; font-size: 10pt; }
+        p.closing { text-align: justify; margin: 0 0 26pt 0; }
+        table.sig-table { width: 100%; border-collapse: collapse; margin-top: 20pt; }
+        table.sig-table td { border: none; padding: 0; font-size: 10pt; width: 50%; vertical-align: top; }
+        .sig-line { display: inline-block; border-bottom: 1px solid #333333; width: 160pt; min-height: 12pt; margin-left: 6pt; }
+        .sig-caption { font-size: 8pt; color: #555555; margin-top: 2pt; }
+    </style>
+</head>
+<body>
+
+    <h1 th:text="'АКТ № ' + ${invoice.number}">АКТ</h1>
+    <div class="subtitle">виконаних робіт (наданих послуг)</div>
+    <div class="date-line" th:text="'від ' + ${#temporals.format(invoice.documentDate, 'd MMMM yyyy')} + ' р.'">від дати</div>
+
+    <p class="intro">
+        Ми, що нижче підписалися, з одного боку <strong>ФОП Вишивата Діана Олександрівна</strong> (Виконавець),
+        Україна, 11709, Житомирська обл., Звягельський р-н, місто Звягель, пров. Богуна, будинок 19-Б, квартира 2,
+        і з іншого боку <strong th:text="${client.fullName()}">Замовник</strong> (Замовник), склали цей акт про те,
+        що Виконавцем були виконані наступні роботи (надані наступні послуги):
+    </p>
+
+    <table class="items">
+        <thead>
+        <tr>
+            <th>№</th>
+            <th>Найменування робіт (послуг)</th>
+            <th>Кіл-сть</th>
+            <th>Од.</th>
+            <th>Ціна</th>
+            <th>Сума</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="row : ${rows}">
+            <td class="center" th:text="${row.lineNumber}">1</td>
+            <td th:text="${row.itemName}">Позиція</td>
+            <td class="num" th:text="${row.quantityDisplay()}">1</td>
+            <td class="center" th:text="${row.unit}">шт.</td>
+            <td class="num" th:text="${#numbers.formatDecimal(row.price, 1, 2)}">0,00</td>
+            <td class="num" th:text="${#numbers.formatDecimal(row.amount, 1, 2)}">0,00</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p class="summary" th:text="'Всього виконано робіт (надано послуг) на суму ' + ${#numbers.formatDecimal(totalAmount, 1, 2)} + ' грн.'">Всього</p>
+    <p class="summary-words" th:text="${amountInWords}">Сума словами</p>
+
+    <p class="closing">
+        Виконавець здав, а Замовник прийняв вищезазначені роботи (послуги) в повному обсязі.
+        Замовник претензій щодо обсягу, якості та строків виконання робіт (надання послуг) не має.
+    </p>
+
+    <table class="sig-table">
+        <tr>
+            <td>Виконавець <span class="sig-line"></span></td>
+            <td>Замовник <span class="sig-line"></span></td>
+        </tr>
+        <tr>
+            <td class="sig-caption">(підпис)</td>
+            <td class="sig-caption">(підпис)</td>
+        </tr>
+    </table>
+</body>
+</html>

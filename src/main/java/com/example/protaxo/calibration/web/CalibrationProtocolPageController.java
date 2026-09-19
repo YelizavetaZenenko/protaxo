@@ -8,6 +8,9 @@ import com.example.protaxo.client.service.ClientService;
 import com.example.protaxo.invoice.dto.InvoiceResponse;
 import com.example.protaxo.invoice.service.InvoiceService;
 import com.example.protaxo.pdf.service.PdfRenderService;
+import com.example.protaxo.printagent.PrintAgentSessionRegistry;
+import com.example.protaxo.printagent.QrCodeImageGenerator;
+import com.example.protaxo.printagent.TsplLabelBuilder;
 import com.example.protaxo.suggestion.entity.FieldSuggestionCategory;
 import com.example.protaxo.suggestion.service.FieldSuggestionService;
 import com.example.protaxo.vehicle.dto.VehicleResponse;
@@ -31,6 +34,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.thymeleaf.context.Context;
 
 @Controller
@@ -44,6 +48,9 @@ public class CalibrationProtocolPageController {
     private final VehicleService vehicleService;
     private final FieldSuggestionService fieldSuggestionService;
     private final PdfRenderService pdfRenderService;
+    private final PrintAgentSessionRegistry printAgentSessionRegistry;
+    private final TsplLabelBuilder tsplLabelBuilder;
+    private final QrCodeImageGenerator qrCodeImageGenerator;
 
     @GetMapping
     public String list(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate filterDate,
@@ -130,7 +137,49 @@ public class CalibrationProtocolPageController {
         CalibrationProtocolResponse response = calibrationProtocolService.findById(id);
         model.addAttribute("protocol", response);
         model.addAttribute("client", clientService.findById(response.clientId()));
+        model.addAttribute("printAgentConnected", printAgentSessionRegistry.isAnyAgentConnected());
         return "calibration-protocols/view";
+    }
+
+    /**
+     * Formats the protocol's seal numbers/QR hash as a TSPL label and broadcasts it to whatever
+     * [[Print Agent]] processes are currently connected over WebSocket — fire-and-forget, no job
+     * queue: if nothing is connected right now, the user is told so and can retry once the agent
+     * (re)starts, rather than the job silently getting lost or stuck.
+     */
+    @PostMapping("/{id}/print-label")
+    public String printLabel(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        CalibrationProtocolResponse protocol = calibrationProtocolService.ensureQrHash(id);
+        String clientName = clientService.findById(protocol.clientId()).name();
+        byte[] tspl = tsplLabelBuilder.build(protocol, clientName);
+        boolean sent = printAgentSessionRegistry.broadcast(tspl);
+        if (sent) {
+            redirectAttributes.addFlashAttribute("printSuccess", "Завдання на друк наклейки відправлено");
+        } else {
+            redirectAttributes.addFlashAttribute("printError", "Print Agent не підключений — наклейку не надіслано");
+        }
+        return "redirect:/calibration-protocols/" + id;
+    }
+
+    /**
+     * Shows what the label will look like WITHOUT a physical printer — an HTML/CSS approximation
+     * of TsplLabelBuilder's layout (same builder call, so the text content is always the exact
+     * source of truth) plus a real QR image rendered via ZXing, and the raw TSPL text underneath
+     * for anyone who wants to check it exactly. Positions on the actual label are TSPL
+     * dot-coordinates (8 dots/mm @ 203dpi) — this preview approximates the same layout with CSS,
+     * it does not literally replay the TSPL drawing commands.
+     */
+    @GetMapping("/{id}/label-preview")
+    public String labelPreview(@PathVariable Long id, Model model) {
+        CalibrationProtocolResponse protocol = calibrationProtocolService.ensureQrHash(id);
+        String clientName = clientService.findById(protocol.clientId()).name();
+        String verifyUrl = tsplLabelBuilder.verifyUrl(protocol);
+        model.addAttribute("protocol", protocol);
+        model.addAttribute("clientName", clientName);
+        model.addAttribute("verifyUrl", verifyUrl);
+        model.addAttribute("tspl", tsplLabelBuilder.buildPreviewText(protocol, clientName));
+        model.addAttribute("qrDataUri", qrCodeImageGenerator.toPngDataUri(verifyUrl, 300));
+        return "calibration-protocols/label-preview";
     }
 
     @GetMapping("/{id}/edit")
@@ -189,8 +238,8 @@ public class CalibrationProtocolPageController {
 
     private CalibrationProtocolRequest toRequest(CalibrationProtocolFormData form) {
         return new CalibrationProtocolRequest(form.getInternalNumber(), form.getStampNumber(), form.getClientId(),
-                form.getVehicleName(), form.getCardNumber(), form.getRepresentativeName(), form.getTachographBrand(),
-                form.getTachographModel(), form.getTachographType(), form.getTachographManufacturer(),
+                form.getVehicleName(), form.getCardNumber(), form.getRepresentativeName(), form.getTachographId(),
+                form.getTachographBrand(), form.getTachographModel(), form.getTachographType(), form.getTachographManufacturer(),
                 form.getPreviousInspectionDate(), form.getVehicleVrn(), form.getVehicleVin(),
                 form.getTachographSerialNumber(), form.getTachographManufactureYear(), form.getInspectionReason(),
                 form.getCheckMethod(), form.getMileageBefore(), form.getMileageAfter(), form.getTireSize(),
@@ -200,7 +249,7 @@ public class CalibrationProtocolPageController {
                 form.getTimeDeviationAfterInstall(), form.getTimeDeviationInService(), form.getSpeedLimiterValue(),
                 form.getCoverOpeningRegistered(), form.getPowerCutoffRegistered(),
                 form.getPulseSensorInterruptionRegistered(), form.getExecutorPosition(), form.getExecutorName(),
-                form.getInvoiceId());
+                form.getInvoiceId(), form.getSealNumbers());
     }
 
     private CalibrationProtocolFormData toFormData(CalibrationProtocolResponse response) {
@@ -211,6 +260,7 @@ public class CalibrationProtocolPageController {
         form.setVehicleName(response.vehicleName());
         form.setCardNumber(response.cardNumber());
         form.setRepresentativeName(response.representativeName());
+        form.setTachographId(response.tachographId());
         form.setTachographBrand(response.tachographBrand());
         form.setTachographModel(response.tachographModel());
         form.setTachographType(response.tachographType());
@@ -242,6 +292,7 @@ public class CalibrationProtocolPageController {
         form.setExecutorPosition(response.executorPosition());
         form.setExecutorName(response.executorName());
         form.setInvoiceId(response.invoiceId());
+        form.setSealNumbers(response.sealNumbers());
         return form;
     }
 }

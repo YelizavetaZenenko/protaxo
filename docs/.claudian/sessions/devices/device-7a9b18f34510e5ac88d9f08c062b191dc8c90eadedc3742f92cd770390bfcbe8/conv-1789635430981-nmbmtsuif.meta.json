@@ -1,0 +1,13 @@
+{
+  "id": "conv-1789635430981-nmbmtsuif",
+  "providerId": "claude",
+  "title": "Initial Greeting",
+  "titleGenerationStatus": "success",
+  "createdAt": 1789635430992,
+  "lastActivityAt": 1789635437876,
+  "sessionId": "554eed0a-96af-419e-92a6-bb9217e414fd",
+  "selectedModel": "fable",
+  "providerState": {
+    "providerSessionId": "554eed0a-96af-419e-92a6-bb9217e414fd"
+  }
+}

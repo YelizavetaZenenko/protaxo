@@ -1,5 +1,6 @@
 package com.example.protaxo.tachograph.web;
 
+import com.example.protaxo.client.service.ClientService;
 import com.example.protaxo.tachograph.dto.TachographFormData;
 import com.example.protaxo.tachograph.dto.TachographRequest;
 import com.example.protaxo.tachograph.dto.TachographResponse;
@@ -7,6 +8,7 @@ import com.example.protaxo.tachograph.service.TachographService;
 import com.example.protaxo.vehicle.dto.VehicleResponse;
 import com.example.protaxo.vehicle.service.VehicleService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,6 +26,7 @@ public class TachographPageController {
 
     private final TachographService tachographService;
     private final VehicleService vehicleService;
+    private final ClientService clientService;
 
     @GetMapping
     public String list() {
@@ -45,14 +48,14 @@ public class TachographPageController {
     @GetMapping("/new")
     public String createForm(Model model) {
         model.addAttribute("tachograph", new TachographFormData());
-        addReferenceData(model);
+        addReferenceData(model, null);
         return "tachographs/form";
     }
 
     @PostMapping
     public String create(@Valid @ModelAttribute("tachograph") TachographFormData form, BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
-            addReferenceData(model);
+            addReferenceData(model, form.getClientId());
             return "tachographs/form";
         }
         tachographService.create(toRequest(form));
@@ -62,9 +65,12 @@ public class TachographPageController {
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
         TachographResponse response = tachographService.findById(id);
-        model.addAttribute("tachograph", toFormData(response));
+        VehicleResponse vehicle = vehicleService.findById(response.vehicleId());
+        TachographFormData form = toFormData(response);
+        form.setClientId(vehicle.clientId());
+        model.addAttribute("tachograph", form);
         model.addAttribute("editId", id);
-        addReferenceData(model);
+        addReferenceData(model, vehicle.clientId());
         return "tachographs/form";
     }
 
@@ -73,7 +79,7 @@ public class TachographPageController {
                           BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("editId", id);
-            addReferenceData(model);
+            addReferenceData(model, form.getClientId());
             return "tachographs/form";
         }
         tachographService.update(id, toRequest(form));
@@ -86,8 +92,14 @@ public class TachographPageController {
         return "redirect:/vehicles?tab=tachographs";
     }
 
-    private void addReferenceData(Model model) {
-        model.addAttribute("vehicles", vehicleService.findAll());
+    /**
+     * {@code vehicles} — скорочений до конкретного контрагента (не {@code findAll()}), щоб
+     * <select id="vehicleId"> одразу рендерився правильним підмножиною, ще до першого спрацювання
+     * JS-фільтра за клієнтом (див. "Контрагент" на tachographs/form.html).
+     */
+    private void addReferenceData(Model model, Long clientId) {
+        model.addAttribute("clients", clientService.findAll());
+        model.addAttribute("vehicles", clientId != null ? vehicleService.findByClientId(clientId) : List.<VehicleResponse>of());
     }
 
     private TachographRequest toRequest(TachographFormData form) {

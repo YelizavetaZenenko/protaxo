@@ -6,6 +6,7 @@ import com.example.protaxo.catalog.entity.CatalogItem;
 import com.example.protaxo.catalog.repository.CatalogItemRepository;
 import com.example.protaxo.client.entity.Client;
 import com.example.protaxo.client.repository.ClientRepository;
+import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.exception.NotFoundException;
 import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.invoice.dto.InvoiceItemRequest;
@@ -17,6 +18,7 @@ import com.example.protaxo.invoice.mapper.InvoiceMapper;
 import com.example.protaxo.invoice.repository.InvoiceRepository;
 import com.example.protaxo.suggestion.entity.FieldSuggestionCategory;
 import com.example.protaxo.suggestion.service.FieldSuggestionService;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -89,6 +91,7 @@ public class InvoiceService {
         invoice.setPaymentType(request.paymentType());
         invoice.setClient(getClientOrThrow(request.clientId()));
         applyNaryadFields(invoice, request);
+        restoreStock(invoice.getItems());
         invoice.getItems().clear();
         applyItems(invoice, request.items());
         Invoice saved = invoiceRepository.save(invoice);
@@ -107,6 +110,7 @@ public class InvoiceService {
 
     public void softDelete(Long id) {
         Invoice invoice = getOrThrow(id);
+        restoreStock(invoice.getItems());
         invoice.setDeletedAt(Instant.now());
         invoiceRepository.save(invoice);
         auditLogService.record(AuditAction.DELETE, "Invoice", id);
@@ -133,6 +137,41 @@ public class InvoiceService {
             item.setPrice(itemRequest.price());
             item.setAmount(itemRequest.quantity().multiply(itemRequest.price()));
             invoice.getItems().add(item);
+
+            deductStock(catalogItem, itemRequest.quantity());
+        }
+    }
+
+    /** Selling a line item takes its quantity off stockQuantity - only for catalog items that
+        actually track stock (MATERIAL; stockQuantity is null for SERVICE and is left alone).
+        Rejects the sale outright if it would take stock below zero - by this point in update()
+        the old quantities are already restored, so this only ever sees the real, current stock,
+        not stock still "reserved" by the document being edited. */
+    private void deductStock(CatalogItem catalogItem, BigDecimal quantity) {
+        if (catalogItem.getStockQuantity() == null) {
+            return;
+        }
+        int requested = quantity.intValue();
+        int available = catalogItem.getStockQuantity();
+        if (requested > available) {
+            throw new BusinessRuleException("Недостатньо на складі: \"%s\" — залишок %d, потрібно %d"
+                    .formatted(catalogItem.getName(), available, requested));
+        }
+        catalogItem.setStockQuantity(available - requested);
+        catalogItemRepository.save(catalogItem);
+    }
+
+    /** Undoes deductStock for items still attached to the invoice - called before re-applying
+        items on update, and before soft-deleting the whole document, so stock reflects reality
+        instead of drifting down every time the same наряд-заказ is edited. */
+    private void restoreStock(List<InvoiceItem> items) {
+        for (InvoiceItem item : items) {
+            CatalogItem catalogItem = item.getCatalogItem();
+            if (catalogItem == null || catalogItem.getStockQuantity() == null) {
+                continue;
+            }
+            catalogItem.setStockQuantity(catalogItem.getStockQuantity() + item.getQuantity().intValue());
+            catalogItemRepository.save(catalogItem);
         }
     }
 

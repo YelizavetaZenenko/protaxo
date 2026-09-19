@@ -14,6 +14,7 @@
                 <h1 th:text="${contract.contractNumber}"></h1>
                 <div class="actions-cell">
                     <a class="btn-outline" th:href="@{/contracts/{id}/edit(id=${contract.id})}">Редагувати</a>
+                    <a class="btn-outline" th:href="@{/contracts/{id}/pdf(id=${contract.id})}" target="_blank">Договір PDF</a>
                     <a class="btn-outline" th:href="@{/contracts}">Назад до списку</a>
                 </div>
             </div>

@@ -64,6 +64,18 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
+		<dependency>
+			<!-- Лише для попереднього перегляду наклейки в браузері (calibration-protocols/label-preview.html)
+			     — сам термопринтер малює QR власною прошивкою з команди TSPL QRCODE, це не використовується
+			     на шляху реального друку. -->
+			<groupId>com.google.zxing</groupId>
+			<artifactId>core</artifactId>
+			<version>3.5.3</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

@@ -6,9 +6,11 @@ import com.example.protaxo.catalog.dto.CatalogItemResponse;
 import com.example.protaxo.catalog.entity.CatalogItemType;
 import com.example.protaxo.catalog.service.CatalogItemService;
 import com.example.protaxo.client.service.ClientService;
+import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.util.UkrainianAmountWords;
 import com.example.protaxo.contract.dto.ContractResponse;
 import com.example.protaxo.contract.service.ContractService;
+import com.example.protaxo.invoice.dto.ActItemRow;
 import com.example.protaxo.invoice.dto.BillItemRow;
 import com.example.protaxo.invoice.dto.InvoiceFormData;
 import com.example.protaxo.invoice.dto.InvoiceItemFormData;
@@ -159,7 +161,16 @@ public class InvoicePageController {
             addReferenceData(model);
             return "invoices/form";
         }
-        InvoiceResponse created = invoiceService.create(toRequest(form));
+        InvoiceResponse created;
+        try {
+            created = invoiceService.create(toRequest(form));
+        } catch (BusinessRuleException ex) {
+            model.addAttribute("formError", ex.getMessage());
+            model.addAttribute("selectedClientName", resolveClientName(form.getClientId()));
+            addItemRows(model, form);
+            addReferenceData(model);
+            return "invoices/form";
+        }
         boolean hasCalibrationService = created.items().stream()
                 .anyMatch(i -> i.itemName() != null && i.itemName().startsWith(CALIBRATION_SERVICE_PREFIX));
         if (hasCalibrationService) {
@@ -195,7 +206,16 @@ public class InvoicePageController {
             addReferenceData(model);
             return "invoices/form";
         }
-        invoiceService.update(id, toRequest(form));
+        try {
+            invoiceService.update(id, toRequest(form));
+        } catch (BusinessRuleException ex) {
+            model.addAttribute("formError", ex.getMessage());
+            model.addAttribute("editId", id);
+            model.addAttribute("selectedClientName", resolveClientName(form.getClientId()));
+            addItemRows(model, form);
+            addReferenceData(model);
+            return "invoices/form";
+        }
         return "redirect:/invoices";
     }
 
@@ -210,7 +230,7 @@ public class InvoicePageController {
         InvoiceResponse invoice = invoiceService.findById(id);
         String clientName = clientService.findById(invoice.clientId()).name();
 
-        Context context = new Context();
+        Context context = new Context(new Locale("uk"));
         context.setVariable("invoice", invoice);
         context.setVariable("clientName", clientName);
         byte[] pdf = pdfRenderService.render("invoice", context);
@@ -261,6 +281,40 @@ public class InvoicePageController {
         response.setContentLength(pdf.length);
         response.getOutputStream().write(pdf);
         response.getOutputStream().flush();
+    }
+
+    /**
+     * "Акт виконаних робіт" — a standard-layout Ukrainian works-completion act, generated without
+     * a user-provided sample (unlike the bill/protocol PDFs) since none exists for this document
+     * yet — see docs/"Наряд-заказ".md for the decision. No VAT breakdown (unlike the bill): this
+     * is a simpler, generic completion act, not a tax document.
+     */
+    @GetMapping("/{id}/act-pdf")
+    public void printActPdf(@PathVariable Long id, HttpServletResponse response) throws IOException {
+        InvoiceResponse invoice = invoiceService.findById(id);
+
+        List<ActItemRow> rows = invoice.items().stream().map(this::toActItemRow).toList();
+        BigDecimal totalAmount = invoice.totalAmount();
+        String amountInWords = UkrainianAmountWords.amountToWords(totalAmount);
+
+        Context context = new Context(new Locale("uk"));
+        context.setVariable("invoice", invoice);
+        context.setVariable("client", clientService.findById(invoice.clientId()));
+        context.setVariable("rows", rows);
+        context.setVariable("totalAmount", totalAmount);
+        context.setVariable("amountInWords", amountInWords);
+        byte[] pdf = pdfRenderService.render("act", context);
+
+        response.setContentType(MediaType.APPLICATION_PDF_VALUE);
+        response.setHeader("Content-Disposition", "inline; filename=\"act-" + id + ".pdf\"");
+        response.setContentLength(pdf.length);
+        response.getOutputStream().write(pdf);
+        response.getOutputStream().flush();
+    }
+
+    private ActItemRow toActItemRow(InvoiceItemResponse item) {
+        String unit = item.catalogItemType() == CatalogItemType.SERVICE ? "послуга" : "шт.";
+        return new ActItemRow(item.lineNumber(), item.itemName(), unit, item.quantity(), item.price(), item.amount());
     }
 
     private BillItemRow toBillItemRow(InvoiceItemResponse item) {
