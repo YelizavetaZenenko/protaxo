@@ -106,6 +106,20 @@
                     <h2 style="font-size:1.05rem;margin-bottom:0.25rem;">Дані тахографа</h2>
                 </div>
 
+                <input type="hidden" id="tachographId" th:field="*{tachographId}">
+
+                <div class="field combobox-field field-full">
+                    <label for="tachographPicker">Тахограф з довідника</label>
+                    <div class="combobox">
+                        <input type="text" id="tachographPicker" readonly class="picker-input"
+                               placeholder="— оберіть тахограф контрагента або заповніть дані нижче вручну —">
+                        <div class="combobox-dropdown" id="tachographDropdown" hidden>
+                            <div class="combobox-options" id="tachographOptions"></div>
+                        </div>
+                    </div>
+                    <div class="muted" id="tachographHint" hidden>Модель, виробник, заводський номер і рік — підставлені з обраного тахографа</div>
+                </div>
+
                 <div class="field">
                     <label for="tachographBrand">Марка</label>
                     <select id="tachographBrand" th:field="*{tachographBrand}"></select>
@@ -240,6 +254,12 @@
                     <input type="text" id="pulseSensorInterruptionRegistered" th:field="*{pulseSensorInterruptionRegistered}" placeholder="Так / Ні">
                 </div>
 
+                <div class="field">
+                    <label for="sealNumbers">Номери пломб</label>
+                    <input type="text" id="sealNumbers" th:field="*{sealNumbers}" placeholder="напр. 123456, 123457">
+                    <div class="muted">Для наклейки на тахограф — на бланку протоколу не друкується</div>
+                </div>
+
                 <div class="field-full" style="grid-column:1/-1;margin-top:0.5rem;">
                     <h2 style="font-size:1.05rem;margin-bottom:0.25rem;">Роботи виконав</h2>
                 </div>
@@ -330,6 +350,9 @@
         var initialTachographModel = /*[[${protocol.tachographModel}]]*/ '';
         var initialTachographType = /*[[${protocol.tachographType}]]*/ '';
         var initialTachographManufacturer = /*[[${protocol.tachographManufacturer}]]*/ '';
+        var initialTachographId = /*[[${protocol.tachographId}]]*/ null;
+        var initialTachographSerialNumber = /*[[${protocol.tachographSerialNumber}]]*/ '';
+        var initialTachographManufactureYear = /*[[${protocol.tachographManufactureYear}]]*/ '';
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -451,13 +474,25 @@
                 var select = document.getElementById(selectId);
                 var items = attributeCache[category] || [];
                 select.innerHTML = '<option value="">— оберіть ' + attributeLabels[category] + ' —</option>';
+                var matched = false;
                 items.forEach(function (a) {
                     var opt = document.createElement('option');
                     opt.value = a.name;
                     opt.textContent = a.name;
-                    if (a.name === selectName) opt.selected = true;
+                    if (a.name === selectName) { opt.selected = true; matched = true; }
                     select.appendChild(opt);
                 });
+                if (selectName && !matched) {
+                    // Модель/Виробник тахографа можуть прийти не зі словника TachographAttribute,
+                    // а прямо з прив'язаного Tachograph (див. "Тахограф з довідника" нижче) — тоді
+                    // значення може не існувати серед словникових варіантів. Показуємо його все
+                    // одно, а не мовчки скидаємо на порожній вибір.
+                    var extra = document.createElement('option');
+                    extra.value = selectName;
+                    extra.textContent = selectName;
+                    extra.selected = true;
+                    select.appendChild(extra);
+                }
             }
 
             function loadAttributeCategory(category, selects) {
@@ -525,6 +560,166 @@
                     attributeModalError.hidden = false;
                 });
             });
+
+            // --- "Тахограф з довідника": readonly combobox picker backed by
+            // /api/clients/{id}/tachographs, scoped to the currently selected client. Picking one
+            // links protocol.tachographId and — since the server always trusts the linked
+            // tachograph's own data over free-typed values — locks Модель/Виробник/Заводський
+            // номер/Дата виготовлення to that tachograph's real values (see
+            // CalibrationProtocolService#effectiveTachograph*). ---
+            var tachographs = [];
+            var tachographIdInput = document.getElementById('tachographId');
+            var tachographPickerInput = document.getElementById('tachographPicker');
+            var tachographDropdown = document.getElementById('tachographDropdown');
+            var tachographOptions = document.getElementById('tachographOptions');
+            var tachographHint = document.getElementById('tachographHint');
+            var tachographModelSelect = document.getElementById('tachographModel');
+            var tachographManufacturerSelect = document.getElementById('tachographManufacturer');
+            var tachographSerialNumberInput = document.getElementById('tachographSerialNumber');
+            var tachographManufactureYearInput = document.getElementById('tachographManufactureYear');
+            var clientIdSelect = document.getElementById('clientId');
+
+            function tachographLabel(t) {
+                var name = [t.manufacturer, t.model].filter(function (s) { return s; }).join(' ') || 'Тахограф';
+                var parts = [name];
+                if (t.serialNumber) parts.push('№ ' + t.serialNumber);
+                if (t.vehicleLabel) parts.push(t.vehicleLabel);
+                return parts.join(' — ');
+            }
+
+            function setSelectValueEnsureOption(select, value) {
+                if (!select || !value) return;
+                var exists = Array.prototype.some.call(select.options, function (o) { return o.value === value; });
+                if (!exists) {
+                    var opt = document.createElement('option');
+                    opt.value = value;
+                    opt.textContent = value;
+                    select.appendChild(opt);
+                }
+                select.value = value;
+            }
+
+            function disableSelectWithFallback(select) {
+                if (!select || select.disabled) return;
+                var fallback = document.createElement('input');
+                fallback.type = 'hidden';
+                fallback.name = select.name;
+                fallback.value = select.value;
+                fallback.className = 'js-tachograph-fallback';
+                fallback.dataset.for = select.id;
+                select.insertAdjacentElement('afterend', fallback);
+                select.disabled = true;
+            }
+
+            function enableSelect(select) {
+                if (!select) return;
+                select.disabled = false;
+                var existing = document.querySelector('.js-tachograph-fallback[data-for="' + select.id + '"]');
+                if (existing) existing.remove();
+            }
+
+            function lockTachographFields(t) {
+                if (t) {
+                    setSelectValueEnsureOption(tachographModelSelect, t.model);
+                    setSelectValueEnsureOption(tachographManufacturerSelect, t.manufacturer);
+                    tachographSerialNumberInput.value = t.serialNumber || '';
+                    tachographManufactureYearInput.value = t.productionDate ? t.productionDate.slice(0, 4) : '';
+                }
+                disableSelectWithFallback(tachographModelSelect);
+                disableSelectWithFallback(tachographManufacturerSelect);
+                tachographSerialNumberInput.readOnly = true;
+                tachographManufactureYearInput.readOnly = true;
+                tachographHint.hidden = false;
+            }
+
+            function unlockTachographFields() {
+                enableSelect(tachographModelSelect);
+                enableSelect(tachographManufacturerSelect);
+                tachographSerialNumberInput.readOnly = false;
+                tachographManufactureYearInput.readOnly = false;
+                tachographHint.hidden = true;
+            }
+
+            function selectTachograph(t) {
+                tachographIdInput.value = t.id;
+                tachographPickerInput.value = tachographLabel(t);
+                tachographDropdown.hidden = true;
+                lockTachographFields(t);
+            }
+
+            function clearTachographSelection() {
+                tachographIdInput.value = '';
+                tachographPickerInput.value = '';
+                tachographDropdown.hidden = true;
+                unlockTachographFields();
+            }
+
+            function renderTachographOptions() {
+                tachographOptions.innerHTML = '';
+                var clearOpt = document.createElement('div');
+                clearOpt.className = 'combobox-option';
+                clearOpt.textContent = '— без прив\'язки (заповнити вручну) —';
+                clearOpt.addEventListener('click', clearTachographSelection);
+                tachographOptions.appendChild(clearOpt);
+                if (tachographs.length === 0) {
+                    var empty = document.createElement('div');
+                    empty.className = 'combobox-empty';
+                    empty.textContent = 'У контрагента ще немає тахографів';
+                    tachographOptions.appendChild(empty);
+                }
+                tachographs.forEach(function (t) {
+                    var opt = document.createElement('div');
+                    opt.className = 'combobox-option';
+                    opt.textContent = tachographLabel(t);
+                    opt.addEventListener('click', function () { selectTachograph(t); });
+                    tachographOptions.appendChild(opt);
+                });
+            }
+
+            function loadTachographsForClient(clientId) {
+                if (!clientId) {
+                    tachographs = [];
+                    renderTachographOptions();
+                    return;
+                }
+                fetch('/api/clients/' + clientId + '/tachographs', { credentials: 'same-origin' })
+                    .then(function (resp) { return resp.ok ? resp.json() : []; })
+                    .then(function (list) {
+                        tachographs = list;
+                        renderTachographOptions();
+                    });
+            }
+
+            tachographPickerInput.addEventListener('click', function () {
+                tachographDropdown.hidden = false;
+            });
+            document.addEventListener('click', function (e) {
+                if (!tachographDropdown.contains(e.target) && e.target !== tachographPickerInput) {
+                    tachographDropdown.hidden = true;
+                }
+            });
+
+            if (clientIdSelect) {
+                clientIdSelect.addEventListener('change', function () {
+                    clearTachographSelection();
+                    loadTachographsForClient(clientIdSelect.value);
+                });
+            }
+
+            if (initialTachographId) {
+                // Protocol already has a linked tachograph — its Модель/Виробник/Заводський
+                // номер/Дата виготовлення values rendered via th:field are already the
+                // tachograph's real, persisted data (server-always-wins), so just lock the
+                // fields without overwriting them, and show a placeholder label until the
+                // client's tachograph list resolves the full display label.
+                tachographPickerInput.value = [initialTachographManufacturer, initialTachographModel]
+                    .filter(function (s) { return s; }).join(' ') || 'Обраний тахограф';
+                lockTachographFields(null);
+            }
+            var initialClientId = clientIdSelect ? clientIdSelect.value : '';
+            if (initialClientId) {
+                loadTachographsForClient(initialClientId);
+            }
 
             // --- "Роботи виконав": readonly combobox picker backed by /api/repair-workers,
             // selecting a worker fills both executorName and the readonly executorPosition. ---
@@ -627,14 +822,14 @@
                 var existingDraftId = new URLSearchParams(window.location.search).get('draft');
 
                 var fieldIds = ['internalNumber', 'clientId', 'vehicleName', 'vehicleVrn', 'vehicleVin',
-                    'cardNumber', 'representativeName', 'tachographBrand', 'tachographModel', 'tachographType',
+                    'cardNumber', 'representativeName', 'tachographId', 'tachographBrand', 'tachographModel', 'tachographType',
                     'tachographManufacturer', 'tachographSerialNumber', 'tachographManufactureYear', 'inspectionReason',
                     'previousInspectionDate', 'mileageBefore', 'mileageAfter', 'tireSize', 'tirePressure',
                     'tireCircumferenceL', 'coefficientW', 'constantK', 'pathDeviationAfterInstall',
                     'pathDeviationInService', 'speedDeviationAfterInstall', 'speedDeviationInService',
                     'timeDeviationAfterInstall', 'timeDeviationInService', 'speedLimiterValue',
                     'coverOpeningRegistered', 'powerCutoffRegistered', 'pulseSensorInterruptionRegistered',
-                    'executorPosition', 'executorName'];
+                    'sealNumbers', 'executorPosition', 'executorName'];
                 var selectFieldIds = ['tachographBrand', 'tachographModel', 'tachographType', 'tachographManufacturer'];
 
                 function computeDraftLabel() {
@@ -664,6 +859,13 @@
                             }
                         }
                     });
+                    if (snapshot.tachographId) {
+                        // Values are already restored onto the fields above — just re-lock the
+                        // picker UI to match, without overwriting them (same as an edit-mode load).
+                        tachographPickerInput.value = [snapshot.tachographManufacturer, snapshot.tachographModel]
+                            .filter(function (s) { return s; }).join(' ') || 'Обраний тахограф';
+                        lockTachographFields(null);
+                    }
                 }
 
                 function markDraftDirty() {

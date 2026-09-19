@@ -8,6 +8,11 @@ import lombok.Data;
 @Data
 public class TachographFormData {
 
+    // UI-only: не частина TachographRequest/сутності Tachograph (той самий зв'язок з
+    // автомобілем лишається єдиним джерелом істини) — служить лише для звуження списку
+    // автомобілів у формі до конкретного контрагента, див. TachographPageController.
+    private Long clientId;
+
     @NotNull(message = "Оберіть автомобіль")
     private Long vehicleId;
 

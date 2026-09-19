@@ -4,35 +4,60 @@
     <meta charset="UTF-8" />
     <title>Наряд-заказ</title>
     <style>
-        @page { size: A4; margin: 2cm; }
-        body { font-family: 'DejaVu Sans'; font-size: 11pt; color: #111111; }
-        h1 { font-size: 16pt; margin: 0 0 10pt 0; }
-        .meta div { margin: 2pt 0; }
-        table { width: 100%; border-collapse: collapse; margin-top: 14pt; }
-        th, td { border: 1px solid #333333; padding: 5pt 7pt; font-size: 10pt; }
-        th { background-color: #eeeeee; text-align: left; }
-        td.num { text-align: right; }
-        tfoot td { font-weight: bold; }
-        .signatures { margin-top: 40pt; }
-        .signatures div { margin-top: 24pt; }
-        .line { display: inline-block; border-bottom: 1px solid #333333; width: 220pt; margin-left: 10pt; }
+        @page { size: A4; margin: 1.6cm; }
+        body { font-family: 'Times New Roman'; font-size: 9.5pt; color: #111111; }
+        h1 { font-size: 13pt; margin: 12pt 0 8pt 0; }
+        table.header-table { width: 100%; border-collapse: collapse; margin-bottom: 8pt; }
+        table.header-table td { border: none; padding: 2pt 0; vertical-align: top; font-size: 9.5pt; }
+        table.header-table td.label { width: 26%; padding-right: 4pt; white-space: nowrap; }
+        table.header-table td.value strong { font-size: 10pt; }
+        table.items { width: 100%; border-collapse: collapse; margin-top: 6pt; }
+        table.items th, table.items td { border: 1px solid #333333; padding: 4pt 5pt; font-size: 8.5pt; }
+        table.items th { background-color: #eeeeee; text-align: center; }
+        table.items td.num { text-align: right; }
+        table.totals-table { border-collapse: collapse; margin: 6pt 0 0 auto; }
+        table.totals-table td { border: none; padding: 2pt 0; font-size: 9.5pt; }
+        table.totals-table td.label { font-weight: bold; text-align: right; padding-right: 10pt; }
+        table.totals-table td.value { padding-left: 10pt; font-weight: bold; text-align: right; }
+        .signature-rule { border-top: 1px solid #000000; margin-top: 16pt; }
+        .signatures p { margin: 10pt 0 0 0; }
+        .fill-line { display: inline-block; border-bottom: 1px solid #333333; width: 220pt; min-height: 11pt; }
     </style>
 </head>
 <body>
-    <h1 th:text="'НАРЯД-ЗАКАЗ № ' + ${invoice.number}">НАРЯД-ЗАКАЗ</h1>
+    <h1 th:text="'Наряд-заказ № ' + ${invoice.number} + ' від ' + ${#temporals.format(invoice.documentDate, 'd MMMM yyyy')} + ' р.'">Наряд-заказ</h1>
 
-    <div class="meta">
-        <div th:text="'Дата: ' + ${#temporals.format(invoice.documentDate, 'dd.MM.yyyy HH:mm')}">Дата</div>
-        <div th:text="'Тип оплати: ' + ${invoice.paymentType.label}">Тип оплати</div>
-        <div th:text="'Контрагент: ' + ${clientName}">Контрагент</div>
-        <div th:if="${not #strings.isEmpty(invoice.vehicleName)}" th:text="'Автомобіль: ' + ${invoice.vehicleName}">Автомобіль</div>
-        <div th:if="${not #strings.isEmpty(invoice.driverName)}" th:text="'Водій: ' + ${invoice.driverName}">Водій</div>
-        <div th:if="${not #strings.isEmpty(invoice.repairResponsibleName)}" th:text="'Відповідальний за ремонт: ' + ${invoice.repairResponsibleName}">Відповідальний</div>
-        <div th:if="${not #strings.isEmpty(invoice.repairSupervisorName)}" th:text="'Керівник ремонту: ' + ${invoice.repairSupervisorName}">Керівник ремонту</div>
-        <div th:text="${invoice.buyerOrderLabel}">Замовлення покупця</div>
-    </div>
+    <table class="header-table">
+        <tr>
+            <td class="label">Контрагент:</td>
+            <td class="value"><strong th:text="${clientName}">Контрагент</strong></td>
+        </tr>
+        <tr th:if="${not #strings.isEmpty(invoice.vehicleName)}">
+            <td class="label">Автомобіль:</td>
+            <td class="value" th:text="${invoice.vehicleName}">Автомобіль</td>
+        </tr>
+        <tr th:if="${not #strings.isEmpty(invoice.driverName)}">
+            <td class="label">Водій:</td>
+            <td class="value" th:text="${invoice.driverName}">Водій</td>
+        </tr>
+        <tr>
+            <td class="label">Тип оплати:</td>
+            <td class="value" th:text="${invoice.paymentType.label}">Тип оплати</td>
+        </tr>
+        <tr th:if="${not #strings.isEmpty(invoice.repairResponsibleName)}">
+            <td class="label">Відповідальний за ремонт:</td>
+            <td class="value" th:text="${invoice.repairResponsibleName}">Відповідальний</td>
+        </tr>
+        <tr th:if="${not #strings.isEmpty(invoice.repairSupervisorName)}">
+            <td class="label">Керівник ремонту:</td>
+            <td class="value" th:text="${invoice.repairSupervisorName}">Керівник ремонту</td>
+        </tr>
+        <tr>
+            <td class="value" colspan="2" th:text="${invoice.buyerOrderLabel}">Замовлення покупця</td>
+        </tr>
+    </table>
 
-    <table>
+    <table class="items">
         <thead>
         <tr>
             <th>№</th>
@@ -51,17 +76,19 @@
             <td class="num" th:text="${#numbers.formatDecimal(item.amount, 1, 2)}">0.00</td>
         </tr>
         </tbody>
-        <tfoot>
-        <tr>
-            <td colspan="4">Разом</td>
-            <td class="num" th:text="${#numbers.formatDecimal(invoice.totalAmount, 1, 2)}">0.00</td>
-        </tr>
-        </tfoot>
     </table>
 
+    <table class="totals-table">
+        <tr>
+            <td class="label">Разом:</td>
+            <td class="value" th:text="${#numbers.formatDecimal(invoice.totalAmount, 1, 2)}">0.00</td>
+        </tr>
+    </table>
+
+    <div class="signature-rule"></div>
     <div class="signatures">
-        <div>Виконавець: <span class="line"> </span></div>
-        <div>Замовник: <span class="line"> </span></div>
+        <p>Виконавець: <span class="fill-line"></span></p>
+        <p>Замовник: <span class="fill-line"></span></p>
     </div>
 </body>
 </html>

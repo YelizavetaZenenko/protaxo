@@ -13,6 +13,7 @@ public record CalibrationProtocolRequest(
         @NotBlank @Pattern(regexp = "^[A-Z]{3}[0-9]{12}$", message = "Формат: 3 великі латинські літери та 12 цифр")
         String cardNumber,
         String representativeName,
+        Long tachographId,
         String tachographBrand,
         String tachographModel,
         String tachographType,
@@ -43,6 +44,7 @@ public record CalibrationProtocolRequest(
         String pulseSensorInterruptionRegistered,
         String executorPosition,
         String executorName,
-        Long invoiceId
+        Long invoiceId,
+        String sealNumbers
 ) {
 }

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        Свідомо НЕ модуль головного reactor'а (D:\protaxo\pom.xml не оголошує <modules>) — окремий,
+        повністю незалежний Maven-проєкт, що збирається/запускається окремо від Spring Boot
+        застосунку. Жодних зовнішніх залежностей: WebSocket-клієнт (java.net.http.WebSocket) і
+        друк сирих байтів (javax.print) — обидва вже в самому JDK 21. Див. docs/Print Agent.md.
+    -->
+    <groupId>com.example</groupId>
+    <artifactId>print-agent</artifactId>
+    <version>0.1.0</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <finalName>print-agent</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.example.printagent.PrintAgentMain</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

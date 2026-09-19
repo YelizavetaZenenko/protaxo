@@ -44,6 +44,7 @@
                         <span th:unless="${u.active}" class="badge" style="background:#fbeceb;color:#b3261e;">Очікує підтвердження</span>
                     </td>
                     <td class="actions-cell">
+                        <a class="link-btn" th:href="@{/users/{id}/edit(id=${u.id})}">Редагувати</a>
                         <form sec:authorize="hasRole('ADMIN')" th:action="@{/users/{id}/delete(id=${u.id})}" method="post" style="display:inline">
                             <button type="submit" class="link-btn link-btn-danger"
                                     onclick="return confirm('Видалити користувача?')">Видалити</button>
@@ -56,6 +57,145 @@
                 </tbody>
             </table>
         </div>
+
+        <div class="card" style="margin-top:1.5rem;">
+            <div class="toolbar">
+                <h1>Робітники</h1>
+                <button type="button" class="btn" id="addWorkerBtn" sec:authorize="hasRole('ADMIN')">+ Додати робітника</button>
+            </div>
+
+            <table class="clean-table">
+                <colgroup>
+                    <col style="width:36%">
+                    <col style="width:36%">
+                    <col style="width:28%">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th>ПІБ</th>
+                    <th>Посада</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="workersTableBody">
+                <tr th:each="w : ${workers}">
+                    <td th:text="${w.fullName}"></td>
+                    <td th:text="${w.position}"></td>
+                    <td class="actions-cell" sec:authorize="hasRole('ADMIN')">
+                        <button type="button" class="link-btn edit-worker-btn"
+                                th:attr="data-id=${w.id},data-full-name=${w.fullName},data-position=${w.position}">Редагувати</button>
+                        <button type="button" class="link-btn link-btn-danger delete-worker-btn" th:attr="data-id=${w.id}">Видалити</button>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(workers)}">
+                    <td colspan="3">Робітників ще немає</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
+
+    <div class="modal-overlay" id="addWorkerOverlay" hidden>
+        <div class="modal">
+            <h2 id="workerModalTitle">Новий робітник</h2>
+            <div class="alert alert-error" id="addWorkerError" hidden></div>
+            <div class="field field-full">
+                <label for="newWorkerFullName">ПІБ *</label>
+                <input type="text" id="newWorkerFullName">
+            </div>
+            <div class="field field-full">
+                <label for="newWorkerPosition">Посада *</label>
+                <input type="text" id="newWorkerPosition">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveNewWorkerBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelNewWorkerBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var addWorkerBtn = document.getElementById('addWorkerBtn');
+            var editButtons = document.querySelectorAll('.edit-worker-btn');
+            if (!addWorkerBtn && editButtons.length === 0) return;
+
+            var addWorkerOverlay = document.getElementById('addWorkerOverlay');
+            var addWorkerError = document.getElementById('addWorkerError');
+            var workerModalTitle = document.getElementById('workerModalTitle');
+            var newWorkerFullName = document.getElementById('newWorkerFullName');
+            var newWorkerPosition = document.getElementById('newWorkerPosition');
+            var editingWorkerId = null;
+
+            function openModal(id, fullName, position) {
+                editingWorkerId = id;
+                workerModalTitle.textContent = id ? 'Редагувати робітника' : 'Новий робітник';
+                addWorkerError.hidden = true;
+                newWorkerFullName.value = fullName || '';
+                newWorkerPosition.value = position || '';
+                addWorkerOverlay.hidden = false;
+                newWorkerFullName.focus();
+            }
+
+            if (addWorkerBtn) {
+                addWorkerBtn.addEventListener('click', function () {
+                    openModal(null, '', '');
+                });
+            }
+
+            editButtons.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    openModal(btn.dataset.id, btn.dataset.fullName, btn.dataset.position);
+                });
+            });
+
+            document.querySelectorAll('.delete-worker-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    if (!confirm('Видалити робітника?')) return;
+                    fetch('/api/repair-workers/' + btn.dataset.id, {
+                        method: 'DELETE',
+                        credentials: 'same-origin'
+                    }).then(function (resp) {
+                        if (!resp.ok) throw new Error('Не вдалося видалити робітника');
+                        window.location.reload();
+                    }).catch(function (err) {
+                        alert(err.message);
+                    });
+                });
+            });
+
+            document.getElementById('cancelNewWorkerBtn').addEventListener('click', function () {
+                addWorkerOverlay.hidden = true;
+            });
+
+            document.getElementById('saveNewWorkerBtn').addEventListener('click', function () {
+                var fullName = newWorkerFullName.value.trim();
+                var position = newWorkerPosition.value.trim();
+                if (!fullName || !position) {
+                    addWorkerError.textContent = "ПІБ і посада обов'язкові";
+                    addWorkerError.hidden = false;
+                    return;
+                }
+                var url = editingWorkerId ? '/api/repair-workers/' + editingWorkerId : '/api/repair-workers';
+                var method = editingWorkerId ? 'PUT' : 'POST';
+                fetch(url, {
+                    method: method,
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullName: fullName, position: position })
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (body) { throw new Error(body.message || 'Не вдалося зберегти робітника'); });
+                    }
+                    return resp.json();
+                }).then(function () {
+                    window.location.reload();
+                }).catch(function (err) {
+                    addWorkerError.textContent = err.message;
+                    addWorkerError.hidden = false;
+                });
+            });
+        });
+    </script>
 </body>
 </html>

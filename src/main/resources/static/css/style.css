@@ -7,6 +7,7 @@
     --accent: #2f6f4f;
     --accent-dark: #24563d;
     --danger: #b3261e;
+    --brand-dark: #2c4a56;
 }
 
 * {
@@ -193,11 +194,85 @@ a {
     text-align: center;
 }
 
-.auth-logo {
-    width: 190px;
-    max-width: 70%;
-    margin: 0 auto 1.5rem;
-    display: block;
+.brand-mark {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.brand-gauge {
+    width: 88px;
+    height: 88px;
+    margin-bottom: 0.6rem;
+    opacity: 0;
+    transform: scale(0.85);
+    animation: brand-gauge-in 0.5s ease-out 0.1s forwards;
+}
+
+.brand-gauge-cog {
+    fill: var(--brand-dark);
+}
+
+.brand-gauge-face {
+    fill: var(--surface);
+}
+
+.brand-gauge-arc {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 160 54;
+}
+
+.brand-gauge-hub {
+    fill: var(--brand-dark);
+}
+
+.brand-gauge-needle {
+    stroke: var(--accent);
+    stroke-width: 5;
+    stroke-linecap: round;
+    transform-origin: 100px 100px;
+    transform: rotate(-25deg);
+}
+
+.brand-name {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: var(--brand-dark);
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+}
+
+.brand-tagline {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 0.3rem;
+}
+
+@keyframes brand-gauge-in {
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .brand-gauge-needle {
+        animation: brand-gauge-needle-sweep 1.3s cubic-bezier(0.22, 1, 0.36, 1) 0.35s backwards;
+    }
+}
+
+@keyframes brand-gauge-needle-sweep {
+    0% { transform: rotate(-150deg); }
+    55% { transform: rotate(20deg); }
+    78% { transform: rotate(-42deg); }
+    100% { transform: rotate(-25deg); }
 }
 
 .auth-card h1 {

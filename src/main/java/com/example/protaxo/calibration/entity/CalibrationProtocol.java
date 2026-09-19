@@ -3,6 +3,7 @@ package com.example.protaxo.calibration.entity;
 import com.example.protaxo.client.entity.Client;
 import com.example.protaxo.common.entity.BaseEntity;
 import com.example.protaxo.invoice.entity.Invoice;
+import com.example.protaxo.tachograph.entity.Tachograph;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -148,4 +149,32 @@ public class CalibrationProtocol extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "invoice_id")
     private Invoice invoice;
+
+    /**
+     * The real, system-tracked device this protocol is about — nullable, since older/free-text
+     * protocols never picked one. When set, {@code tachographModel}/{@code tachographManufacturer}/
+     * {@code tachographSerialNumber}/{@code tachographManufactureYear} are unconditionally derived
+     * from this record server-side (see CalibrationProtocolService.applyFields) rather than trusted
+     * from the request, the same "server always wins" treatment as internalNumber/stampNumber.
+     * {@code tachographBrand}/{@code tachographType} stay independently editable dictionary
+     * selects — Tachograph itself has no "brand" or "type" field to derive them from.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tachograph_id")
+    private Tachograph tachograph;
+
+    /**
+     * Номери пломб, встановлених при калібруванні — вільний текст (фізичні пломби можуть мати
+     * будь-яке маркування виробника), використовується лише для наклейки [[Print Agent]], у самому
+     * PDF-бланку протоколу такого поля немає (у зразку його не було).
+     */
+    @Column(name = "seal_numbers")
+    private String sealNumbers;
+
+    /**
+     * Згенерований раз при створенні протоколу (див. CalibrationProtocolService.create), ніколи не
+     * редагується вручну — саме цей рядок кодується в QR-коді на наклейці [[Print Agent]].
+     */
+    @Column(name = "qr_hash")
+    private String qrHash;
 }

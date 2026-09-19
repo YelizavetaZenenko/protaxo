@@ -17,6 +17,14 @@
                   method="post" class="form-grid">
 
                 <div class="field field-full">
+                    <label for="clientId">Контрагент *</label>
+                    <select id="clientId" th:field="*{clientId}">
+                        <option value="">— оберіть контрагента —</option>
+                        <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
+                    </select>
+                </div>
+
+                <div class="field field-full">
                     <label for="vehicleId">Автомобіль *</label>
                     <select id="vehicleId" th:field="*{vehicleId}">
                         <option value="">— оберіть автомобіль —</option>
@@ -56,5 +64,31 @@
             </form>
         </div>
     </div>
+
+    <script>
+        // "Контрагент" звужує "Автомобіль" до автомобілів саме цього контрагента — сервер уже
+        // рендерить select вихідним підмножиною (див. TachographPageController#addReferenceData),
+        // цей обробник лише перевантажує список при інтерактивній зміні контрагента.
+        document.addEventListener('DOMContentLoaded', function () {
+            var clientSelect = document.getElementById('clientId');
+            var vehicleSelect = document.getElementById('vehicleId');
+
+            clientSelect.addEventListener('change', function () {
+                var clientId = clientSelect.value;
+                vehicleSelect.innerHTML = '<option value="">— оберіть автомобіль —</option>';
+                if (!clientId) return;
+                fetch('/api/clients/' + clientId + '/vehicles', { credentials: 'same-origin' })
+                    .then(function (resp) { return resp.ok ? resp.json() : []; })
+                    .then(function (list) {
+                        list.forEach(function (v) {
+                            var opt = document.createElement('option');
+                            opt.value = v.id;
+                            opt.textContent = v.vin + ' (' + v.registrationNumber + ')';
+                            vehicleSelect.appendChild(opt);
+                        });
+                    });
+            });
+        });
+    </script>
 </body>
 </html>

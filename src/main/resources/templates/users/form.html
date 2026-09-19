@@ -2,7 +2,7 @@
 <html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title>ProTaxo — Запросити користувача</title>
+    <title th:text="${editId} != null ? 'ProTaxo — Редагування користувача' : 'ProTaxo — Запросити користувача'"></title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -10,11 +10,13 @@
 
     <div class="container">
         <div class="card">
-            <h1>Запросити користувача</h1>
+            <h1 th:text="${editId} != null ? 'Редагування користувача' : 'Запросити користувача'"></h1>
 
             <div class="alert alert-error" th:if="${formError}" th:text="${formError}"></div>
 
-            <form th:object="${invite}" th:action="@{/users}" method="post" class="form-grid">
+            <form th:object="${form}"
+                  th:action="${editId} != null ? @{/users/{id}/edit(id=${editId})} : @{/users}"
+                  method="post" class="form-grid">
 
                 <div class="field">
                     <label for="fullName">Ім'я *</label>
@@ -37,12 +39,12 @@
                     <div class="field-error" th:if="${#fields.hasErrors('role')}" th:errors="*{role}"></div>
                 </div>
 
-                <div class="muted field-full">
+                <div class="muted field-full" th:if="${editId} == null">
                     На вказану пошту буде надіслано лист із посиланням для встановлення пароля. Посилання дійсне 24 години.
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn">Надіслати запрошення</button>
+                    <button type="submit" class="btn" th:text="${editId} != null ? 'Зберегти' : 'Надіслати запрошення'"></button>
                     <a class="btn-outline" th:href="@{/users}">Скасувати</a>
                 </div>
             </form>

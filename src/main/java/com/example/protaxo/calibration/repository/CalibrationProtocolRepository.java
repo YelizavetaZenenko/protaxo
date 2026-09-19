@@ -10,6 +10,9 @@ public interface CalibrationProtocolRepository extends JpaRepository<Calibration
 
     Optional<CalibrationProtocol> findByInvoiceId(Long invoiceId);
 
+    /** Backs the public, unauthenticated /verify/{qrHash}/pdf route — see [[Print Agent]]. */
+    Optional<CalibrationProtocol> findByQrHash(String qrHash);
+
     /** Bypasses the deleted_at @SQLRestriction, see VehicleRepository#findRegistrationNumberByIdIncludingDeleted. */
     @Query(value = "SELECT internal_number FROM calibration_protocols WHERE id = :id", nativeQuery = true)
     Optional<String> findInternalNumberByIdIncludingDeleted(@Param("id") Long id);

@@ -16,11 +16,14 @@ import com.example.protaxo.invoice.entity.Invoice;
 import com.example.protaxo.invoice.repository.InvoiceRepository;
 import com.example.protaxo.suggestion.entity.FieldSuggestionCategory;
 import com.example.protaxo.suggestion.service.FieldSuggestionService;
+import com.example.protaxo.tachograph.entity.Tachograph;
+import com.example.protaxo.tachograph.repository.TachographRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +52,7 @@ public class CalibrationProtocolService {
     private final CalibrationProtocolRepository calibrationProtocolRepository;
     private final ClientRepository clientRepository;
     private final InvoiceRepository invoiceRepository;
+    private final TachographRepository tachographRepository;
     private final CalibrationProtocolMapper calibrationProtocolMapper;
     private final FieldSuggestionService fieldSuggestionService;
     private final AuditLogService auditLogService;
@@ -70,9 +74,36 @@ public class CalibrationProtocolService {
         return calibrationProtocolRepository.findByInvoiceId(invoiceId).map(calibrationProtocolMapper::toResponse);
     }
 
+    /** Backs the public, unauthenticated /verify/{qrHash}/pdf route — see [[Print Agent]]. */
+    @Transactional(readOnly = true)
+    public CalibrationProtocolResponse findByQrHash(String qrHash) {
+        return calibrationProtocolRepository.findByQrHash(qrHash)
+                .map(calibrationProtocolMapper::toResponse)
+                .orElseThrow(() -> new NotFoundException("CalibrationProtocol with qrHash not found"));
+    }
+
+    /**
+     * Same as {@link #findById}, but guarantees a non-blank {@code qrHash} — protocols created
+     * before the [[Print Agent]] label feature existed never got one (qrHash is normally set once,
+     * at {@link #create}). Used by the label preview/print endpoints instead of plain
+     * {@code findById} so old protocols don't crash the QR encoder with a blank/null input; once
+     * backfilled here, the hash is permanent just like one set at creation time.
+     */
+    public CalibrationProtocolResponse ensureQrHash(Long id) {
+        CalibrationProtocol protocol = getOrThrow(id);
+        if (protocol.getQrHash() == null || protocol.getQrHash().isBlank()) {
+            protocol.setQrHash(UUID.randomUUID().toString().replace("-", ""));
+            protocol = calibrationProtocolRepository.save(protocol);
+        }
+        return calibrationProtocolMapper.toResponse(protocol);
+    }
+
     public CalibrationProtocolResponse create(CalibrationProtocolRequest request) {
         CalibrationProtocol protocol = new CalibrationProtocol();
         protocol.setProtocolDate(LocalDateTime.now());
+        // Генерується раз і назавжди — саме цей рядок кодується в QR-коді наклейки [[Print Agent]],
+        // тому має бути стабільним ще до першого друку, а не лінивим "при першому натисканні".
+        protocol.setQrHash(UUID.randomUUID().toString().replace("-", ""));
         Invoice invoice = null;
         if (request.invoiceId() != null) {
             if (calibrationProtocolRepository.findByInvoiceId(request.invoiceId()).isPresent()) {
@@ -81,7 +112,8 @@ public class CalibrationProtocolService {
             invoice = getInvoiceOrThrow(request.invoiceId());
             protocol.setInvoice(invoice);
         }
-        applyFields(protocol, request, invoice);
+        Tachograph tachograph = request.tachographId() != null ? getTachographOrThrow(request.tachographId()) : null;
+        applyFields(protocol, request, invoice, tachograph);
         CalibrationProtocol saved = calibrationProtocolRepository.save(protocol);
         auditLogService.record(AuditAction.CREATE, "CalibrationProtocol", saved.getId());
         return calibrationProtocolMapper.toResponse(saved);
@@ -91,27 +123,30 @@ public class CalibrationProtocolService {
         CalibrationProtocol protocol = getOrThrow(id);
         // client/vehicle/internal number are locked read-only in the UI once saved, and the
         // invoice link is permanent — `invoice` is deliberately never touched again here.
-        Map<String, String[]> changes = buildChanges(protocol, request);
-        applyFields(protocol, request, protocol.getInvoice());
+        Tachograph tachograph = request.tachographId() != null ? getTachographOrThrow(request.tachographId()) : null;
+        Map<String, String[]> changes = buildChanges(protocol, request, tachograph);
+        applyFields(protocol, request, protocol.getInvoice(), tachograph);
         CalibrationProtocol saved = calibrationProtocolRepository.save(protocol);
         auditLogService.record(AuditAction.UPDATE, "CalibrationProtocol", saved.getId(), changes);
         return calibrationProtocolMapper.toResponse(saved);
     }
 
-    private Map<String, String[]> buildChanges(CalibrationProtocol p, CalibrationProtocolRequest r) {
+    private Map<String, String[]> buildChanges(CalibrationProtocol p, CalibrationProtocolRequest r, Tachograph newTachograph) {
         return FieldDiff.builder()
                 .add("Автомобіль", p.getVehicleName(), r.vehicleName())
                 .add("Номер картки", p.getCardNumber(), r.cardNumber())
                 .add("Представник", p.getRepresentativeName(), r.representativeName())
+                .add("Тахограф", p.getTachograph() != null ? p.getTachograph().getSerialNumber() : null,
+                        newTachograph != null ? newTachograph.getSerialNumber() : null)
                 .add("Марка тахографа", p.getTachographBrand(), r.tachographBrand())
-                .add("Модель тахографа", p.getTachographModel(), r.tachographModel())
+                .add("Модель тахографа", p.getTachographModel(), effectiveTachographModel(r, newTachograph))
                 .add("Тип тахографа", p.getTachographType(), r.tachographType())
-                .add("Виробник тахографа", p.getTachographManufacturer(), r.tachographManufacturer())
+                .add("Виробник тахографа", p.getTachographManufacturer(), effectiveTachographManufacturer(r, newTachograph))
                 .add("Дата попередньої перевірки", p.getPreviousInspectionDate(), r.previousInspectionDate())
                 .add("Держномер ТЗ", p.getVehicleVrn(), r.vehicleVrn())
                 .add("VIN ТЗ", p.getVehicleVin(), r.vehicleVin())
-                .add("Заводський номер тахографа", p.getTachographSerialNumber(), r.tachographSerialNumber())
-                .add("Рік випуску тахографа", p.getTachographManufactureYear(), r.tachographManufactureYear())
+                .add("Заводський номер тахографа", p.getTachographSerialNumber(), effectiveTachographSerialNumber(r, newTachograph))
+                .add("Рік випуску тахографа", p.getTachographManufactureYear(), effectiveTachographManufactureYear(r, newTachograph))
                 .add("Причина перевірки", p.getInspectionReason(), r.inspectionReason())
                 .add("Пробіг до", p.getMileageBefore(), r.mileageBefore())
                 .add("Пробіг після", p.getMileageAfter(), r.mileageAfter())
@@ -132,6 +167,7 @@ public class CalibrationProtocolService {
                 .add("Зафіксовано переривання імпульсного датчика", p.getPulseSensorInterruptionRegistered(), r.pulseSensorInterruptionRegistered())
                 .add("Посада виконавця", p.getExecutorPosition(), r.executorPosition())
                 .add("ПІБ виконавця", p.getExecutorName(), r.executorName())
+                .add("Номери пломб", p.getSealNumbers(), r.sealNumbers())
                 .build();
     }
 
@@ -147,22 +183,27 @@ public class CalibrationProtocolService {
      * own number — one unified system, not two independently typed numbers that could drift
      * apart. Enforced here server-side (not just readonly in the UI) so it can't be bypassed.
      */
-    private void applyFields(CalibrationProtocol protocol, CalibrationProtocolRequest request, Invoice linkedInvoice) {
+    private void applyFields(CalibrationProtocol protocol, CalibrationProtocolRequest request, Invoice linkedInvoice, Tachograph tachograph) {
         protocol.setInternalNumber(linkedInvoice != null ? linkedInvoice.getNumber() : request.internalNumber());
         protocol.setStampNumber(STAMP_NUMBER);
         protocol.setClient(getClientOrThrow(request.clientId()));
         protocol.setVehicleName(request.vehicleName());
         protocol.setCardNumber(request.cardNumber());
         protocol.setRepresentativeName(request.representativeName());
+        protocol.setTachograph(tachograph);
+        // Brand/type stay independently editable dictionary selects - Tachograph has no such
+        // fields to derive them from. Model/manufacturer/serial/year are unconditionally
+        // overwritten from the linked device when one is chosen (see class-level Javadoc on the
+        // `tachograph` field) - the request's own values for those four are simply ignored then.
         protocol.setTachographBrand(request.tachographBrand());
-        protocol.setTachographModel(request.tachographModel());
         protocol.setTachographType(request.tachographType());
-        protocol.setTachographManufacturer(request.tachographManufacturer());
+        protocol.setTachographModel(effectiveTachographModel(request, tachograph));
+        protocol.setTachographManufacturer(effectiveTachographManufacturer(request, tachograph));
+        protocol.setTachographSerialNumber(effectiveTachographSerialNumber(request, tachograph));
+        protocol.setTachographManufactureYear(effectiveTachographManufactureYear(request, tachograph));
         protocol.setPreviousInspectionDate(request.previousInspectionDate());
         protocol.setVehicleVrn(request.vehicleVrn());
         protocol.setVehicleVin(request.vehicleVin());
-        protocol.setTachographSerialNumber(request.tachographSerialNumber());
-        protocol.setTachographManufactureYear(request.tachographManufactureYear());
         protocol.setInspectionReason(request.inspectionReason());
         protocol.setCheckMethod(CHECK_METHOD);
         protocol.setMileageBefore(request.mileageBefore());
@@ -184,9 +225,33 @@ public class CalibrationProtocolService {
         protocol.setPulseSensorInterruptionRegistered(request.pulseSensorInterruptionRegistered());
         protocol.setExecutorPosition(request.executorPosition());
         protocol.setExecutorName(request.executorName());
+        protocol.setSealNumbers(request.sealNumbers());
 
         fieldSuggestionService.remember(FieldSuggestionCategory.VEHICLE, request.vehicleName());
         fieldSuggestionService.remember(FieldSuggestionCategory.REPRESENTATIVE, request.representativeName());
+    }
+
+    // The four "effective*" helpers are the single source of truth for what actually gets
+    // persisted for these fields (used by both applyFields and buildChanges, so the audit diff
+    // never disagrees with what was really saved) — real Tachograph data wins when one is linked,
+    // otherwise the manually entered/selected request value is used unchanged.
+    private String effectiveTachographModel(CalibrationProtocolRequest request, Tachograph tachograph) {
+        return tachograph != null ? tachograph.getModel() : request.tachographModel();
+    }
+
+    private String effectiveTachographManufacturer(CalibrationProtocolRequest request, Tachograph tachograph) {
+        return tachograph != null ? tachograph.getManufacturer() : request.tachographManufacturer();
+    }
+
+    private String effectiveTachographSerialNumber(CalibrationProtocolRequest request, Tachograph tachograph) {
+        return tachograph != null ? tachograph.getSerialNumber() : request.tachographSerialNumber();
+    }
+
+    private String effectiveTachographManufactureYear(CalibrationProtocolRequest request, Tachograph tachograph) {
+        if (tachograph == null) {
+            return request.tachographManufactureYear();
+        }
+        return tachograph.getProductionDate() != null ? String.valueOf(tachograph.getProductionDate().getYear()) : null;
     }
 
     private CalibrationProtocol getOrThrow(Long id) {
@@ -202,5 +267,10 @@ public class CalibrationProtocolService {
     private Invoice getInvoiceOrThrow(Long invoiceId) {
         return invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new NotFoundException("Invoice %d not found".formatted(invoiceId)));
+    }
+
+    private Tachograph getTachographOrThrow(Long tachographId) {
+        return tachographRepository.findById(tachographId)
+                .orElseThrow(() -> new NotFoundException("Tachograph %d not found".formatted(tachographId)));
     }
 }

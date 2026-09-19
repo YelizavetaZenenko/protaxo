@@ -11,6 +11,7 @@ import org.mapstruct.MappingTarget;
 public interface ContractMapper {
 
     @Mapping(source = "client.id", target = "clientId")
+    @Mapping(target = "contractDate", expression = "java(contract.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toLocalDate())")
     ContractResponse toResponse(Contract contract);
 
     @Mapping(target = "client", ignore = true)

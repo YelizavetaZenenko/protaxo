@@ -4,6 +4,7 @@ import com.example.protaxo.audit.entity.AuditAction;
 import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.security.dto.UserEditFormData;
 import com.example.protaxo.security.dto.UserInviteFormData;
 import com.example.protaxo.security.dto.UserSummary;
 import com.example.protaxo.security.entity.InvitationToken;
@@ -39,6 +40,13 @@ public class UserManagementService {
         return userRepository.findAll().stream()
                 .map(u -> new UserSummary(u.getId(), u.getFullName(), u.getEmail(), u.getRole(), u.isActive()))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public UserSummary findById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User %d not found".formatted(id)));
+        return new UserSummary(user.getId(), user.getFullName(), user.getEmail(), user.getRole(), user.isActive());
     }
 
     public void invite(UserInviteFormData form) {
@@ -92,6 +100,28 @@ public class UserManagementService {
         invitationTokenRepository.save(invitationToken);
 
         auditLogService.record(AuditAction.UPDATE, "User", user.getId());
+    }
+
+    public void update(Long id, UserEditFormData form) {
+        User target = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User %d not found".formatted(id)));
+
+        userRepository.findByEmail(form.getEmail())
+                .filter(existing -> !existing.getId().equals(id))
+                .ifPresent(existing -> {
+                    throw new BusinessRuleException("Користувач з такою поштою вже існує");
+                });
+
+        if (target.getRole() == Role.ADMIN && form.getRole() != Role.ADMIN
+                && userRepository.findByRoleAndActiveTrue(Role.ADMIN).size() <= 1) {
+            throw new BusinessRuleException("Не можна зняти роль адміністратора з останнього адміністратора");
+        }
+
+        target.setFullName(form.getFullName());
+        target.setEmail(form.getEmail());
+        target.setRole(form.getRole());
+        userRepository.save(target);
+        auditLogService.record(AuditAction.UPDATE, "User", id);
     }
 
     public void delete(Long id) {

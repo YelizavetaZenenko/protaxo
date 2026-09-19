@@ -1,0 +1,17 @@
+# Скопіюйте цей файл у printagent.properties (той самий каталог, поруч із print-agent.jar) і
+# заповніть значення. printagent.properties НЕ комітиться в git (реальний токен — секрет).
+
+# Адреса WebSocket-ендпоінта бекенду. Для віддаленого сервера — wss://ваш-домен/ws/print-agent
+backend.ws.url=ws://localhost:8080/ws/print-agent
+
+# Має ЗБІГАТИСЬ з print-agent.token бекенду (application.properties / змінна середовища
+# PRINT_AGENT_TOKEN). Це єдиний захист WebSocket-ендпоінта — тримайте в секреті.
+token=dev-print-agent-token
+
+# Підрядок імені принтера в списку встановлених у Windows принтерів (наприклад "TSC" чи "Godex").
+# Порожньо — використовується принтер за замовчуванням у системі.
+# Тестовий стенд: TSC, наклейка 50x30мм — саме під цей розмір уже налаштований TsplLabelBuilder
+# (SIZE 50 mm, 30 mm), нічого в коді міняти не треба. Принтер має бути встановлений у Windows як
+# "Generic / Text Only" черга (raw passthrough) — інакше TSPL-команди не дійдуть до прошивки
+# в сирому вигляді, див. docs/Print Agent.md.
+printer.name=TSC

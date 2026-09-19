@@ -14,7 +14,10 @@
                 <h1 th:text="${editId} != null ? 'Редагування наряд-заказу' : 'Новий наряд-заказ'"></h1>
                 <a th:if="${editId} != null" class="btn-outline" th:href="@{/invoices/{id}/pdf(id=${editId})}" target="_blank">Друк PDF</a>
                 <a th:if="${editId} != null" class="btn-outline" th:href="@{/invoices/{id}/bill-pdf(id=${editId})}" target="_blank">Рахунок PDF</a>
+                <a th:if="${editId} != null" class="btn-outline" th:href="@{/invoices/{id}/act-pdf(id=${editId})}" target="_blank">Акт PDF</a>
             </div>
+
+            <div class="alert alert-error" th:if="${formError}" th:text="${formError}"></div>
 
             <form th:object="${invoice}"
                   th:action="${editId} != null ? @{/invoices/{id}/edit(id=${editId})} : @{/invoices}"

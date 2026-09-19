@@ -1,13 +1,19 @@
 package com.example.protaxo.contract.web;
 
+import com.example.protaxo.client.dto.ClientResponse;
 import com.example.protaxo.client.service.ClientService;
 import com.example.protaxo.contract.dto.ContractFormData;
 import com.example.protaxo.contract.dto.ContractRequest;
 import com.example.protaxo.contract.dto.ContractResponse;
 import com.example.protaxo.contract.service.ContractService;
+import com.example.protaxo.pdf.service.PdfRenderService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.io.IOException;
+import java.util.Locale;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -16,6 +22,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.thymeleaf.context.Context;
 
 @Controller
 @RequestMapping("/contracts")
@@ -24,6 +31,7 @@ public class ContractPageController {
 
     private final ContractService contractService;
     private final ClientService clientService;
+    private final PdfRenderService pdfRenderService;
 
     @GetMapping
     public String list(Model model) {
@@ -87,6 +95,23 @@ public class ContractPageController {
     public String delete(@PathVariable Long id) {
         contractService.softDelete(id);
         return "redirect:/contracts";
+    }
+
+    @GetMapping("/{id}/pdf")
+    public void printPdf(@PathVariable Long id, HttpServletResponse response) throws IOException {
+        ContractResponse contract = contractService.findById(id);
+        ClientResponse client = clientService.findById(contract.clientId());
+
+        Context context = new Context(new Locale("uk"));
+        context.setVariable("contract", contract);
+        context.setVariable("client", client);
+        byte[] pdf = pdfRenderService.render("contract", context);
+
+        response.setContentType(MediaType.APPLICATION_PDF_VALUE);
+        response.setHeader("Content-Disposition", "inline; filename=\"contract-" + id + ".pdf\"");
+        response.setContentLength(pdf.length);
+        response.getOutputStream().write(pdf);
+        response.getOutputStream().flush();
     }
 
     private void addReferenceData(Model model) {

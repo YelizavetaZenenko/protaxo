@@ -8,7 +8,30 @@
 </head>
 <body class="auth-page">
     <div class="auth-card card">
-        <img class="auth-logo" th:src="@{/images/logo.png}" alt="ProTaxo">
+        <div class="brand-mark">
+            <svg viewBox="0 0 200 200" class="brand-gauge" aria-hidden="true">
+                <g class="brand-gauge-cog">
+                    <rect x="92" y="20" width="16" height="24" rx="3"></rect>
+                    <rect x="92" y="156" width="16" height="24" rx="3"></rect>
+                    <rect x="92" y="20" width="16" height="24" rx="3" transform="rotate(36 100 100)"></rect>
+                    <rect x="92" y="20" width="16" height="24" rx="3" transform="rotate(72 100 100)"></rect>
+                    <rect x="92" y="20" width="16" height="24" rx="3" transform="rotate(108 100 100)"></rect>
+                    <rect x="92" y="20" width="16" height="24" rx="3" transform="rotate(144 100 100)"></rect>
+                    <rect x="92" y="20" width="16" height="24" rx="3" transform="rotate(180 100 100)"></rect>
+                    <rect x="92" y="20" width="16" height="24" rx="3" transform="rotate(216 100 100)"></rect>
+                    <rect x="92" y="20" width="16" height="24" rx="3" transform="rotate(252 100 100)"></rect>
+                    <rect x="92" y="20" width="16" height="24" rx="3" transform="rotate(288 100 100)"></rect>
+                    <rect x="92" y="20" width="16" height="24" rx="3" transform="rotate(324 100 100)"></rect>
+                    <circle cx="100" cy="100" r="62"></circle>
+                </g>
+                <circle cx="100" cy="100" r="47" class="brand-gauge-face"></circle>
+                <circle cx="100" cy="100" r="34" class="brand-gauge-arc" transform="rotate(135 100 100)"></circle>
+                <line x1="100" y1="100" x2="100" y2="70" class="brand-gauge-needle"></line>
+                <circle cx="100" cy="100" r="7" class="brand-gauge-hub"></circle>
+            </svg>
+            <span class="brand-name">ProTaxo</span>
+            <span class="brand-tagline">Ремонт та калібрування тахографів</span>
+        </div>
         <h1>Вхід до системи</h1>
 
         <div class="alert alert-error" th:if="${param.error}">

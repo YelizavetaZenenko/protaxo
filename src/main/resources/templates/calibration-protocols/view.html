@@ -15,8 +15,19 @@
                 <div class="actions-cell">
                     <a class="btn-outline" th:href="@{/calibration-protocols/{id}/edit(id=${protocol.id})}">Редагувати</a>
                     <a class="btn-outline" th:href="@{/calibration-protocols/{id}/pdf(id=${protocol.id})}" target="_blank">Друк PDF</a>
+                    <a class="btn-outline" th:href="@{/calibration-protocols/{id}/label-preview(id=${protocol.id})}" target="_blank">Перегляд наклейки</a>
+                    <form th:action="@{/calibration-protocols/{id}/print-label(id=${protocol.id})}" method="post" style="display:inline">
+                        <button type="submit" class="btn-outline" th:disabled="${!printAgentConnected}"
+                                th:title="${printAgentConnected} ? '' : 'Print Agent зараз не підключений'">Друк наклейки</button>
+                    </form>
                     <a class="btn-outline" th:href="@{/calibration-protocols}">Назад до списку</a>
                 </div>
+            </div>
+
+            <div class="alert alert-success" th:if="${printSuccess}" th:text="${printSuccess}"></div>
+            <div class="alert alert-error" th:if="${printError}" th:text="${printError}"></div>
+            <div class="muted" style="margin-bottom:0.75rem;" th:unless="${printAgentConnected}">
+                Print Agent зараз не підключений до сервера — друк наклейки буде недоступний, поки агент не запуститься.
             </div>
 
             <div class="view-meta">
@@ -56,6 +67,10 @@
 
             <h2 class="view-section-title">Дані тахографа</h2>
             <div class="view-meta">
+                <div class="field field-full" th:if="${protocol.tachographId} != null">
+                    <label>Тахограф</label>
+                    <div><a th:href="@{/tachographs/{id}(id=${protocol.tachographId})}">Переглянути картку тахографа</a></div>
+                </div>
                 <div class="field" th:if="${not #strings.isEmpty(protocol.tachographBrand)}">
                     <label>Марка</label>
                     <div th:text="${protocol.tachographBrand}"></div>
@@ -75,6 +90,18 @@
                 <div class="field" th:if="${protocol.previousInspectionDate} != null">
                     <label>Дата попередньої перевірки</label>
                     <div th:text="${#temporals.format(protocol.previousInspectionDate, 'dd.MM.yyyy')}"></div>
+                </div>
+                <div class="field" th:if="${protocol.nextInspectionDate} != null">
+                    <label>Дата наступної перевірки</label>
+                    <div th:text="${#temporals.format(protocol.nextInspectionDate, 'dd.MM.yyyy')}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(protocol.sealNumbers)}">
+                    <label>Номери пломб</label>
+                    <div th:text="${protocol.sealNumbers}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(protocol.qrHash)}">
+                    <label>QR-хеш наклейки</label>
+                    <div th:text="${protocol.qrHash}" style="font-family:monospace;font-size:0.85rem;"></div>
                 </div>
             </div>
         </div>

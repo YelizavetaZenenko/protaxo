@@ -14,6 +14,7 @@ public record CalibrationProtocolResponse(
         String orderLabel,
         String cardNumber,
         String representativeName,
+        Long tachographId,
         String tachographBrand,
         String tachographModel,
         String tachographType,
@@ -44,6 +45,9 @@ public record CalibrationProtocolResponse(
         String pulseSensorInterruptionRegistered,
         String executorPosition,
         String executorName,
-        Long invoiceId
+        Long invoiceId,
+        String sealNumbers,
+        String qrHash,
+        LocalDate nextInspectionDate
 ) {
 }

@@ -47,6 +47,13 @@ public class TachographService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<TachographResponse> findByClientId(Long clientId) {
+        return tachographRepository.findByVehicle_ClientId(clientId).stream()
+                .map(tachographMapper::toResponse)
+                .toList();
+    }
+
     public TachographResponse create(TachographRequest request) {
         Tachograph tachograph = tachographMapper.toEntity(request);
         tachograph.setVehicle(getVehicleOrThrow(request.vehicleId()));
