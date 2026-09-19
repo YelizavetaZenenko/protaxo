@@ -6,6 +6,9 @@ WORKDIR /build
 # міняється pom.xml, а не при кожній зміні коду.
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
+# Репозиторій клонується з Windows-хосту, де git не зберігає прапорець
+# "виконуваний" — без цього ./mvnw падає з exit code 126 на Linux.
+RUN chmod +x mvnw
 RUN ./mvnw -B dependency:go-offline
 
 COPY src/ src/
