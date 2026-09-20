@@ -174,12 +174,12 @@ a {
 }
 
 .auth-page {
-    --panel-1: #0e1b20;
-    --panel-2: #1c2f37;
-    --paper: #f5f1e6;
+    --bg-1: #eef2ef;
+    --bg-2: #f8faf8;
+    --paper: #ffffff;
     --ink: #1c2b31;
     --ink-muted: #5b6b70;
-    --hair: #cabf9e;
+    --hair: #dfe4e0;
     --auth-accent: #2f6f4f;
     --auth-accent-bright: #5ab98a;
 
@@ -190,13 +190,13 @@ a {
     align-items: center;
     justify-content: center;
     padding: 2rem 1rem;
-    background: radial-gradient(ellipse 90% 60% at 22% -10%, var(--panel-2), transparent 60%), var(--panel-1);
+    background: radial-gradient(ellipse 90% 60% at 22% -10%, var(--bg-2), transparent 60%), var(--bg-1);
     font-family: "Golos Text", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
 
 /* Huge partial dial peeking in from the corner, evoking an oversized
    instrument face without drawing another literal gauge icon. Kept very
-   low-contrast (white at 4-6% alpha on a dark panel) so it reads as
+   low-contrast (brand-dark at 4-5% alpha on a light panel) so it reads as
    ambience, not a second focal point next to the card. */
 .auth-page::before {
     content: "";
@@ -209,7 +209,7 @@ a {
     background: repeating-conic-gradient(
         from -18deg at 50% 50%,
         transparent 0deg 2.1deg,
-        rgba(255, 255, 255, 0.05) 2.1deg 2.5deg,
+        rgba(44, 74, 86, 0.05) 2.1deg 2.5deg,
         transparent 2.5deg 9deg
     );
     pointer-events: none;
@@ -223,7 +223,7 @@ a {
     background: var(--paper);
     border: 1px solid var(--hair);
     border-radius: 6px;
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset, 0 30px 60px rgba(4, 10, 12, 0.45);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 20px 45px rgba(28, 43, 49, 0.1), 0 2px 8px rgba(28, 43, 49, 0.06);
     text-align: center;
     color: var(--ink);
 }
