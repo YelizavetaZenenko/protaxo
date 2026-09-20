@@ -1,10 +1,12 @@
 package com.example.protaxo.security.web;
 
 import com.example.protaxo.common.exception.BusinessRuleException;
+import com.example.protaxo.security.dto.RolePermissionsFormData;
 import com.example.protaxo.security.dto.UserEditFormData;
 import com.example.protaxo.security.dto.UserInviteFormData;
 import com.example.protaxo.security.dto.UserSummary;
 import com.example.protaxo.security.entity.Role;
+import com.example.protaxo.security.service.PermissionService;
 import com.example.protaxo.security.service.UserManagementService;
 import com.example.protaxo.worker.service.RepairWorkerService;
 import jakarta.validation.Valid;
@@ -26,12 +28,25 @@ public class UserPageController {
 
     private final UserManagementService userManagementService;
     private final RepairWorkerService repairWorkerService;
+    private final PermissionService permissionService;
 
     @GetMapping
     public String list(Model model) {
         model.addAttribute("users", userManagementService.findAll());
         model.addAttribute("workers", repairWorkerService.findAll());
+
+        RolePermissionsFormData permissionsForm = new RolePermissionsFormData();
+        permissionsForm.setCanViewAuditLog(permissionService.masterCanViewAuditLog());
+        permissionsForm.setCanManageUsers(permissionService.masterCanManageUsers());
+        model.addAttribute("permissionsForm", permissionsForm);
+
         return "users/list";
+    }
+
+    @PostMapping("/permissions")
+    public String updatePermissions(@ModelAttribute("permissionsForm") RolePermissionsFormData form) {
+        permissionService.updateMasterPermissions(form.isCanViewAuditLog(), form.isCanManageUsers());
+        return "redirect:/users";
     }
 
     @GetMapping("/new")
