@@ -52,6 +52,9 @@
         <div class="alert alert-success" th:if="${param.activated}">
             Акаунт активовано, тепер увійдіть
         </div>
+        <div class="alert alert-success" th:if="${param.resetSuccess}">
+            Пароль оновлено, тепер увійдіть новим паролем
+        </div>
 
         <form th:action="@{/login}" method="post">
             <div class="field">
@@ -62,6 +65,7 @@
                 <label for="password">Пароль</label>
                 <input type="password" id="password" name="password" autocomplete="current-password" required>
             </div>
+            <a class="auth-forgot-link" th:href="@{/forgot-password}">Забули пароль?</a>
             <button type="submit" class="btn btn-block">Увійти</button>
         </form>
     </div>

@@ -32,7 +32,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/css/**", "/images/**", "/login", "/accept-invite", "/ws/print-agent", "/verify/**").permitAll()
+                        .requestMatchers("/css/**", "/images/**", "/login", "/accept-invite", "/forgot-password", "/reset-password", "/ws/print-agent", "/verify/**").permitAll()
                         // Не hasRole('ADMIN') напряму — MASTER може отримати доступ через
                         // RolePermissions (Users -> "Права ролі MASTER"), без зміни коду.
                         // Див. PermissionService.
