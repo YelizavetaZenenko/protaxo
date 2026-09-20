@@ -1,4 +1,4 @@
-# Реєструє Windows Scheduled Task, що щодня о 09:00 тягне нові бекапи БД з VPS
+﻿# Реєструє Windows Scheduled Task, що щодня о 09:00 тягне нові бекапи БД з VPS
 # на цей комп'ютер (scripts/pull-remote-backups.ps1) — офсайт-копія 3-2-1.
 # -StartWhenAvailable надолужує пропущений запуск, якщо комп'ютер був
 # вимкнений о 09:00 — спрацює одразу, як тільки увімкнеться й буде онлайн.
@@ -16,3 +16,4 @@ Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger `
 Write-Host "Scheduled task '$taskName' registered: runs pull-remote-backups.ps1 daily at 09:00 (or on next boot/connect if missed)."
 Write-Host "Inspect/remove it with: Get-ScheduledTask -TaskName $taskName"
 Write-Host "                        Unregister-ScheduledTask -TaskName $taskName -Confirm:`$false"
+
