@@ -28,6 +28,10 @@ public interface CalibrationProtocolMapper {
     CalibrationProtocolResponse toResponse(CalibrationProtocol protocol);
 
     default String buildProtocolNumber(CalibrationProtocol protocol) {
+        Invoice invoice = protocol.getInvoice();
+        if (invoice != null) {
+            return "№" + invoice.getNumber();
+        }
         return "№%06d".formatted(protocol.getId());
     }
 
