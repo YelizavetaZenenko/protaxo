@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@700;800&display=swap');
+
 :root {
     --bg: #f4f5f7;
     --surface: #ffffff;
@@ -8,6 +10,9 @@
     --accent-dark: #24563d;
     --danger: #b3261e;
     --brand-dark: #2c4a56;
+    --font: "Golos Text", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --font-brand: "Unbounded", var(--font);
+    --shadow-card: 0 1px 2px rgba(28, 43, 49, 0.04), 0 8px 20px rgba(28, 43, 49, 0.06);
 }
 
 * {
@@ -16,7 +21,7 @@
 
 body {
     margin: 0;
-    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: var(--font);
     background: var(--bg);
     color: var(--text);
 }
@@ -32,13 +37,16 @@ a {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     padding: 0.75rem 1.5rem;
+    box-shadow: 0 1px 3px rgba(28, 43, 49, 0.04);
 }
 
 .topbar .brand {
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--text);
+    font-family: var(--font-brand);
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: var(--brand-dark);
     text-decoration: none;
+    letter-spacing: -0.01em;
 }
 
 .topbar nav a {
@@ -169,8 +177,9 @@ a {
 .card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 2rem;
+    box-shadow: var(--shadow-card);
 }
 
 .auth-page {
@@ -191,7 +200,6 @@ a {
     justify-content: center;
     padding: 2rem 1rem;
     background: radial-gradient(ellipse 90% 60% at 22% -10%, var(--bg-2), transparent 60%), var(--bg-1);
-    font-family: "Golos Text", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
 
 /* Huge partial dial peeking in from the corner, evoking an oversized
@@ -280,7 +288,7 @@ a {
 }
 
 .brand-name {
-    font-family: "Unbounded", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: var(--font-brand);
     font-size: 1.4rem;
     font-weight: 800;
     color: var(--brand-dark);
@@ -321,7 +329,6 @@ a {
 }
 
 .auth-card h1 {
-    font-family: "Unbounded", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
     font-size: 1.1rem;
     font-weight: 700;
     color: var(--ink);
@@ -374,14 +381,6 @@ a {
     background: var(--ink);
 }
 
-.auth-footer {
-    margin: 1.75rem 0 0;
-    font-size: 0.78rem;
-    line-height: 1.5;
-    color: var(--ink-muted);
-    text-align: left;
-}
-
 .field {
     margin-bottom: 1rem;
 }
@@ -397,8 +396,16 @@ a {
     width: 100%;
     padding: 0.6rem 0.75rem;
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(47, 111, 79, 0.15);
 }
 
 .btn {
@@ -406,11 +413,13 @@ a {
     background: var(--accent);
     color: #fff;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 0.6rem 1.2rem;
     font-size: 1rem;
+    font-family: inherit;
     cursor: pointer;
     text-decoration: none;
+    transition: background-color 0.15s ease;
 }
 
 .btn:hover {
@@ -427,10 +436,12 @@ a {
     background: var(--danger);
     color: #fff;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 0.6rem 1.2rem;
     font-size: 1rem;
+    font-family: inherit;
     cursor: pointer;
+    transition: background-color 0.15s ease;
 }
 
 .btn-danger:hover {
@@ -507,6 +518,10 @@ th {
 
 .clean-table th {
     white-space: nowrap;
+}
+
+.clean-table tbody tr {
+    transition: background-color 0.1s ease;
 }
 
 .clean-table tbody tr:hover {
@@ -652,9 +667,17 @@ td.actions-cell > * + * {
     width: 100%;
     padding: 0.6rem 0.75rem;
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 1rem;
+    font-family: inherit;
     background: #fff;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(47, 111, 79, 0.15);
 }
 
 .field-error {
@@ -675,11 +698,13 @@ td.actions-cell > * + * {
     background: #fff;
     color: var(--text);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 0.6rem 1.2rem;
     font-size: 1rem;
+    font-family: inherit;
     cursor: pointer;
     text-decoration: none;
+    transition: background-color 0.15s ease;
 }
 
 .btn-outline:hover {
@@ -978,7 +1003,7 @@ a.doc-tab-btn {
 
 .modal {
     background: var(--surface);
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 1.5rem;
     width: 100%;
     max-width: 420px;
