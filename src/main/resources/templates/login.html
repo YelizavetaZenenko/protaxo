@@ -5,11 +5,14 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ProTaxo — Вхід</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body class="auth-page">
     <div class="auth-card card">
-        <div class="brand-mark">
+        <div class="brand-lockup">
             <svg viewBox="0 0 200 200" class="brand-gauge" aria-hidden="true">
                 <g class="brand-gauge-cog">
                     <rect x="92" y="20" width="16" height="24" rx="3"></rect>
@@ -30,9 +33,18 @@
                 <line x1="100" y1="100" x2="100" y2="70" class="brand-gauge-needle"></line>
                 <circle cx="100" cy="100" r="7" class="brand-gauge-hub"></circle>
             </svg>
-            <span class="brand-name">ProTaxo</span>
-            <span class="brand-tagline">Ремонт та калібрування тахографів</span>
+            <div class="brand-lockup-text">
+                <span class="brand-name">ProTaxo</span>
+                <span class="brand-kicker">Ремонт і калібрування тахографів</span>
+            </div>
         </div>
+
+        <div class="tick-rule" aria-hidden="true">
+            <span></span><span></span><span class="tick-major"></span><span></span><span></span>
+            <span class="tick-major"></span><span></span><span></span><span class="tick-major"></span>
+            <span></span><span></span>
+        </div>
+
         <h1>Вхід до системи</h1>
 
         <div class="alert alert-error" th:if="${param.error}">
@@ -57,7 +69,7 @@
             <button type="submit" class="btn btn-block">Увійти</button>
         </form>
 
-        <div class="auth-footer">ProTaxo &middot; Ремонт та калібрування тахографів</div>
+        <p class="auth-footer">Приватна система. Доступ лише для співробітників СТО.</p>
     </div>
 </body>
 </html>

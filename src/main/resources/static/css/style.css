@@ -174,37 +174,72 @@ a {
 }
 
 .auth-page {
+    --panel-1: #0e1b20;
+    --panel-2: #1c2f37;
+    --paper: #f5f1e6;
+    --ink: #1c2b31;
+    --ink-muted: #5b6b70;
+    --hair: #cabf9e;
+    --auth-accent: #2f6f4f;
+    --auth-accent-bright: #5ab98a;
+
+    position: relative;
+    overflow: hidden;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 2rem 1rem;
-    background:
-        radial-gradient(circle at 15% 15%, rgba(47, 111, 79, 0.16), transparent 45%),
-        radial-gradient(circle at 85% 85%, rgba(47, 111, 79, 0.12), transparent 45%),
-        var(--bg);
+    background: radial-gradient(ellipse 90% 60% at 22% -10%, var(--panel-2), transparent 60%), var(--panel-1);
+    font-family: "Golos Text", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* Huge partial dial peeking in from the corner, evoking an oversized
+   instrument face without drawing another literal gauge icon. Kept very
+   low-contrast (white at 4-6% alpha on a dark panel) so it reads as
+   ambience, not a second focal point next to the card. */
+.auth-page::before {
+    content: "";
+    position: absolute;
+    width: 150vmax;
+    height: 150vmax;
+    right: -78vmax;
+    bottom: -86vmax;
+    border-radius: 50%;
+    background: repeating-conic-gradient(
+        from -18deg at 50% 50%,
+        transparent 0deg 2.1deg,
+        rgba(255, 255, 255, 0.05) 2.1deg 2.5deg,
+        transparent 2.5deg 9deg
+    );
+    pointer-events: none;
 }
 
 .auth-card {
+    position: relative;
     width: 100%;
     max-width: 380px;
     padding: 2.5rem 2.25rem 2.25rem;
-    border-radius: 16px;
-    box-shadow: 0 20px 45px rgba(31, 36, 48, 0.1), 0 2px 6px rgba(31, 36, 48, 0.06);
+    background: var(--paper);
+    border: 1px solid var(--hair);
+    border-radius: 6px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset, 0 30px 60px rgba(4, 10, 12, 0.45);
     text-align: center;
+    color: var(--ink);
 }
 
-.brand-mark {
+.brand-lockup {
     display: flex;
-    flex-direction: column;
     align-items: center;
+    gap: 0.85rem;
+    text-align: left;
     margin-bottom: 1.5rem;
 }
 
 .brand-gauge {
-    width: 88px;
-    height: 88px;
-    margin-bottom: 0.6rem;
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
     opacity: 0;
     transform: scale(0.85);
     animation: brand-gauge-in 0.5s ease-out 0.1s forwards;
@@ -215,12 +250,12 @@ a {
 }
 
 .brand-gauge-face {
-    fill: var(--surface);
+    fill: var(--paper);
 }
 
 .brand-gauge-arc {
     fill: none;
-    stroke: var(--accent);
+    stroke: var(--auth-accent);
     stroke-width: 8;
     stroke-linecap: round;
     stroke-dasharray: 160 54;
@@ -231,28 +266,32 @@ a {
 }
 
 .brand-gauge-needle {
-    stroke: var(--accent);
+    stroke: var(--auth-accent);
     stroke-width: 5;
     stroke-linecap: round;
     transform-origin: 100px 100px;
     transform: rotate(-25deg);
 }
 
+.brand-lockup-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
 .brand-name {
-    font-size: 1.7rem;
+    font-family: "Unbounded", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 1.4rem;
     font-weight: 800;
     color: var(--brand-dark);
     letter-spacing: -0.01em;
-    line-height: 1.1;
 }
 
-.brand-tagline {
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-top: 0.3rem;
+.brand-kicker {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--ink-muted);
+    margin-top: 0.15rem;
 }
 
 @keyframes brand-gauge-in {
@@ -275,42 +314,89 @@ a {
     100% { transform: rotate(-25deg); }
 }
 
+/* Tick-rule divider — a measurement scale, not decoration: it's the same
+   visual vocabulary as the gauge dial above it (major/minor ticks), used
+   here to separate the brand block from the form. */
+.tick-rule {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 14px;
+    margin-bottom: 1.5rem;
+}
+
+.tick-rule span {
+    width: 2px;
+    height: 6px;
+    background: var(--hair);
+}
+
+.tick-rule span.tick-major {
+    height: 13px;
+    background: var(--ink-muted);
+}
+
 .auth-card h1 {
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: var(--muted);
-    margin-bottom: 1.75rem;
-    text-align: center;
+    font-family: "Unbounded", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 1.5rem;
+    text-align: left;
 }
 
 .auth-card form {
     text-align: left;
 }
 
+.auth-card .field label {
+    color: var(--ink-muted);
+}
+
 .auth-card .field input {
-    padding: 0.7rem 0.85rem;
+    padding: 0.55rem 0.1rem;
     font-size: 1rem;
+    font-family: inherit;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--hair);
+    border-radius: 0;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .auth-card .field input:focus {
     outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(47, 111, 79, 0.15);
+    border-bottom-color: var(--auth-accent);
+    box-shadow: 0 1px 0 0 var(--auth-accent);
 }
 
 .auth-card .btn-block {
     padding: 0.75rem 1.2rem;
-    font-size: 1.02rem;
+    font-size: 1rem;
     font-weight: 600;
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
     letter-spacing: 0.01em;
 }
 
+/* Scoped to .btn (not .btn-outline.btn-block, e.g. accept-invite's "back to
+   login" link) — this is the primary action's ink fill, not a blanket
+   auth-card button style. */
+.auth-card .btn.btn-block {
+    background: var(--brand-dark);
+}
+
+.auth-card .btn.btn-block:hover {
+    background: var(--ink);
+}
+
 .auth-footer {
-    margin-top: 1.5rem;
+    margin: 1.75rem 0 0;
     font-size: 0.78rem;
-    color: var(--muted);
-    text-align: center;
+    line-height: 1.5;
+    color: var(--ink-muted);
+    text-align: left;
 }
 
 .field {
