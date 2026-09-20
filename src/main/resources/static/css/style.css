@@ -314,27 +314,10 @@ a {
     100% { transform: rotate(-25deg); }
 }
 
-/* Tick-rule divider — a measurement scale, not decoration: it's the same
-   visual vocabulary as the gauge dial above it (major/minor ticks), used
-   here to separate the brand block from the form. */
-.tick-rule {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 0.5rem;
-    height: 14px;
-    margin-bottom: 1.5rem;
-}
-
-.tick-rule span {
-    width: 2px;
-    height: 6px;
-    background: var(--hair);
-}
-
-.tick-rule span.tick-major {
-    height: 13px;
-    background: var(--ink-muted);
+.auth-divider {
+    border: none;
+    border-top: 1px solid var(--hair);
+    margin: 0 0 1.5rem;
 }
 
 .auth-card h1 {
