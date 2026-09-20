@@ -61,32 +61,6 @@
 
         <div class="card" style="margin-top:1.5rem;">
             <div class="toolbar">
-                <h1>Права ролі MASTER</h1>
-            </div>
-            <p style="color:var(--muted);margin-top:-0.5rem;">
-                ADMIN завжди має повний доступ. Тут — які з адмінських розділів додатково відкрити для ролі MASTER.
-            </p>
-            <form th:action="@{/users/permissions}" method="post" th:object="${permissionsForm}">
-                <div style="margin-bottom:0.6rem;">
-                    <label style="display:flex;align-items:center;gap:0.5rem;font-weight:normal;">
-                        <input type="checkbox" th:field="*{canViewAuditLog}" style="width:auto;">
-                        Переглядати журнал дій
-                    </label>
-                </div>
-                <div style="margin-bottom:0.6rem;">
-                    <label style="display:flex;align-items:center;gap:0.5rem;font-weight:normal;">
-                        <input type="checkbox" th:field="*{canManageUsers}" style="width:auto;">
-                        Керувати користувачами (сторінка "Користувачі")
-                    </label>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn">Зберегти</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="card" style="margin-top:1.5rem;">
-            <div class="toolbar">
                 <h1>Робітники</h1>
                 <button type="button" class="btn" id="addWorkerBtn" sec:authorize="hasRole('ADMIN')">+ Додати робітника</button>
             </div>
