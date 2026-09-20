@@ -9,7 +9,7 @@
 <body>
     <div th:replace="~{fragments/topbar :: topbar(active='clients')}"></div>
 
-    <div class="container">
+    <div class="container container-wide">
         <div class="card">
             <div class="toolbar">
                 <h1>Контрагенти</h1>
@@ -36,12 +36,12 @@
 
             <table class="clean-table clean-table--fixed">
                 <colgroup>
-                    <col style="width:6%">
-                    <col style="width:15%">
-                    <col style="width:22%">
-                    <col style="width:12%">
-                    <col style="width:18%">
-                    <col style="width:8%">
+                    <col style="width:4%">
+                    <col style="width:19%">
+                    <col style="width:19%">
+                    <col style="width:10%">
+                    <col style="width:19%">
+                    <col style="width:10%">
                     <col style="width:19%">
                 </colgroup>
                 <thead>
@@ -57,12 +57,12 @@
                 </thead>
                 <tbody>
                 <tr th:each="c : ${clients}" class="clickable-row" th:attr="data-href=@{/clients/{id}(id=${c.id})}">
-                    <td th:text="${c.id}"></td>
+                    <td class="nowrap-cell" th:text="${c.id}"></td>
                     <td th:text="${c.name}"></td>
                     <td th:text="${c.fullName}"></td>
-                    <td th:text="${c.edrpou}"></td>
-                    <td th:text="${c.contactPersonName}"></td>
-                    <td th:text="${c.code}"></td>
+                    <td class="nowrap-cell" th:text="${c.edrpou}"></td>
+                    <td th:text="${#strings.trim((c.lastName ?: '') + ' ' + (c.firstName ?: '') + ' ' + (c.middleName ?: ''))}"></td>
+                    <td class="nowrap-cell" th:text="${c.code}"></td>
                     <td class="actions-cell">
                         <a class="link-btn" th:href="@{/clients/{id}/edit(id=${c.id})}">Редагувати</a>
                         <form sec:authorize="hasRole('ADMIN')" th:action="@{/clients/{id}/delete(id=${c.id})}" method="post" style="display:inline">

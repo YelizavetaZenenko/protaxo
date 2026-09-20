@@ -18,8 +18,9 @@
 
             <form th:action="@{/calibration-protocols}" method="get" class="filter-bar">
                 <div class="field">
-                    <label for="filterDate">Дата</label>
-                    <input type="date" id="filterDate" name="filterDate" th:value="${filterDate}">
+                    <label for="filterDateDisplay">Дата</label>
+                    <input type="text" id="filterDateDisplay" class="picker-input" readonly placeholder="Усі дати">
+                    <input type="hidden" id="filterDate" name="filterDate" th:value="${filterDate}">
                 </div>
                 <div class="field">
                     <label for="filterInternalNumber">Внутрішній номер</label>
@@ -68,6 +69,21 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="dateModalOverlay" hidden>
+        <div class="modal">
+            <h2>Дата</h2>
+            <div class="field">
+                <label for="dateInput">Дата</label>
+                <input type="date" id="dateInput">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="applyDateBtn">Застосувати</button>
+                <button type="button" class="btn-outline" id="clearDateBtn">Скинути</button>
+                <button type="button" class="btn-outline" id="cancelDateBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.clickable-row').forEach(function (row) {
@@ -76,6 +92,53 @@
                     window.location.href = row.dataset.href;
                 });
             });
+        });
+    </script>
+
+    <script>
+        /**
+         * Той самий підхід, що на "Наряд-заказ" (invoices/list.html) — нативний
+         * <input type="date"> показує дату у форматі локалі браузера, тому реальний
+         * picker живе в модалці, а видиме поле фільтра завжди показує dd.mm.yyyy
+         * незалежно від локалі.
+         */
+        document.addEventListener('DOMContentLoaded', function () {
+            var display = document.getElementById('filterDateDisplay');
+            var hidden = document.getElementById('filterDate');
+            var overlay = document.getElementById('dateModalOverlay');
+            var dateInput = document.getElementById('dateInput');
+
+            function formatDisplayDate(iso) {
+                var parts = iso.split('-');
+                return parts[2] + '.' + parts[1] + '.' + parts[0];
+            }
+
+            function updateDisplay() {
+                display.value = hidden.value ? formatDisplayDate(hidden.value) : '';
+            }
+
+            display.addEventListener('click', function () {
+                dateInput.value = hidden.value;
+                overlay.hidden = false;
+            });
+
+            document.getElementById('applyDateBtn').addEventListener('click', function () {
+                hidden.value = dateInput.value;
+                updateDisplay();
+                overlay.hidden = true;
+            });
+
+            document.getElementById('clearDateBtn').addEventListener('click', function () {
+                hidden.value = '';
+                updateDisplay();
+                overlay.hidden = true;
+            });
+
+            document.getElementById('cancelDateBtn').addEventListener('click', function () {
+                overlay.hidden = true;
+            });
+
+            updateDisplay();
         });
     </script>
 </body>
