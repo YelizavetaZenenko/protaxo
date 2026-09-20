@@ -48,7 +48,7 @@
                 </thead>
                 <tbody>
                 <tr th:each="p : ${protocols}" class="clickable-row" th:attr="data-href=@{/calibration-protocols/{id}(id=${p.id})}">
-                    <td th:text="${p.protocolNumber}"></td>
+                    <td th:text="${#strings.replace(p.protocolNumber, '№', '')}"></td>
                     <td th:text="${#temporals.format(p.protocolDate, 'dd.MM.yyyy HH:mm')}"></td>
                     <td th:text="${p.internalNumber}"></td>
                     <td th:text="${clientNames[p.clientId]}"></td>

@@ -17,24 +17,21 @@
             </div>
             <table class="clean-table clean-table--fixed">
                 <colgroup>
-                    <col style="width:8%">
-                    <col style="width:40%">
-                    <col style="width:22%">
+                    <col style="width:20%">
+                    <col style="width:50%">
                     <col style="width:30%">
                 </colgroup>
                 <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Контрагент</th>
                     <th>Номер договору</th>
+                    <th>Контрагент</th>
                     <th></th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:each="c : ${contracts}" class="clickable-row" th:attr="data-href=@{/contracts/{id}(id=${c.id})}">
-                    <td th:text="${c.id}"></td>
-                    <td th:text="${clientNames[c.clientId]}"></td>
                     <td th:text="${c.contractNumber}"></td>
+                    <td th:text="${clientNames[c.clientId]}"></td>
                     <td class="actions-cell">
                         <a class="link-btn" th:href="@{/contracts/{id}/edit(id=${c.id})}">Редагувати</a>
                         <a class="link-btn" th:href="@{/contracts/{id}/pdf(id=${c.id})}" target="_blank">Договір PDF</a>
@@ -45,7 +42,7 @@
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(contracts)}">
-                    <td colspan="4">Договорів ще немає</td>
+                    <td colspan="3">Договорів ще немає</td>
                 </tr>
                 </tbody>
             </table>
