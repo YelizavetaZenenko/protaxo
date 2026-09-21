@@ -57,10 +57,10 @@
                 <div class="detail-line" th:text="'Date: ' + ${#temporals.format(protocol.protocolDate, 'dd.MM.yyyy')}"></div>
                 <div class="detail-line" th:text="'VIN: ' + (${#strings.isEmpty(protocol.vehicleVin)} ? '-' : ${protocol.vehicleVin})"></div>
                 <div class="detail-line" th:text="'S/N: ' + (${#strings.isEmpty(clientEdrpou)} ? '-' : ${clientEdrpou})"></div>
-                <div class="detail-line" th:text="'Wheels: ' + (${#strings.isEmpty(protocol.tireSize)} ? '-' : ${protocol.tireSize})
-                    + '  L=' + (${#strings.isEmpty(protocol.tireCircumferenceL)} ? '-' : ${protocol.tireCircumferenceL})"></div>
+                <div class="detail-line" th:text="'Wheels: ' + (${#strings.isEmpty(protocol.tireSize)} ? '-' : ${protocol.tireSize})"></div>
+                <div class="detail-line" th:text="'L=' + (${#strings.isEmpty(protocol.tireCircumferenceL)} ? '-' : ${protocol.tireCircumferenceL})"></div>
                 <div class="detail-line" th:text="'W=' + (${#strings.isEmpty(protocol.coefficientW)} ? '-' : ${protocol.coefficientW})"></div>
-                <div class="detail-line" th:text="'K=' + (${#strings.isEmpty(protocol.constantK)} ? '-' : ${protocol.constantK})"></div>
+                <div class="detail-line" th:text="'k=' + (${#strings.isEmpty(protocol.constantK)} ? '-' : ${protocol.constantK})"></div>
                 <div class="detail-line" th:text="'V-set=' + (${#strings.isEmpty(protocol.speedLimiterValue)} ? '-' : ${protocol.speedLimiterValue})"></div>
                 <div class="qr-block">
                     <img th:src="${qrDataUri}" alt="QR-код наклейки">
