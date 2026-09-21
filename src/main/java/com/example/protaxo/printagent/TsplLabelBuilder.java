@@ -86,27 +86,33 @@ public class TsplLabelBuilder {
     }
 
     /**
-     * Top to bottom: logo (BITMAP, in {@link #build}) → address → phone → stamp number alone in a
-     * large font → date → VIN → S/N (the client's EDRPOU/RNOKPP code, not a tachograph serial
-     * number — printed here so the physical seal can be traced back to the carrier without a QR
-     * scan) → tires → W/K/V each on its own line. Client name is intentionally not printed —
-     * replaced by the EDRPOU code (S/N) as the carrier identifier.
+     * Top to bottom: logo (BITMAP, in {@link #build}) → address → phone, both centered → stamp
+     * number alone in a large font → date → VIN → S/N (the client's EDRPOU/RNOKPP code, not a
+     * tachograph serial number — printed here so the physical seal can be traced back to the
+     * carrier without a QR scan) → wheels → W/K/V-set, each on its own line. Client name and seal
+     * numbers are intentionally not printed — S/N (EDRPOU) identifies the carrier instead, and the
+     * seal numbers were dropped from the label by request (2026-09-21), even though the field still
+     * exists on the protocol itself.
+     *
+     * <p>Address/phone centering uses TSPL2's optional 7th {@code TEXT} parameter (alignment: 2 =
+     * center), with X set to the label's horizontal midpoint (400 dots / 2) rather than a left
+     * margin — like the rest of this class, unverified against the real printer (see class
+     * javadoc); some TSPL firmwares ignore this parameter or center relative to a different anchor.
      */
     private String textCommands(CalibrationProtocolResponse protocol, String clientEdrpou) {
         String date = protocol.protocolDate() == null ? null : DATE_FORMAT.format(protocol.protocolDate());
         StringBuilder sb = new StringBuilder();
-        sb.append("TEXT 10,185,\"1\",0,1,1,\"").append(escape(SHORT_COMPANY_ADDRESS)).append("\"\r\n");
-        sb.append("TEXT 10,210,\"1\",0,1,1,\"").append(escape(field("Тел", SHORT_COMPANY_PHONE))).append("\"\r\n");
+        sb.append("TEXT 200,185,\"1\",0,1,1,2,\"").append(escape(SHORT_COMPANY_ADDRESS)).append("\"\r\n");
+        sb.append("TEXT 200,210,\"1\",0,1,1,2,\"").append(escape(field("Tel", SHORT_COMPANY_PHONE))).append("\"\r\n");
         sb.append("TEXT 10,240,\"3\",0,1,1,\"").append(escape(orDash(protocol.stampNumber()))).append("\"\r\n");
         sb.append("TEXT 10,300,\"1\",0,1,1,\"").append(escape(field("Date", date))).append("\"\r\n");
         sb.append("TEXT 10,325,\"1\",0,1,1,\"").append(escape(field("VIN", truncate(protocol.vehicleVin(), 22)))).append("\"\r\n");
         sb.append("TEXT 10,350,\"1\",0,1,1,\"").append(escape(field("S/N", clientEdrpou))).append("\"\r\n");
-        sb.append("TEXT 10,375,\"1\",0,1,1,\"").append(escape(field("Шини", truncate(protocol.tireSize(), 16))))
+        sb.append("TEXT 10,375,\"1\",0,1,1,\"").append(escape(field("Wheels", truncate(protocol.tireSize(), 16))))
                 .append("  L=").append(escape(orDash(protocol.tireCircumferenceL()))).append("\"\r\n");
         sb.append("TEXT 10,400,\"1\",0,1,1,\"W=").append(escape(orDash(protocol.coefficientW()))).append("\"\r\n");
         sb.append("TEXT 10,425,\"1\",0,1,1,\"K=").append(escape(orDash(protocol.constantK()))).append("\"\r\n");
-        sb.append("TEXT 10,450,\"1\",0,1,1,\"V=").append(escape(orDash(protocol.speedLimiterValue()))).append("\"\r\n");
-        sb.append("TEXT 10,480,\"1\",0,1,1,\"").append(escape(field("Пломби", truncate(protocol.sealNumbers(), 22)))).append("\"\r\n");
+        sb.append("TEXT 10,450,\"1\",0,1,1,\"V-set=").append(escape(orDash(protocol.speedLimiterValue()))).append("\"\r\n");
         return sb.toString();
     }
 
