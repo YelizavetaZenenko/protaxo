@@ -1,5 +1,7 @@
 package com.example.protaxo.printagent;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,12 +30,22 @@ public class PrintAgentHandshakeInterceptor implements HandshakeInterceptor {
                                     WebSocketHandler wsHandler, Map<String, Object> attributes) {
         String token = UriComponentsBuilder.fromUri(request.getURI()).build()
                 .getQueryParams().getFirst("token");
-        if (token == null || !token.equals(expectedToken)) {
+        if (token == null || !constantTimeEquals(token, expectedToken)) {
             log.warn("Rejected Print Agent handshake from {} — missing or wrong token", request.getRemoteAddress());
             response.setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
             return false;
         }
         return true;
+    }
+
+    /**
+     * {@code String.equals} short-circuits on the first mismatched byte, which leaks (via
+     * response timing) how many leading characters of a guess were correct — a classic timing
+     * side-channel for a secret token. {@link MessageDigest#isEqual} always compares the full
+     * length of both arrays regardless of where they first differ.
+     */
+    private static boolean constantTimeEquals(String a, String b) {
+        return MessageDigest.isEqual(a.getBytes(StandardCharsets.UTF_8), b.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override

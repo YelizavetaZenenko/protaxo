@@ -88,7 +88,12 @@ public class UserManagementService {
     public void acceptInvite(String token, String rawPassword) {
         InvitationToken invitationToken = invitationTokenRepository.findByToken(token)
                 .orElseThrow(() -> new BusinessRuleException("Посилання недійсне"));
-        if (!invitationToken.isValid()) {
+
+        // Atomic claim, not "check isValid() then save()" — two concurrent submits of the same
+        // invite link could otherwise both pass the check before either commits.
+        Instant now = Instant.now();
+        int claimed = invitationTokenRepository.claim(invitationToken.getId(), now, now);
+        if (claimed == 0) {
             throw new BusinessRuleException("Посилання протерміноване або вже використане");
         }
 
@@ -96,9 +101,6 @@ public class UserManagementService {
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
         user.setActive(true);
         userRepository.save(user);
-
-        invitationToken.setUsedAt(Instant.now());
-        invitationTokenRepository.save(invitationToken);
 
         auditLogService.record(AuditAction.UPDATE, "User", user.getId());
     }

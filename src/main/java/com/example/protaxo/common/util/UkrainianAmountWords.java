@@ -38,9 +38,26 @@ public final class UkrainianAmountWords {
     private static final String[] HRYVNIA_FORMS = {"гривня", "гривні", "гривень"};
     private static final String[] KOPECK_FORMS = {"копійка", "копійки", "копійок"};
 
+    private static final long MAX_HRYVNIAS = 1_000_000_000_000L;
+
+    /**
+     * @throws IllegalArgumentException for a negative amount (the digit-by-digit conversion below
+     *         assumes non-negative input and would otherwise silently print a malformed line like
+     *         "-70" for kopecks instead of failing) or an amount at/above 1 trillion hryvnias (the
+     *         group breakdown below only goes up to billions — silently truncating anything larger
+     *         would print the wrong number rather than fail). Every real caller sums positive
+     *         quantity×price values, so both are far outside anything this business would ever
+     *         legitimately pass in.
+     */
     public static String amountToWords(BigDecimal amount) {
+        if (amount.signum() < 0) {
+            throw new IllegalArgumentException("Сума не може бути від'ємною: " + amount);
+        }
         BigDecimal normalized = amount.setScale(2, RoundingMode.HALF_UP);
         long hryvnias = normalized.longValue();
+        if (hryvnias >= MAX_HRYVNIAS) {
+            throw new IllegalArgumentException("Сума занадто велика для запису словами: " + amount);
+        }
         int kopecks = normalized.subtract(BigDecimal.valueOf(hryvnias))
                 .movePointRight(2)
                 .setScale(0, RoundingMode.HALF_UP)

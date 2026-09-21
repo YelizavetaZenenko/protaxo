@@ -9,5 +9,5 @@ public interface FieldSuggestionRepository extends JpaRepository<FieldSuggestion
 
     List<FieldSuggestion> findByCategoryOrderByValueAsc(FieldSuggestionCategory category);
 
-    boolean existsByCategoryAndValue(FieldSuggestionCategory category, String value);
+    boolean existsByCategoryAndValueIgnoreCase(FieldSuggestionCategory category, String value);
 }

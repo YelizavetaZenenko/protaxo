@@ -58,16 +58,18 @@ public class PasswordResetService {
     public void resetPassword(String token, String rawPassword) {
         PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
                 .orElseThrow(() -> new BusinessRuleException("Посилання недійсне"));
-        if (!resetToken.isValid()) {
+
+        // Atomic claim, not "check isValid() then save()" — two concurrent submits of the same
+        // token could otherwise both pass the check before either commits, defeating single-use.
+        Instant now = Instant.now();
+        int claimed = passwordResetTokenRepository.claim(resetToken.getId(), now, now);
+        if (claimed == 0) {
             throw new BusinessRuleException("Посилання протерміноване або вже використане");
         }
 
         User user = resetToken.getUser();
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
         userRepository.save(user);
-
-        resetToken.setUsedAt(Instant.now());
-        passwordResetTokenRepository.save(resetToken);
 
         auditLogService.record(AuditAction.UPDATE, "User", user.getId());
     }
