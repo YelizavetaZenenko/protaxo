@@ -104,7 +104,8 @@ public class TsplLabelBuilder {
      * Top to bottom: logo (BITMAP, in {@link #build}) → address → phone, both centered → stamp
      * number alone in a large font → date → VIN → S/N (the client's EDRPOU/RNOKPP code, not a
      * tachograph serial number — printed here so the physical seal can be traced back to the
-     * carrier without a QR scan) → wheels → W/K/V-set, each on its own line. Client name and seal
+     * carrier without a QR scan) → wheels → L/W/k/V-set, each on its own line (lowercase "k" to
+     * match the official calibration form's notation). Client name and seal
      * numbers are intentionally not printed — S/N (EDRPOU) identifies the carrier instead, and the
      * seal numbers were dropped from the label by request (2026-09-21), even though the field still
      * exists on the protocol itself.
@@ -123,11 +124,11 @@ public class TsplLabelBuilder {
         sb.append("TEXT 10,300,\"1\",0,1,1,\"").append(escape(field("Date", date))).append("\"\r\n");
         sb.append("TEXT 10,325,\"1\",0,1,1,\"").append(escape(field("VIN", truncate(protocol.vehicleVin(), 22)))).append("\"\r\n");
         sb.append("TEXT 10,350,\"1\",0,1,1,\"").append(escape(field("S/N", clientEdrpou))).append("\"\r\n");
-        sb.append("TEXT 10,375,\"1\",0,1,1,\"").append(escape(field("Wheels", truncate(protocol.tireSize(), 16))))
-                .append("  L=").append(escape(orDash(protocol.tireCircumferenceL()))).append("\"\r\n");
-        sb.append("TEXT 10,400,\"1\",0,1,1,\"W=").append(escape(orDash(protocol.coefficientW()))).append("\"\r\n");
-        sb.append("TEXT 10,425,\"1\",0,1,1,\"K=").append(escape(orDash(protocol.constantK()))).append("\"\r\n");
-        sb.append("TEXT 10,450,\"1\",0,1,1,\"V-set=").append(escape(orDash(protocol.speedLimiterValue()))).append("\"\r\n");
+        sb.append("TEXT 10,375,\"1\",0,1,1,\"").append(escape(field("Wheels", truncate(protocol.tireSize(), 16)))).append("\"\r\n");
+        sb.append("TEXT 10,400,\"1\",0,1,1,\"L=").append(escape(orDash(protocol.tireCircumferenceL()))).append("\"\r\n");
+        sb.append("TEXT 10,425,\"1\",0,1,1,\"W=").append(escape(orDash(protocol.coefficientW()))).append("\"\r\n");
+        sb.append("TEXT 10,450,\"1\",0,1,1,\"k=").append(escape(orDash(protocol.constantK()))).append("\"\r\n");
+        sb.append("TEXT 10,475,\"1\",0,1,1,\"V-set=").append(escape(orDash(protocol.speedLimiterValue()))).append("\"\r\n");
         return sb.toString();
     }
 
