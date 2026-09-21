@@ -35,7 +35,8 @@ public class TsplLabelBuilder {
     /** 50x80mm portrait label, 8 dots/mm @ 203dpi (see class javadoc) — 400x640 dots. */
     private static final int LOGO_WIDTH_DOTS = 240;
     private static final int LOGO_X = 80;
-    private static final String SHORT_COMPANY_ADDRESS = "м.Звягель, пров.Богуна 19-Б/2";
+    private static final String FOP_NAME = "ФОП Вишивата Діана Олександрівна";
+    private static final String SHORT_COMPANY_ADDRESS = "Волинська обл., с. Крупа вул. Широка 31";
     private static final String SHORT_COMPANY_PHONE = "+38(067)-223-22-63";
 
     /**
@@ -101,35 +102,48 @@ public class TsplLabelBuilder {
     }
 
     /**
-     * Top to bottom: logo (BITMAP, in {@link #build}) → address → phone, both centered → stamp
-     * number alone in a large font → date → VIN → S/N (the client's EDRPOU/RNOKPP code, not a
-     * tachograph serial number — printed here so the physical seal can be traced back to the
-     * carrier without a QR scan) → wheels → L/W/k/V-set, each on its own line (lowercase "k" to
-     * match the official calibration form's notation). Client name and seal
-     * numbers are intentionally not printed — S/N (EDRPOU) identifies the carrier instead, and the
-     * seal numbers were dropped from the label by request (2026-09-21), even though the field still
-     * exists on the protocol itself.
+     * Top to bottom: logo (BITMAP, in {@link #build}) → company name, address, phone (all centered)
+     * → stamp number alone in a large font → date → VIN → S/N (the client's EDRPOU/RNOKPP code, not
+     * a tachograph serial number — printed here so the physical seal can be traced back to the
+     * carrier without a QR scan) → wheels → L/W/k, each on its own line (lowercase "k" to match the
+     * official calibration form's notation) — all of these (date through k) printed bold. Client
+     * name and seal numbers are intentionally not printed — S/N (EDRPOU) identifies the carrier
+     * instead, and the seal numbers were dropped from the label by request (2026-09-21), even
+     * though the field still exists on the protocol itself. {@code speedLimiterValue} ("V-set") was
+     * on the label too but removed by request (2026-09-21) — the field itself is untouched.
      *
-     * <p>Address/phone centering uses TSPL2's optional 7th {@code TEXT} parameter (alignment: 2 =
-     * center), with X set to the label's horizontal midpoint (400 dots / 2) rather than a left
-     * margin — like the rest of this class, unverified against the real printer (see class
-     * javadoc); some TSPL firmwares ignore this parameter or center relative to a different anchor.
+     * <p>Address/phone/company-name centering uses TSPL2's optional 7th {@code TEXT} parameter
+     * (alignment: 2 = center), with X set to the label's horizontal midpoint (400 dots / 2) rather
+     * than a left margin — like the rest of this class, unverified against the real printer (see
+     * class javadoc); some TSPL firmwares ignore this parameter or center relative to a different
+     * anchor.
      */
     private String textCommands(CalibrationProtocolResponse protocol, String clientEdrpou) {
         String date = protocol.protocolDate() == null ? null : DATE_FORMAT.format(protocol.protocolDate());
         StringBuilder sb = new StringBuilder();
-        sb.append("TEXT 200,185,\"1\",0,1,1,2,\"").append(escape(SHORT_COMPANY_ADDRESS)).append("\"\r\n");
-        sb.append("TEXT 200,210,\"1\",0,1,1,2,\"").append(escape(field("Tel", SHORT_COMPANY_PHONE))).append("\"\r\n");
-        sb.append("TEXT 10,240,\"3\",0,1,1,\"").append(escape(orDash(protocol.stampNumber()))).append("\"\r\n");
-        sb.append("TEXT 10,300,\"1\",0,1,1,\"").append(escape(field("Date", date))).append("\"\r\n");
-        sb.append("TEXT 10,325,\"1\",0,1,1,\"").append(escape(field("VIN", truncate(protocol.vehicleVin(), 22)))).append("\"\r\n");
-        sb.append("TEXT 10,350,\"1\",0,1,1,\"").append(escape(field("S/N", clientEdrpou))).append("\"\r\n");
-        sb.append("TEXT 10,375,\"1\",0,1,1,\"").append(escape(field("Wheels", truncate(protocol.tireSize(), 16)))).append("\"\r\n");
-        sb.append("TEXT 10,400,\"1\",0,1,1,\"L=").append(escape(orDash(protocol.tireCircumferenceL()))).append("\"\r\n");
-        sb.append("TEXT 10,425,\"1\",0,1,1,\"W=").append(escape(orDash(protocol.coefficientW()))).append("\"\r\n");
-        sb.append("TEXT 10,450,\"1\",0,1,1,\"k=").append(escape(orDash(protocol.constantK()))).append("\"\r\n");
-        sb.append("TEXT 10,475,\"1\",0,1,1,\"V-set=").append(escape(orDash(protocol.speedLimiterValue()))).append("\"\r\n");
+        sb.append("TEXT 200,185,\"1\",0,1,1,2,\"").append(escape(FOP_NAME)).append("\"\r\n");
+        sb.append("TEXT 200,210,\"1\",0,1,1,2,\"").append(escape(SHORT_COMPANY_ADDRESS)).append("\"\r\n");
+        sb.append("TEXT 200,235,\"1\",0,1,1,2,\"").append(escape(field("Tel", SHORT_COMPANY_PHONE))).append("\"\r\n");
+        sb.append("TEXT 10,265,\"3\",0,1,1,\"").append(escape(orDash(protocol.stampNumber()))).append("\"\r\n");
+        appendBold(sb, 10, 325, field("Date", date));
+        appendBold(sb, 10, 350, field("VIN", truncate(protocol.vehicleVin(), 22)));
+        appendBold(sb, 10, 375, field("S/N", clientEdrpou));
+        appendBold(sb, 10, 400, field("Wheels", truncate(protocol.tireSize(), 16)));
+        appendBold(sb, 10, 425, "L=" + orDash(protocol.tireCircumferenceL()));
+        appendBold(sb, 10, 450, "W=" + orDash(protocol.coefficientW()));
+        appendBold(sb, 10, 475, "k=" + orDash(protocol.constantK()));
         return sb.toString();
+    }
+
+    /**
+     * TSPL has no bold flag — the standard thermal-printer trick is to print the same line twice,
+     * offset by one dot horizontally, so the extra ink thickens the strokes. Font stays {@code "1"}
+     * (same size as the rest of the detail lines), only the two calls' X differs.
+     */
+    private void appendBold(StringBuilder sb, int x, int y, String content) {
+        String escaped = escape(content);
+        sb.append("TEXT ").append(x).append(',').append(y).append(",\"1\",0,1,1,\"").append(escaped).append("\"\r\n");
+        sb.append("TEXT ").append(x + 1).append(',').append(y).append(",\"1\",0,1,1,\"").append(escaped).append("\"\r\n");
     }
 
     private static void writeLabel(ByteArrayOutputStream out, String text) {
