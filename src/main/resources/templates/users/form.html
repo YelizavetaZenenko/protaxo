@@ -35,7 +35,7 @@
                     <label for="role">Роль *</label>
                     <select id="role" th:field="*{role}">
                         <option value="">— оберіть роль —</option>
-                        <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"></option>
+                        <option th:each="r : ${roles}" th:value="${r}" th:text="${r.label}"></option>
                     </select>
                     <div class="field-error" th:if="${#fields.hasErrors('role')}" th:errors="*{role}"></div>
                 </div>
