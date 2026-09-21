@@ -38,7 +38,7 @@ public class UserManagementService {
     @Transactional(readOnly = true)
     public List<UserSummary> findAll() {
         return userRepository.findAll().stream()
-                .map(u -> new UserSummary(u.getId(), u.getFullName(), u.getEmail(), u.getRole(), u.isActive()))
+                .map(u -> new UserSummary(u.getId(), u.getFullName(), u.getEmail(), u.getRole(), u.isActive(), u.getLastLoginAt()))
                 .toList();
     }
 
@@ -46,7 +46,7 @@ public class UserManagementService {
     public UserSummary findById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User %d not found".formatted(id)));
-        return new UserSummary(user.getId(), user.getFullName(), user.getEmail(), user.getRole(), user.isActive());
+        return new UserSummary(user.getId(), user.getFullName(), user.getEmail(), user.getRole(), user.isActive(), user.getLastLoginAt());
     }
 
     public void invite(UserInviteFormData form) {

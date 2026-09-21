@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -38,4 +39,7 @@ public class User extends BaseEntity {
 
     @Column(name = "is_active", nullable = false)
     private boolean active;
+
+    @Column(name = "last_login_at")
+    private Instant lastLoginAt;
 }

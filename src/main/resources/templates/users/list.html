@@ -20,17 +20,19 @@
 
             <table class="clean-table">
                 <colgroup>
-                    <col style="width:26%">
-                    <col style="width:28%">
-                    <col style="width:14%">
-                    <col style="width:18%">
-                    <col style="width:14%">
+                    <col style="width:20%">
+                    <col style="width:24%">
+                    <col style="width:12%">
+                    <col style="width:16%">
+                    <col style="width:16%">
+                    <col style="width:12%">
                 </colgroup>
                 <thead>
                 <tr>
                     <th>Ім'я</th>
                     <th>Email</th>
                     <th>Роль</th>
+                    <th>Останній вхід</th>
                     <th>Статус</th>
                     <th></th>
                 </tr>
@@ -39,7 +41,11 @@
                 <tr th:each="u : ${users}">
                     <td th:text="${u.fullName}"></td>
                     <td th:text="${u.email}"></td>
-                    <td><span class="badge" th:text="${u.role}"></span></td>
+                    <td><span class="badge" th:text="${u.role.label}"></span></td>
+                    <td>
+                        <span th:if="${u.lastLoginAt} != null" th:text="${#temporals.format(u.lastLoginAt, 'dd.MM.yyyy HH:mm')}"></span>
+                        <span th:if="${u.lastLoginAt} == null" class="muted">Ще не входив(ла)</span>
+                    </td>
                     <td>
                         <span th:if="${u.active}" class="badge">Активний</span>
                         <span th:unless="${u.active}" class="badge" style="background:#fbeceb;color:#b3261e;">Очікує підтвердження</span>
@@ -53,7 +59,7 @@
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(users)}">
-                    <td colspan="5">Користувачів ще немає</td>
+                    <td colspan="6">Користувачів ще немає</td>
                 </tr>
                 </tbody>
             </table>
