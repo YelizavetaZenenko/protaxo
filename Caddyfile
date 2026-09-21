@@ -23,3 +23,22 @@
 		output file /data/access.log
 	}
 }
+
+# Публічна перевірка протоколу за QR (для будь-кого, без Tailscale) — див.
+# docs/Print Agent.md "Публічний доступ через Tailscale Funnel". Просте HTTP,
+# без TLS: слухає лише 127.0.0.1 хоста (docker-compose.prod.yml), TLS для
+# зовнішнього трафіку термінує сам tailscaled на боці Funnel, сюди долітає вже
+# розшифрований HTTP. Навмисно вузько — лише /verify/*, усе інше 404.
+:8081 {
+	@verify path /verify/*
+	handle @verify {
+		reverse_proxy app:8080
+	}
+	handle {
+		respond 404
+	}
+
+	log {
+		output file /data/funnel-access.log
+	}
+}
