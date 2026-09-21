@@ -90,8 +90,14 @@ public class TsplLabelBuilder {
         return "SIZE 50 mm, 80 mm\r\nGAP 2 mm, 0 mm\r\nDIRECTION 1\r\nCODEPAGE 1251\r\nCLS\r\n";
     }
 
+    /**
+     * X=125 centers an ECC-H QR at cell size 3 for a URL this long (~version 8-9, ~150 dots wide)
+     * within the 400-dot label width — unlike TEXT, TSPL's QRCODE command has no alignment
+     * parameter, so centering has to be a hand-estimated X rather than computed from an actual
+     * rendered width. Same "unverified until the real printer" caveat as the rest of this class.
+     */
     private String footer(CalibrationProtocolResponse protocol) {
-        return "QRCODE 100,510,H,3,A,0,\"" + verifyUrl(protocol) + "\"\r\nPRINT 1,1\r\n";
+        return "QRCODE 125,510,H,3,A,0,\"" + verifyUrl(protocol) + "\"\r\nPRINT 1,1\r\n";
     }
 
     /**
