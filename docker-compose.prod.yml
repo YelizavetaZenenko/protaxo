@@ -10,6 +10,7 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       APP_BASE_URL: ${APP_BASE_URL}
+      PUBLIC_VERIFY_BASE_URL: ${PUBLIC_VERIFY_BASE_URL}
       MAIL_HOST: ${MAIL_HOST}
       MAIL_PORT: ${MAIL_PORT}
       MAIL_USERNAME: ${MAIL_USERNAME}
@@ -62,6 +63,10 @@ services:
       # Firewall провайдера (крок 3 плану) — другий, незалежний рубіж захисту.
       - "${TAILSCALE_IP}:80:80"
       - "${TAILSCALE_IP}:443:443"
+      # 127.0.0.1 хоста, НЕ Tailscale IP і НЕ публічний інтерфейс — досяжний
+      # лише самим tailscaled на цій-таки машині, коли той пересилає розшифрований
+      # Funnel-трафік для /verify/* (див. Caddyfile і docs/Print Agent.md).
+      - "127.0.0.1:8081:8081"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - /opt/protaxo/certs:/certs:ro

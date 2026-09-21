@@ -38,8 +38,17 @@ public class TsplLabelBuilder {
     private static final String SHORT_COMPANY_ADDRESS = "м.Звягель, пров.Богуна 19-Б/2";
     private static final String SHORT_COMPANY_PHONE = "+38(067)-223-22-63";
 
-    @Value("${app.base-url}")
-    private String appBaseUrl;
+    /**
+     * Deliberately NOT {@code app.base-url} — a real outside scanner (an inspector, a carrier) has
+     * no Tailscale membership and can't resolve the Tailscale-only hostname {@code app.base-url}
+     * points at. This property points at the Tailscale Funnel address instead — a different port,
+     * exposed to the public internet by {@code tailscale funnel}, forwarding only {@code /verify/*}
+     * to this app (see docs/Print Agent.md "Публічний доступ через Tailscale Funnel" and the
+     * Caddyfile). Falls back to app.base-url when unset (local dev, where the distinction doesn't
+     * matter).
+     */
+    @Value("${app.public-verify-base-url}")
+    private String publicVerifyBaseUrl;
 
     private final TsplBitmap.Encoded logo = loadLogo();
 
@@ -50,7 +59,7 @@ public class TsplLabelBuilder {
      * printer will — one source of truth, never two copies that could silently drift apart.
      */
     public String verifyUrl(CalibrationProtocolResponse protocol) {
-        return appBaseUrl + "/verify/" + protocol.qrHash() + "/pdf";
+        return publicVerifyBaseUrl + "/verify/" + protocol.qrHash() + "/pdf";
     }
 
     public byte[] build(CalibrationProtocolResponse protocol, String clientEdrpou) {
