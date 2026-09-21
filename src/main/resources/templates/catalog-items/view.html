@@ -34,7 +34,7 @@
                 </div>
                 <div class="field" th:if="${catalogItem.type.name() == 'MATERIAL'}">
                     <label>Залишок</label>
-                    <div th:text="${catalogItem.stockQuantity != null ? #numbers.formatInteger(catalogItem.stockQuantity, 1) : '—'}"></div>
+                    <div th:text="${catalogItem.stockQuantity != null ? catalogItem.stockQuantityDisplay() : '—'}"></div>
                 </div>
             </div>
         </div>

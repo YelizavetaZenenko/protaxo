@@ -53,6 +53,7 @@ public class UserManagementService {
         if (userRepository.findByEmail(form.getEmail()).isPresent()) {
             throw new BusinessRuleException("Користувач з такою поштою вже існує");
         }
+        requireAdminToAssign(form.getRole());
 
         User user = new User();
         user.setFullName(form.getFullName());
@@ -111,9 +112,10 @@ public class UserManagementService {
                 .ifPresent(existing -> {
                     throw new BusinessRuleException("Користувач з такою поштою вже існує");
                 });
+        requireAdminToAssign(form.getRole());
 
         if (target.getRole() == Role.ADMIN && form.getRole() != Role.ADMIN
-                && userRepository.findByRoleAndActiveTrue(Role.ADMIN).size() <= 1) {
+                && userRepository.findByRoleAndActiveTrueForUpdate(Role.ADMIN).size() <= 1) {
             throw new BusinessRuleException("Не можна зняти роль адміністратора з останнього адміністратора");
         }
 
@@ -132,12 +134,30 @@ public class UserManagementService {
         if (target.getEmail().equals(currentEmail)) {
             throw new BusinessRuleException("Не можна видалити власний акаунт");
         }
-        if (target.getRole() == Role.ADMIN && userRepository.findByRoleAndActiveTrue(Role.ADMIN).size() <= 1) {
+        if (target.getRole() == Role.ADMIN && userRepository.findByRoleAndActiveTrueForUpdate(Role.ADMIN).size() <= 1) {
             throw new BusinessRuleException("Не можна видалити останнього адміністратора");
         }
 
         target.setDeletedAt(Instant.now());
         userRepository.save(target);
         auditLogService.record(AuditAction.DELETE, "User", id);
+    }
+
+    /**
+     * {@code CAN_MANAGE_USERS} lets MASTER reach {@code /users} at all (see RolePermissions), but
+     * that permission is meant to cover managing the user list, not minting new ADMIN accounts —
+     * without this check a MASTER with the toggle on could set their own (or anyone's) {@code role}
+     * to ADMIN via a normal invite/edit POST, a full privilege escalation the permission toggle was
+     * never meant to grant. Only an actual ROLE_ADMIN authority may assign the ADMIN role.
+     */
+    private void requireAdminToAssign(Role role) {
+        if (role != Role.ADMIN) {
+            return;
+        }
+        boolean callerIsAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+        if (!callerIsAdmin) {
+            throw new BusinessRuleException("Лише адміністратор може призначити роль адміністратора");
+        }
     }
 }

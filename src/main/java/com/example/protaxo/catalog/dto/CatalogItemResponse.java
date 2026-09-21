@@ -8,6 +8,11 @@ public record CatalogItemResponse(
         CatalogItemType type,
         String name,
         BigDecimal basePrice,
-        Integer stockQuantity
+        BigDecimal stockQuantity
 ) {
+
+    /** "5" instead of "5.000", "2.5" instead of "2.500" — same pattern as BillItemRow#quantityDisplay. */
+    public String stockQuantityDisplay() {
+        return stockQuantity == null ? null : stockQuantity.stripTrailingZeros().toPlainString();
+    }
 }
