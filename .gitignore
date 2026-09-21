@@ -35,6 +35,10 @@ build/
 ### Obsidian ###
 docs/.obsidian/
 
+### Внутрішня база знань (Obsidian vault) — лишається лише локально, ###
+### на GitHub не публікується ###
+docs/
+
 ### Logs ###
 logs/
 

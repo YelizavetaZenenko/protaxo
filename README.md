@@ -3,72 +3,64 @@
 
   # ProTaxo ERP
 
-  Внутрішня система управління сервісним центром з калібрування тахографів і ремонту вантажного транспорту.
+  Internal management system for a tachograph calibration and heavy-vehicle repair shop.
 </div>
 
 ---
 
-## Що це
+## What it is
 
-ProTaxo — ERP-система для тахосервісу: облік наряд-заказів, договорів, каталогу товарів і послуг, контрагентів, автопарку та тахографів, а також повноцінний модуль протоколів калібрування тахографів за офіційним бланком.
+ProTaxo is an ERP system for a tachograph service center: work orders, contracts, a catalog of goods and services, clients, a fleet of vehicles and tachographs, plus a full tachograph calibration protocol module built to the official regulatory form.
 
-Розроблено з нуля — від бізнес-логіки до продакшн-інфраструктури — і розгорнуто в реальному використанні на власному сервері.
+Built from the ground up — from business logic to production infrastructure — and deployed in real-world use on a dedicated server.
 
-## Можливості
+## Features
 
-- **Наряд-заказ** — документ продажу товарів/послуг з автоматичним розрахунком вартості, списанням зі складу, генерацією PDF (наряд, рахунок на оплату з розбивкою ПДВ, акт виконаних робіт)
-- **Протокол калібрування тахографа** — повний офіційний бланк (11 пунктів, таблиця результатів на 13 рядків), прив'язка до наряд-заказу й реального тахографа контрагента, автогенерація PDF
-- **Наклейки з QR-кодом** — окремий Print Agent друкує наклейку на термопринтері (TSPL); QR веде на публічну сторінку перевірки протоколу, доступну будь-кому без входу в систему (через Tailscale Funnel)
-- **Довідники**: контрагенти, автомобілі, водії, тахографи, каталог товарів і послуг, договори
-- **Рольова модель доступу** (ADMIN/MASTER) із гнучкими правами на рівні окремих дій та повним журналом аудиту (хто/коли/що саме змінив)
-- **Керування користувачами** — запрошення поштою, самостійна зміна пароля, відновлення забутого пароля, відстеження останнього входу
+- **Work orders** — the sales document for goods/services, with automatic total calculation, stock deduction, and PDF generation (work order, VAT-itemized invoice, act of completed works)
+- **Tachograph calibration protocols** — the full official form (11 sections, a 13-row results table), linked to a work order and the client's real tachograph, with automatic PDF generation
+- **QR-code labels** — a dedicated Print Agent prints a label on a thermal printer (TSPL); the QR code opens a public verification page for the protocol, reachable by anyone without logging in (via Tailscale Funnel)
+- **Reference data**: clients, vehicles, drivers, tachographs, a catalog of goods and services, contracts
+- **Role-based access** (ADMIN/MASTER) with fine-grained permissions and a full audit log (who changed what, and when)
+- **User management** — email invitations, self-service password change, forgot-password recovery, last-login tracking
 
-## Технологічний стек
+## Tech stack
 
-| Категорія | Технології |
+| Category | Technologies |
 |---|---|
-| Бекенд | Java 21, Spring Boot 4, Spring Security, Spring Data JPA / Hibernate, Spring WebSocket |
-| База даних | PostgreSQL 16, Flyway (усі зміни схеми — лише через міграції) |
-| Веб-шар | Thymeleaf (серверний рендеринг), без фронтенд-фреймворків |
+| Backend | Java 21, Spring Boot 4, Spring Security, Spring Data JPA / Hibernate, Spring WebSocket |
+| Database | PostgreSQL 16, Flyway (all schema changes go through migrations) |
+| Web layer | Thymeleaf (server-side rendering), no frontend framework |
 | PDF | openhtmltopdf |
-| Друк наклейок | TSPL2, `javax.print`, окремий легкий Java-клієнт (Print Agent) |
-| Інфраструктура | Docker / Docker Compose, Caddy (реверс-проксі), Tailscale VPN + Funnel |
+| Label printing | TSPL2, `javax.print`, a small standalone Java client (Print Agent) |
+| Infrastructure | Docker / Docker Compose, Caddy (reverse proxy), Tailscale VPN + Funnel |
 
-Повний і актуальний опис — [`docs/Технологічний стек.md`](docs/Технологічний%20стек.md).
+## Deployment architecture
 
-## Архітектура розгортання
+Production runs on a private network — access only through Tailscale VPN, with no application or database port exposed to the public internet. The one deliberate exception is a narrow public endpoint for scanning the QR code on a calibration label (via Tailscale Funnel), isolated from the rest of the system.
 
-Продакшн живе в приватній мережі — доступ лише через Tailscale VPN, без жодного відкритого назовні порту застосунку чи бази даних. Єдиний навмисний виняток — вузький публічний вхід для сканування QR-коду на наклейці калібрування (через Tailscale Funnel), не пов'язаний з рештою системи.
-
-Деталі — [`docs/Варіанти розгортання (сервер).md`](<docs/Варіанти розгортання (сервер).md>).
-
-## Швидкий старт (локальна розробка)
+## Getting started (local development)
 
 ```bash
-# 1. Підняти базу даних і MailHog (перехоплювач листів для локальної розробки)
+# 1. Start the database and MailHog (mail catcher for local dev)
 docker compose up -d
 
-# 2. Запустити застосунок
+# 2. Run the application
 ./mvnw spring-boot:run
 ```
 
-Відкрити `http://localhost:8080` — редірект на сторінку входу. Тестові акаунти (засіваються автоматично при першому старті):
+Open `http://localhost:8080` — redirects to the login page. Test accounts (seeded automatically on first start):
 
-| Email | Пароль | Роль |
+| Email | Password | Role |
 |---|---|---|
 | `admin@protaxo.local` | `admin123` | ADMIN |
 | `master@protaxo.local` | `master123` | MASTER |
 
-> Це дефолтні паролі лише для локальної розробки. На реальному продакшн-сервері вони змінені на випадкові.
+> These are local-development defaults only. The production server uses randomly generated passwords.
 
-## Документація
+## Project structure
 
-Повна база знань проєкту — у теці [`docs/`](docs/) (Obsidian vault, взаємопов'язані нотатки по кожному модулю): архітектурні рішення, історія багів і виправлень, деталі розгортання, тестування. Стартова точка — [`docs/Home.md`](docs/Home.md).
-
-## Структура коду
-
-Вертикальні зрізи по модулях (не по шарах) — кожен модуль (`client`, `vehicle`, `invoice`, `catalog`, `security`, `calibration`, `printagent`...) має власні `entity/ dto/ mapper/ repository/ service/ controller/ web/`.
+Vertical slices by module (not by layer) — each module (`client`, `vehicle`, `invoice`, `catalog`, `security`, `calibration`, `printagent`...) has its own `entity/ dto/ mapper/ repository/ service/ controller/ web/`.
 
 ---
 
-<div align="center">Приватний проєкт. Не для публічного використання.</div>
+<div align="center">Private project. Not for public use.</div>
