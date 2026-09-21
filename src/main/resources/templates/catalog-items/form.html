@@ -41,7 +41,7 @@
 
                 <div class="field">
                     <label for="stockQuantity">Залишок на складі</label>
-                    <input type="number" step="1" min="0" inputmode="numeric" id="stockQuantity" th:field="*{stockQuantity}">
+                    <input type="number" step="0.001" min="0" inputmode="decimal" id="stockQuantity" th:field="*{stockQuantity}">
                     <div class="field-error" th:if="${#fields.hasErrors('stockQuantity')}" th:errors="*{stockQuantity}"></div>
                     <div class="muted" id="stockQuantityHint">Недоступно для послуг</div>
                 </div>
@@ -59,9 +59,15 @@
             var typeSelect = document.getElementById('type');
             var stockInput = document.getElementById('stockQuantity');
 
-            /** Only whole digits pass through as the user types — no decimal point, no letters. */
+            /** Digits and a single decimal point pass through — stock now tracks fractional units
+                (e.g. 2.5 liters), same precision as наряд-заказ line item quantities. */
             stockInput.addEventListener('input', function () {
-                stockInput.value = stockInput.value.replace(/\D/g, '');
+                var cleaned = stockInput.value.replace(/[^\d.]/g, '');
+                var firstDot = cleaned.indexOf('.');
+                if (firstDot !== -1) {
+                    cleaned = cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, '');
+                }
+                stockInput.value = cleaned;
             });
 
             function updateStockAvailability() {

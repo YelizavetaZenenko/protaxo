@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -114,7 +115,17 @@ public class CalibrationProtocolService {
         }
         Tachograph tachograph = request.tachographId() != null ? getTachographOrThrow(request.tachographId()) : null;
         applyFields(protocol, request, invoice, tachograph);
-        CalibrationProtocol saved = calibrationProtocolRepository.save(protocol);
+        // The findByInvoiceId check above has a TOCTOU gap under concurrent requests (e.g. a
+        // double-click, or the auto-redirect from Invoice.create firing twice for the same
+        // наряд-заказ) — saveAndFlush forces the INSERT (and the DB's uq_calibration_protocols_
+        // invoice_id constraint) to fire here, so the race still surfaces as this friendly message
+        // instead of a raw DataIntegrityViolationException/500 further up the stack.
+        CalibrationProtocol saved;
+        try {
+            saved = calibrationProtocolRepository.saveAndFlush(protocol);
+        } catch (DataIntegrityViolationException ex) {
+            throw new BusinessRuleException("Для цього наряд-заказу протокол уже створено");
+        }
         auditLogService.record(AuditAction.CREATE, "CalibrationProtocol", saved.getId());
         return calibrationProtocolMapper.toResponse(saved);
     }

@@ -58,7 +58,7 @@
                     <td th:text="${ci.id}"></td>
                     <td th:text="${ci.name}"></td>
                     <td th:text="${#numbers.formatDecimal(ci.basePrice, 1, 2)}"></td>
-                    <td th:text="${ci.stockQuantity != null ? #numbers.formatInteger(ci.stockQuantity, 1) : '—'}"></td>
+                    <td th:text="${ci.stockQuantity != null ? ci.stockQuantityDisplay() : '—'}"></td>
                     <td class="actions-cell">
                         <a class="link-btn" th:href="@{/catalog-items/{id}/edit(id=${ci.id})}">Редагувати</a>
                         <form sec:authorize="hasRole('ADMIN')" th:action="@{/catalog-items/{id}/delete(id=${ci.id})}" method="post" style="display:inline">

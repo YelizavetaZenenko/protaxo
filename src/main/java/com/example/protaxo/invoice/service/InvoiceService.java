@@ -146,32 +146,48 @@ public class InvoiceService {
         actually track stock (MATERIAL; stockQuantity is null for SERVICE and is left alone).
         Rejects the sale outright if it would take stock below zero - by this point in update()
         the old quantities are already restored, so this only ever sees the real, current stock,
-        not stock still "reserved" by the document being edited. */
+        not stock still "reserved" by the document being edited.
+
+        <p>BigDecimal arithmetic throughout (not .intValue()) - quantity has scale 3 (fractional
+        units like 2.5 liters are legitimate), and truncating to an int on every sale silently
+        drifted stockQuantity upward relative to reality with every fractional-quantity sale. */
     private void deductStock(CatalogItem catalogItem, BigDecimal quantity) {
-        if (catalogItem.getStockQuantity() == null) {
+        BigDecimal available = catalogItem.getStockQuantity();
+        if (available == null) {
             return;
         }
-        int requested = quantity.intValue();
-        int available = catalogItem.getStockQuantity();
-        if (requested > available) {
-            throw new BusinessRuleException("Недостатньо на складі: \"%s\" — залишок %d, потрібно %d"
-                    .formatted(catalogItem.getName(), available, requested));
+        if (quantity.compareTo(available) > 0) {
+            throw new BusinessRuleException("Недостатньо на складі: \"%s\" — залишок %s, потрібно %s"
+                    .formatted(catalogItem.getName(), display(available), display(quantity)));
         }
-        catalogItem.setStockQuantity(available - requested);
+        catalogItem.setStockQuantity(available.subtract(quantity));
         catalogItemRepository.save(catalogItem);
+    }
+
+    private String display(BigDecimal value) {
+        return value.stripTrailingZeros().toPlainString();
     }
 
     /** Undoes deductStock for items still attached to the invoice - called before re-applying
         items on update, and before soft-deleting the whole document, so stock reflects reality
-        instead of drifting down every time the same наряд-заказ is edited. */
+        instead of drifting down every time the same наряд-заказ is edited.
+
+        <p>Goes straight to a native, id-based update ({@link CatalogItemRepository#restoreStockQuantity})
+        instead of loading the CatalogItem entity and re-saving it - the catalog item on an OLD line
+        item can have been soft-deleted since the sale (someone tidied up the catalog), and loading
+        it through the normal entity path runs into {@code @SQLRestriction("deleted_at IS NULL")},
+        which would either silently skip the restore or throw depending on how the association
+        happens to be fetched. The native update bypasses that restriction and hits the real row
+        directly, so a soft-deleted catalog item's stock still gets restored correctly. Reading
+        {@code item.getCatalogItem().getId()} is safe even when the row is gone - a Hibernate proxy's
+        identifier is known without initializing/fetching it. */
     private void restoreStock(List<InvoiceItem> items) {
         for (InvoiceItem item : items) {
             CatalogItem catalogItem = item.getCatalogItem();
-            if (catalogItem == null || catalogItem.getStockQuantity() == null) {
+            if (catalogItem == null) {
                 continue;
             }
-            catalogItem.setStockQuantity(catalogItem.getStockQuantity() + item.getQuantity().intValue());
-            catalogItemRepository.save(catalogItem);
+            catalogItemRepository.restoreStockQuantity(catalogItem.getId(), item.getQuantity());
         }
     }
 
