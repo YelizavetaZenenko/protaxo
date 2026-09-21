@@ -4,6 +4,7 @@ import com.example.protaxo.calibration.dto.CalibrationProtocolFormData;
 import com.example.protaxo.calibration.dto.CalibrationProtocolRequest;
 import com.example.protaxo.calibration.dto.CalibrationProtocolResponse;
 import com.example.protaxo.calibration.service.CalibrationProtocolService;
+import com.example.protaxo.client.dto.ClientResponse;
 import com.example.protaxo.client.service.ClientService;
 import com.example.protaxo.invoice.dto.InvoiceResponse;
 import com.example.protaxo.invoice.service.InvoiceService;
@@ -150,8 +151,8 @@ public class CalibrationProtocolPageController {
     @PostMapping("/{id}/print-label")
     public String printLabel(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         CalibrationProtocolResponse protocol = calibrationProtocolService.ensureQrHash(id);
-        String clientName = clientService.findById(protocol.clientId()).name();
-        byte[] tspl = tsplLabelBuilder.build(protocol, clientName);
+        ClientResponse client = clientService.findById(protocol.clientId());
+        byte[] tspl = tsplLabelBuilder.build(protocol, client.edrpou());
         boolean sent = printAgentSessionRegistry.broadcast(tspl);
         if (sent) {
             redirectAttributes.addFlashAttribute("printSuccess", "Завдання на друк наклейки відправлено");
@@ -172,12 +173,13 @@ public class CalibrationProtocolPageController {
     @GetMapping("/{id}/label-preview")
     public String labelPreview(@PathVariable Long id, Model model) {
         CalibrationProtocolResponse protocol = calibrationProtocolService.ensureQrHash(id);
-        String clientName = clientService.findById(protocol.clientId()).name();
+        ClientResponse client = clientService.findById(protocol.clientId());
         String verifyUrl = tsplLabelBuilder.verifyUrl(protocol);
         model.addAttribute("protocol", protocol);
-        model.addAttribute("clientName", clientName);
+        model.addAttribute("clientName", client.name());
+        model.addAttribute("clientEdrpou", client.edrpou());
         model.addAttribute("verifyUrl", verifyUrl);
-        model.addAttribute("tspl", tsplLabelBuilder.buildPreviewText(protocol, clientName));
+        model.addAttribute("tspl", tsplLabelBuilder.buildPreviewText(protocol, client.edrpou()));
         model.addAttribute("qrDataUri", qrCodeImageGenerator.toPngDataUri(verifyUrl, 300));
         return "calibration-protocols/label-preview";
     }
