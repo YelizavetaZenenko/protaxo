@@ -23,6 +23,7 @@
         }
         .label-mock img.logo { width: 130px; }
         .label-mock .detail-line { font-size: 0.8rem; align-self: flex-start; overflow-wrap: break-word; }
+        .label-mock .detail-line.centered { align-self: center; text-align: center; }
         .label-mock .stamp-number { font-size: 1.6rem; font-weight: 700; margin: 4px 0; }
         .label-mock .qr-block { margin-top: 8px; text-align: center; }
         .label-mock .qr-block img { width: 140px; height: 140px; display: block; }
@@ -50,18 +51,17 @@
 
             <div class="label-mock">
                 <img class="logo" th:src="@{/images/logo.png}" alt="ProTaxo">
-                <div class="detail-line">м.Звягель, пров.Богуна 19-Б/2</div>
-                <div class="detail-line">Тел: +38(067)-223-22-63</div>
+                <div class="detail-line centered">м.Звягель, пров.Богуна 19-Б/2</div>
+                <div class="detail-line centered">Tel: +38(067)-223-22-63</div>
                 <div class="stamp-number" th:text="${#strings.isEmpty(protocol.stampNumber)} ? '-' : ${protocol.stampNumber}"></div>
                 <div class="detail-line" th:text="'Date: ' + ${#temporals.format(protocol.protocolDate, 'dd.MM.yyyy')}"></div>
                 <div class="detail-line" th:text="'VIN: ' + (${#strings.isEmpty(protocol.vehicleVin)} ? '-' : ${protocol.vehicleVin})"></div>
                 <div class="detail-line" th:text="'S/N: ' + (${#strings.isEmpty(clientEdrpou)} ? '-' : ${clientEdrpou})"></div>
-                <div class="detail-line" th:text="'Шини: ' + (${#strings.isEmpty(protocol.tireSize)} ? '-' : ${protocol.tireSize})
+                <div class="detail-line" th:text="'Wheels: ' + (${#strings.isEmpty(protocol.tireSize)} ? '-' : ${protocol.tireSize})
                     + '  L=' + (${#strings.isEmpty(protocol.tireCircumferenceL)} ? '-' : ${protocol.tireCircumferenceL})"></div>
                 <div class="detail-line" th:text="'W=' + (${#strings.isEmpty(protocol.coefficientW)} ? '-' : ${protocol.coefficientW})"></div>
                 <div class="detail-line" th:text="'K=' + (${#strings.isEmpty(protocol.constantK)} ? '-' : ${protocol.constantK})"></div>
-                <div class="detail-line" th:text="'V=' + (${#strings.isEmpty(protocol.speedLimiterValue)} ? '-' : ${protocol.speedLimiterValue})"></div>
-                <div class="detail-line" th:text="'Пломби: ' + (${#strings.isEmpty(protocol.sealNumbers)} ? '-' : ${protocol.sealNumbers})"></div>
+                <div class="detail-line" th:text="'V-set=' + (${#strings.isEmpty(protocol.speedLimiterValue)} ? '-' : ${protocol.speedLimiterValue})"></div>
                 <div class="qr-block">
                     <img th:src="${qrDataUri}" alt="QR-код наклейки">
                     <div class="qr-caption" th:text="${verifyUrl}"></div>
