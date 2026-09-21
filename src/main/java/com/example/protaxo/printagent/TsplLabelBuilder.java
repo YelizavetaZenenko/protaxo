@@ -14,9 +14,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * Builds the raw TSPL2 command block for a calibration protocol seal/QR label. Label size
- * (50x30mm) and text positions are a starting point picked without the actual printer in hand —
- * see [[Print Agent]] for why these will very likely need adjusting once tested against real
- * hardware (label stock size, font, and especially Cyrillic codepage are printer/firmware-specific).
+ * (50x80mm, portrait — confirmed with the user 2026-09-21) and text positions are a starting point
+ * picked without the actual printer in hand — see [[Print Agent]] for why these will very likely
+ * need adjusting once tested against real hardware (font and especially Cyrillic codepage are
+ * printer/firmware-specific).
  *
  * <p>{@link #build} returns raw bytes, not a {@code String} — the label embeds the ProTaxo logo as
  * a TSPL {@code BITMAP} command, whose payload is arbitrary binary pixel data that cannot survive
@@ -31,8 +32,11 @@ public class TsplLabelBuilder {
 
     private static final Charset LABEL_CHARSET = Charset.forName("windows-1251");
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-    private static final int LOGO_WIDTH_DOTS = 64;
+    /** 50x80mm portrait label, 8 dots/mm @ 203dpi (see class javadoc) — 400x640 dots. */
+    private static final int LOGO_WIDTH_DOTS = 240;
+    private static final int LOGO_X = 80;
     private static final String SHORT_COMPANY_ADDRESS = "м.Звягель, пров.Богуна 19-Б/2";
+    private static final String SHORT_COMPANY_PHONE = "+38(067)-223-22-63";
 
     @Value("${app.base-url}")
     private String appBaseUrl;
@@ -49,13 +53,13 @@ public class TsplLabelBuilder {
         return appBaseUrl + "/verify/" + protocol.qrHash() + "/pdf";
     }
 
-    public byte[] build(CalibrationProtocolResponse protocol, String clientName) {
+    public byte[] build(CalibrationProtocolResponse protocol, String clientEdrpou) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         writeLabel(out, header());
-        writeLabel(out, "BITMAP 10,10," + logo.widthBytes() + "," + logo.heightDots() + ",0,");
+        writeLabel(out, "BITMAP " + LOGO_X + ",15," + logo.widthBytes() + "," + logo.heightDots() + ",0,");
         out.writeBytes(logo.data());
         writeLabel(out, "\r\n");
-        writeLabel(out, textCommands(protocol, clientName));
+        writeLabel(out, textCommands(protocol, clientEdrpou));
         writeLabel(out, footer(protocol));
         return out.toByteArray();
     }
@@ -65,36 +69,44 @@ public class TsplLabelBuilder {
      * the real payload is binary (embeds the raw logo bitmap) and can't be dumped as text, so the
      * bitmap line shows a placeholder byte count instead of the actual pixel bytes.
      */
-    public String buildPreviewText(CalibrationProtocolResponse protocol, String clientName) {
+    public String buildPreviewText(CalibrationProtocolResponse protocol, String clientEdrpou) {
         return header()
-                + "BITMAP 10,10," + logo.widthBytes() + "," + logo.heightDots() + ",0,<логотип, " + logo.data().length + " байт бітмапи>\r\n"
-                + textCommands(protocol, clientName)
+                + "BITMAP " + LOGO_X + ",15," + logo.widthBytes() + "," + logo.heightDots() + ",0,<логотип, " + logo.data().length + " байт бітмапи>\r\n"
+                + textCommands(protocol, clientEdrpou)
                 + footer(protocol);
     }
 
+    /** 50x80mm, portrait (see LOGO_WIDTH_DOTS comment) — was 50x30mm landscape. */
     private String header() {
-        return "SIZE 50 mm, 30 mm\r\nGAP 2 mm, 0 mm\r\nDIRECTION 1\r\nCODEPAGE 1251\r\nCLS\r\n";
+        return "SIZE 50 mm, 80 mm\r\nGAP 2 mm, 0 mm\r\nDIRECTION 1\r\nCODEPAGE 1251\r\nCLS\r\n";
     }
 
     private String footer(CalibrationProtocolResponse protocol) {
-        return "QRCODE 260,15,H,3,A,0,\"" + verifyUrl(protocol) + "\"\r\nPRINT 1,1\r\n";
+        return "QRCODE 100,510,H,3,A,0,\"" + verifyUrl(protocol) + "\"\r\nPRINT 1,1\r\n";
     }
 
-    private String textCommands(CalibrationProtocolResponse protocol, String clientName) {
+    /**
+     * Top to bottom: logo (BITMAP, in {@link #build}) → address → phone → stamp number alone in a
+     * large font → date → VIN → S/N (the client's EDRPOU/RNOKPP code, not a tachograph serial
+     * number — printed here so the physical seal can be traced back to the carrier without a QR
+     * scan) → tires → W/K/V each on its own line. Client name is intentionally not printed —
+     * replaced by the EDRPOU code (S/N) as the carrier identifier.
+     */
+    private String textCommands(CalibrationProtocolResponse protocol, String clientEdrpou) {
         String date = protocol.protocolDate() == null ? null : DATE_FORMAT.format(protocol.protocolDate());
         StringBuilder sb = new StringBuilder();
-        sb.append("TEXT 90,15,\"3\",0,1,1,\"").append(escape(protocol.protocolNumber())).append("\"\r\n");
-        sb.append("TEXT 10,85,\"2\",0,1,1,\"").append(escape(truncate(clientName, 24))).append("\"\r\n");
-        sb.append("TEXT 10,110,\"1\",0,1,1,\"").append(escape(field("Штамп", protocol.stampNumber())))
-                .append("   ").append(escape(field("Дата", date))).append("\"\r\n");
-        sb.append("TEXT 10,125,\"1\",0,1,1,\"").append(escape(field("VIN", truncate(protocol.vehicleVin(), 22)))).append("\"\r\n");
-        sb.append("TEXT 10,140,\"1\",0,1,1,\"").append(escape(field("Шини", truncate(protocol.tireSize(), 16))))
-                .append("  L=").append(escape(orDash(protocol.tireCircumferenceL()))).append("\"\r\n");
-        sb.append("TEXT 10,155,\"1\",0,1,1,\"W=").append(escape(orDash(protocol.coefficientW())))
-                .append("  K=").append(escape(orDash(protocol.constantK())))
-                .append("  V=").append(escape(orDash(protocol.speedLimiterValue()))).append("\"\r\n");
-        sb.append("TEXT 10,170,\"1\",0,1,1,\"").append(escape(field("Пломби", truncate(protocol.sealNumbers(), 22)))).append("\"\r\n");
         sb.append("TEXT 10,185,\"1\",0,1,1,\"").append(escape(SHORT_COMPANY_ADDRESS)).append("\"\r\n");
+        sb.append("TEXT 10,210,\"1\",0,1,1,\"").append(escape(field("Тел", SHORT_COMPANY_PHONE))).append("\"\r\n");
+        sb.append("TEXT 10,240,\"3\",0,1,1,\"").append(escape(orDash(protocol.stampNumber()))).append("\"\r\n");
+        sb.append("TEXT 10,300,\"1\",0,1,1,\"").append(escape(field("Date", date))).append("\"\r\n");
+        sb.append("TEXT 10,325,\"1\",0,1,1,\"").append(escape(field("VIN", truncate(protocol.vehicleVin(), 22)))).append("\"\r\n");
+        sb.append("TEXT 10,350,\"1\",0,1,1,\"").append(escape(field("S/N", clientEdrpou))).append("\"\r\n");
+        sb.append("TEXT 10,375,\"1\",0,1,1,\"").append(escape(field("Шини", truncate(protocol.tireSize(), 16))))
+                .append("  L=").append(escape(orDash(protocol.tireCircumferenceL()))).append("\"\r\n");
+        sb.append("TEXT 10,400,\"1\",0,1,1,\"W=").append(escape(orDash(protocol.coefficientW()))).append("\"\r\n");
+        sb.append("TEXT 10,425,\"1\",0,1,1,\"K=").append(escape(orDash(protocol.constantK()))).append("\"\r\n");
+        sb.append("TEXT 10,450,\"1\",0,1,1,\"V=").append(escape(orDash(protocol.speedLimiterValue()))).append("\"\r\n");
+        sb.append("TEXT 10,480,\"1\",0,1,1,\"").append(escape(field("Пломби", truncate(protocol.sealNumbers(), 22)))).append("\"\r\n");
         return sb.toString();
     }
 
