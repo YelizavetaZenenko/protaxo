@@ -48,14 +48,7 @@ docker compose up -d
 ./mvnw spring-boot:run
 ```
 
-Open `http://localhost:8080` — redirects to the login page. Test accounts (seeded automatically on first start):
-
-| Email | Password | Role |
-|---|---|---|
-| `admin@protaxo.local` | `admin123` | ADMIN |
-| `master@protaxo.local` | `master123` | MASTER |
-
-> These are local-development defaults only. The production server uses randomly generated passwords.
+Open `http://localhost:8080` — redirects to the login page. Test accounts are seeded automatically on first start (`AdminUserSeeder`).
 
 ## Project structure
 
