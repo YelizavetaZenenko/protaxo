@@ -202,46 +202,16 @@ a {
     background: radial-gradient(ellipse 90% 60% at 22% -10%, var(--bg-2), transparent 60%), var(--bg-1);
 }
 
-/* Huge partial dial peeking in from the corner, evoking an oversized
-   instrument face without drawing another literal gauge icon. Kept very
-   low-contrast (brand-dark at 4-5% alpha on a light panel) so it reads as
-   ambience, not a second focal point next to the card. */
-.auth-page::before {
-    content: "";
-    position: absolute;
-    width: 150vmax;
-    height: 150vmax;
-    right: -78vmax;
-    bottom: -86vmax;
-    border-radius: 50%;
-    background: repeating-conic-gradient(
-        from -18deg at 50% 50%,
-        transparent 0deg 2.1deg,
-        rgba(44, 74, 86, 0.05) 2.1deg 2.5deg,
-        transparent 2.5deg 9deg
-    );
-    pointer-events: none;
-}
-
-/* Truck illustration in the bottom-right corner: a transparent PNG already
-   tinted --brand-dark, softened with opacity so it stays ambience next to
-   the card. Decorative only; hidden where it would crowd the card. */
+/* Full-window truck illustration behind the card: a transparent PNG already
+   tinted --brand-dark, softened with opacity so the form stays the focus.
+   Fixed, so it fills the viewport even when the page scrolls. */
 .auth-page::after {
     content: "";
-    position: absolute;
-    right: 3vw;
-    bottom: 3vh;
-    width: min(30vw, 420px);
-    aspect-ratio: 900 / 613;
-    background: url('/images/truck.png') no-repeat center / contain;
-    opacity: 0.35;
+    position: fixed;
+    inset: 0;
+    background: url('/images/truck.png') no-repeat center / cover;
+    opacity: 0.2;
     pointer-events: none;
-}
-
-@media (max-width: 960px) {
-    .auth-page::after {
-        display: none;
-    }
 }
 
 .auth-card {
