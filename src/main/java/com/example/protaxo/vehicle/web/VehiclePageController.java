@@ -2,6 +2,7 @@ package com.example.protaxo.vehicle.web;
 
 import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.client.service.ClientService;
+import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.tachograph.dto.TachographResponse;
 import com.example.protaxo.tachograph.service.TachographService;
 import com.example.protaxo.vehicle.dto.VehicleFormData;
@@ -75,7 +76,13 @@ public class VehiclePageController {
             addReferenceData(model);
             return "vehicles/form";
         }
-        vehicleService.create(toRequest(form));
+        try {
+            vehicleService.create(toRequest(form));
+        } catch (BusinessRuleException ex) {
+            model.addAttribute("formError", ex.getMessage());
+            addReferenceData(model);
+            return "vehicles/form";
+        }
         if (form.getReturnToClientId() != null) {
             return "redirect:/clients/" + form.getReturnToClientId() + "/edit";
         }
@@ -99,7 +106,14 @@ public class VehiclePageController {
             addReferenceData(model);
             return "vehicles/form";
         }
-        vehicleService.update(id, toRequest(form));
+        try {
+            vehicleService.update(id, toRequest(form));
+        } catch (BusinessRuleException ex) {
+            model.addAttribute("formError", ex.getMessage());
+            model.addAttribute("editId", id);
+            addReferenceData(model);
+            return "vehicles/form";
+        }
         return "redirect:/vehicles";
     }
 

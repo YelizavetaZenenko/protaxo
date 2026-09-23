@@ -4,6 +4,7 @@ import com.example.protaxo.audit.entity.AuditAction;
 import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.client.entity.Client;
 import com.example.protaxo.client.repository.ClientRepository;
+import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.exception.NotFoundException;
 import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.vehicle.dto.VehicleRequest;
@@ -15,6 +16,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,7 +52,7 @@ public class VehicleService {
     public VehicleResponse create(VehicleRequest request) {
         Vehicle vehicle = vehicleMapper.toEntity(request);
         vehicle.setClient(getClientOrThrow(request.clientId()));
-        Vehicle saved = vehicleRepository.save(vehicle);
+        Vehicle saved = saveOrThrowFriendly(vehicle);
         auditLogService.record(AuditAction.CREATE, "Vehicle", saved.getId());
         return vehicleMapper.toResponse(saved);
     }
@@ -67,9 +69,19 @@ public class VehicleService {
                 .build();
         vehicleMapper.updateEntity(request, vehicle);
         vehicle.setClient(getClientOrThrow(request.clientId()));
-        Vehicle saved = vehicleRepository.save(vehicle);
+        Vehicle saved = saveOrThrowFriendly(vehicle);
         auditLogService.record(AuditAction.UPDATE, "Vehicle", saved.getId(), changes);
         return vehicleMapper.toResponse(saved);
+    }
+
+    /** VIN has a DB-level unique constraint — see ClientService#saveOrThrowFriendly for why this
+        needs to be saveAndFlush + catch rather than a pre-check or a plain save(). */
+    private Vehicle saveOrThrowFriendly(Vehicle vehicle) {
+        try {
+            return vehicleRepository.saveAndFlush(vehicle);
+        } catch (DataIntegrityViolationException ex) {
+            throw new BusinessRuleException("Автомобіль з таким VIN уже існує");
+        }
     }
 
     public void softDelete(Long id) {

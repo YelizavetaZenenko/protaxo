@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -63,7 +64,7 @@ public class UserManagementService {
         // Unguessable placeholder — overwritten once the invite is accepted; the account
         // cannot log in before that anyway because isActive is false.
         user.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
-        User saved = userRepository.save(user);
+        User saved = saveOrThrowFriendly(user);
 
         String token = UUID.randomUUID().toString();
         InvitationToken invitationToken = InvitationToken.builder()
@@ -124,8 +125,19 @@ public class UserManagementService {
         target.setFullName(form.getFullName());
         target.setEmail(form.getEmail());
         target.setRole(form.getRole());
-        userRepository.save(target);
+        saveOrThrowFriendly(target);
         auditLogService.record(AuditAction.UPDATE, "User", id);
+    }
+
+    /** email has a DB-level unique constraint — the pre-checks above already cover the common
+        case with a friendly message, but this is the atomic backup for the race they can't catch
+        (see ClientService#saveOrThrowFriendly for the full rationale). */
+    private User saveOrThrowFriendly(User user) {
+        try {
+            return userRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException ex) {
+            throw new BusinessRuleException("Користувач з такою поштою вже існує");
+        }
     }
 
     public void delete(Long id) {

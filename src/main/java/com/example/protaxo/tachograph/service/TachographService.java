@@ -2,6 +2,7 @@ package com.example.protaxo.tachograph.service;
 
 import com.example.protaxo.audit.entity.AuditAction;
 import com.example.protaxo.audit.service.AuditLogService;
+import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.exception.NotFoundException;
 import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.tachograph.dto.TachographRequest;
@@ -15,6 +16,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,7 +59,7 @@ public class TachographService {
     public TachographResponse create(TachographRequest request) {
         Tachograph tachograph = tachographMapper.toEntity(request);
         tachograph.setVehicle(getVehicleOrThrow(request.vehicleId()));
-        Tachograph saved = tachographRepository.save(tachograph);
+        Tachograph saved = saveOrThrowFriendly(tachograph);
         auditLogService.record(AuditAction.CREATE, "Tachograph", saved.getId());
         return tachographMapper.toResponse(saved);
     }
@@ -72,9 +74,19 @@ public class TachographService {
                 .build();
         tachographMapper.updateEntity(request, tachograph);
         tachograph.setVehicle(getVehicleOrThrow(request.vehicleId()));
-        Tachograph saved = tachographRepository.save(tachograph);
+        Tachograph saved = saveOrThrowFriendly(tachograph);
         auditLogService.record(AuditAction.UPDATE, "Tachograph", saved.getId(), changes);
         return tachographMapper.toResponse(saved);
+    }
+
+    /** serialNumber has a DB-level unique constraint — see ClientService#saveOrThrowFriendly for
+        why this needs to be saveAndFlush + catch rather than a pre-check or a plain save(). */
+    private Tachograph saveOrThrowFriendly(Tachograph tachograph) {
+        try {
+            return tachographRepository.saveAndFlush(tachograph);
+        } catch (DataIntegrityViolationException ex) {
+            throw new BusinessRuleException("Тахограф із таким заводським номером уже існує");
+        }
     }
 
     public void softDelete(Long id) {

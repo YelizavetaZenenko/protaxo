@@ -13,6 +13,8 @@
         <div class="card">
             <h1 th:text="${editId} != null ? 'Редагування тахографа' : 'Новий тахограф'"></h1>
 
+            <div class="alert alert-error" th:if="${formError}" th:text="${formError}"></div>
+
             <form th:object="${tachograph}"
                   th:action="${editId} != null ? @{/tachographs/{id}/edit(id=${editId})} : @{/tachographs}"
                   method="post" class="form-grid">

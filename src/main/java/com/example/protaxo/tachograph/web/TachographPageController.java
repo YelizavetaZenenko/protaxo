@@ -1,6 +1,7 @@
 package com.example.protaxo.tachograph.web;
 
 import com.example.protaxo.client.service.ClientService;
+import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.tachograph.dto.TachographFormData;
 import com.example.protaxo.tachograph.dto.TachographRequest;
 import com.example.protaxo.tachograph.dto.TachographResponse;
@@ -58,7 +59,13 @@ public class TachographPageController {
             addReferenceData(model, form.getClientId());
             return "tachographs/form";
         }
-        tachographService.create(toRequest(form));
+        try {
+            tachographService.create(toRequest(form));
+        } catch (BusinessRuleException ex) {
+            model.addAttribute("formError", ex.getMessage());
+            addReferenceData(model, form.getClientId());
+            return "tachographs/form";
+        }
         return "redirect:/vehicles?tab=tachographs";
     }
 
@@ -82,7 +89,14 @@ public class TachographPageController {
             addReferenceData(model, form.getClientId());
             return "tachographs/form";
         }
-        tachographService.update(id, toRequest(form));
+        try {
+            tachographService.update(id, toRequest(form));
+        } catch (BusinessRuleException ex) {
+            model.addAttribute("formError", ex.getMessage());
+            model.addAttribute("editId", id);
+            addReferenceData(model, form.getClientId());
+            return "tachographs/form";
+        }
         return "redirect:/vehicles?tab=tachographs";
     }
 

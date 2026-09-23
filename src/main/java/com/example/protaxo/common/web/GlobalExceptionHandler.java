@@ -12,9 +12,19 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@RestControllerAdvice
+/**
+ * Scoped to {@code @RestController}s only ({@code annotations = RestController.class}) — this
+ * used to apply globally, which meant a page-based {@code @Controller} (a normal browser form)
+ * that let an exception escape unhandled got a raw JSON body back instead of an HTML page. A real
+ * user hit exactly this on 2026-09-23 (a duplicate-EDRPOU client save surfaced as a bare 409 JSON
+ * response instead of the form re-rendering with an error). Page controllers that don't catch
+ * their own exceptions now fall through to Spring Boot's default error dispatch, which renders
+ * {@code templates/error.html} instead.
+ */
+@RestControllerAdvice(annotations = RestController.class)
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)

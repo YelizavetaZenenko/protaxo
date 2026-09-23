@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ProTaxo — Помилка</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="auth-page">
+    <div class="auth-card card">
+        <h1>Щось пішло не так</h1>
+        <p class="muted" th:if="${status != null}">Код помилки: <span th:text="${status}"></span></p>
+        <p>
+            Сталася непередбачена помилка під час обробки запиту. Спробуйте повернутись і повторити дію —
+            якщо проблема повторюється, повідомте адміністратора.
+        </p>
+        <div class="form-actions">
+            <button type="button" class="btn" onclick="history.back()">Назад</button>
+            <a class="btn-outline" th:href="@{/}">На головну</a>
+        </div>
+    </div>
+</body>
+</html>
