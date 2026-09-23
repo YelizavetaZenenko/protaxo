@@ -4,6 +4,7 @@ import com.example.protaxo.client.dto.ClientFormData;
 import com.example.protaxo.client.dto.ClientRequest;
 import com.example.protaxo.client.dto.ClientResponse;
 import com.example.protaxo.client.service.ClientService;
+import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.driver.dto.DriverResponse;
 import com.example.protaxo.driver.service.DriverService;
 import com.example.protaxo.vehicle.dto.VehicleResponse;
@@ -78,7 +79,14 @@ public class ClientPageController {
             model.addAttribute("vehicles", List.<VehicleResponse>of());
             return "clients/form";
         }
-        clientService.create(toRequest(form, null));
+        try {
+            clientService.create(toRequest(form, null));
+        } catch (BusinessRuleException ex) {
+            model.addAttribute("formError", ex.getMessage());
+            model.addAttribute("drivers", List.<DriverResponse>of());
+            model.addAttribute("vehicles", List.<VehicleResponse>of());
+            return "clients/form";
+        }
         return "redirect:/clients";
     }
 
@@ -100,7 +108,14 @@ public class ClientPageController {
             return "clients/form";
         }
         ClientResponse existing = clientService.findById(id);
-        clientService.update(id, toRequest(form, existing));
+        try {
+            clientService.update(id, toRequest(form, existing));
+        } catch (BusinessRuleException ex) {
+            model.addAttribute("formError", ex.getMessage());
+            model.addAttribute("editId", id);
+            addChildData(model, id);
+            return "clients/form";
+        }
         return "redirect:/clients";
     }
 

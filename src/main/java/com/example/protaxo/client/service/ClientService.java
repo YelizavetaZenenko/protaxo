@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,7 +42,7 @@ public class ClientService {
     public ClientResponse create(ClientRequest request) {
         Client client = clientMapper.toEntity(request);
         client.setEmployerClient(resolveEmployer(request.employerClientId(), null));
-        Client saved = clientRepository.save(client);
+        Client saved = saveOrThrowFriendly(client);
         auditLogService.record(AuditAction.CREATE, "Client", saved.getId());
         return clientMapper.toResponse(saved);
     }
@@ -66,9 +67,25 @@ public class ClientService {
                 .build();
         clientMapper.updateEntity(request, client);
         client.setEmployerClient(resolveEmployer(request.employerClientId(), id));
-        Client saved = clientRepository.save(client);
+        Client saved = saveOrThrowFriendly(client);
         auditLogService.record(AuditAction.UPDATE, "Client", saved.getId(), changes);
         return clientMapper.toResponse(saved);
+    }
+
+    /**
+     * {@code edrpou} has a DB-level unique constraint (@Column(unique = true)) with no pre-check
+     * before this call — a duplicate previously surfaced as a raw DataIntegrityViolationException,
+     * which GlobalExceptionHandler turns into an unhelpful JSON 409 response instead of the normal
+     * form re-render with a field error. saveAndFlush forces the constraint to fire here (a plain
+     * save() can defer the INSERT/UPDATE past this method, past this try/catch). Only edrpou has a
+     * unique constraint right now, so the message doesn't need to guess which field collided.
+     */
+    private Client saveOrThrowFriendly(Client client) {
+        try {
+            return clientRepository.saveAndFlush(client);
+        } catch (DataIntegrityViolationException ex) {
+            throw new BusinessRuleException("Контрагент з таким кодом ЄДРПОУ вже існує");
+        }
     }
 
     private Client resolveEmployer(Long employerClientId, Long ownId) {

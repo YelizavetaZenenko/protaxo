@@ -13,6 +13,8 @@
         <div class="card">
             <h1 th:text="${editId} != null ? 'Редагування контрагента' : 'Новий контрагент'"></h1>
 
+            <div class="alert alert-error" th:if="${formError}" th:text="${formError}"></div>
+
             <form th:object="${client}"
                   th:action="${editId} != null ? @{/clients/{id}/edit(id=${editId})} : @{/clients}"
                   method="post" class="form-grid">
