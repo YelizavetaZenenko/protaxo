@@ -202,29 +202,30 @@ a {
     background: radial-gradient(ellipse 90% 60% at 22% -10%, var(--bg-2), transparent 60%), var(--bg-1);
 }
 
-/* A real truck photo grounds the brand in what the shop actually works on,
-   anchored to the corner and dissolved into the page with a radial mask +
-   a brand-tinted wash — never a hard-edged rectangle competing with the
-   card. Hidden on narrow viewports (see media query below), same as the
-   dial ornament it replaced: pure ambience, never the focal point. */
+/* A real truck-cab photo grounds the brand in what the shop actually works
+   on. Minimalism/Swiss-style treatment on purpose (this is an enterprise
+   auth screen, not a marketing page) — a clean, sharp-edged photo card with
+   the same shadow language as .auth-card, not a photo dissolved into the
+   background. The source shot is already isolated on a near-white studio
+   background, so it needs no color wash or vignette to sit quietly next to
+   the card. Hidden on narrower viewports, same as the ornament it replaced:
+   pure secondary accent, never the focal point. */
 .auth-page::before {
     content: "";
     position: absolute;
-    right: -2%;
-    bottom: -5%;
-    width: min(46vw, 620px);
-    aspect-ratio: 3 / 2;
-    background-image:
-        linear-gradient(150deg, rgba(47, 111, 79, 0.28) 0%, rgba(47, 111, 79, 0) 45%),
-        url('/images/truck.jpg');
+    right: 4%;
+    bottom: 4%;
+    width: min(22vw, 300px);
+    aspect-ratio: 24 / 25;
+    background-image: url('/images/car.jpg');
     background-size: cover;
-    background-position: center 58%;
-    -webkit-mask-image: radial-gradient(circle at 76% 62%, black 38%, transparent 76%);
-            mask-image: radial-gradient(circle at 76% 62%, black 38%, transparent 76%);
+    background-position: center;
+    border-radius: 12px;
+    box-shadow: 0 20px 45px rgba(28, 43, 49, 0.14), 0 2px 8px rgba(28, 43, 49, 0.08);
     pointer-events: none;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 960px) {
     .auth-page::before {
         display: none;
     }
