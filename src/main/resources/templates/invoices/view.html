@@ -15,7 +15,6 @@
                 <h1 th:text="'Наряд-заказ № ' + ${invoice.number}"></h1>
                 <div class="actions-cell">
                     <a class="btn-outline" th:href="@{/invoices/{id}/edit(id=${invoice.id})}">Редагувати</a>
-                    <a class="btn-outline" th:href="@{/invoices/{id}/pdf(id=${invoice.id})}" target="_blank">Друк PDF</a>
                     <a class="btn-outline" th:href="@{/invoices/{id}/bill-pdf(id=${invoice.id})}" target="_blank">Рахунок PDF</a>
                     <a class="btn-outline" th:href="@{/invoices/{id}/act-pdf(id=${invoice.id})}" target="_blank">Акт PDF</a>
                     <a class="btn-outline" th:href="@{/invoices}">Назад до списку</a>

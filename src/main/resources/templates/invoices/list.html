@@ -83,7 +83,6 @@
                     <td th:text="${#numbers.formatDecimal(inv.totalAmount, 1, 2)}"></td>
                     <td class="actions-cell">
                         <a class="link-btn" th:href="@{/invoices/{id}/edit(id=${inv.id})}">Редагувати</a>
-                        <a class="link-btn" th:href="@{/invoices/{id}/pdf(id=${inv.id})}" target="_blank">Друк</a>
                         <form sec:authorize="hasRole('ADMIN')" th:action="@{/invoices/{id}/delete(id=${inv.id})}" method="post" style="display:inline">
                             <button type="submit" class="link-btn link-btn-danger"
                                     onclick="return confirm('Видалити наряд-заказ?')">Видалити</button>
