@@ -225,23 +225,6 @@ public class InvoicePageController {
         return "redirect:/invoices";
     }
 
-    @GetMapping("/{id}/pdf")
-    public void printPdf(@PathVariable Long id, HttpServletResponse response) throws IOException {
-        InvoiceResponse invoice = invoiceService.findById(id);
-        String clientName = clientService.findById(invoice.clientId()).name();
-
-        Context context = new Context(new Locale("uk"));
-        context.setVariable("invoice", invoice);
-        context.setVariable("clientName", clientName);
-        byte[] pdf = pdfRenderService.render("invoice", context);
-
-        response.setContentType(MediaType.APPLICATION_PDF_VALUE);
-        response.setHeader("Content-Disposition", "inline; filename=\"invoice-" + id + ".pdf\"");
-        response.setContentLength(pdf.length);
-        response.getOutputStream().write(pdf);
-        response.getOutputStream().flush();
-    }
-
     /**
      * "Рахунок на оплату" — a distinct document from the plain Наряд-заказ PDF above, modeled
      * on the sample the user provided (rahunok-na-oplatu-2026-roku-vid-01.07.2025.docx): warning
