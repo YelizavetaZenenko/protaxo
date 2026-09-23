@@ -223,7 +223,28 @@ a {
     pointer-events: none;
 }
 
+/* Outline-only semi truck in the bottom-right corner, drawn as marker-style
+   strokes (no fills, no photo) so it sits in the same quiet line language
+   as the dial ornament. Decorative only; hidden where it would crowd the card. */
+.auth-page::after {
+    content: "";
+    position: absolute;
+    right: 3vw;
+    bottom: 3vh;
+    width: min(34vw, 480px);
+    aspect-ratio: 640 / 240;
+    background: url('/images/truck-outline.svg') no-repeat center / contain;
+    pointer-events: none;
+}
+
+@media (max-width: 960px) {
+    .auth-page::after {
+        display: none;
+    }
+}
+
 .auth-card {
+    z-index: 1;
     position: relative;
     width: 100%;
     max-width: 380px;
