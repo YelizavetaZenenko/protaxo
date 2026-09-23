@@ -202,25 +202,32 @@ a {
     background: radial-gradient(ellipse 90% 60% at 22% -10%, var(--bg-2), transparent 60%), var(--bg-1);
 }
 
-/* Huge partial dial peeking in from the corner, evoking an oversized
-   instrument face without drawing another literal gauge icon. Kept very
-   low-contrast (brand-dark at 4-5% alpha on a light panel) so it reads as
-   ambience, not a second focal point next to the card. */
+/* A real truck photo grounds the brand in what the shop actually works on,
+   anchored to the corner and dissolved into the page with a radial mask +
+   a brand-tinted wash — never a hard-edged rectangle competing with the
+   card. Hidden on narrow viewports (see media query below), same as the
+   dial ornament it replaced: pure ambience, never the focal point. */
 .auth-page::before {
     content: "";
     position: absolute;
-    width: 150vmax;
-    height: 150vmax;
-    right: -78vmax;
-    bottom: -86vmax;
-    border-radius: 50%;
-    background: repeating-conic-gradient(
-        from -18deg at 50% 50%,
-        transparent 0deg 2.1deg,
-        rgba(44, 74, 86, 0.05) 2.1deg 2.5deg,
-        transparent 2.5deg 9deg
-    );
+    right: -2%;
+    bottom: -5%;
+    width: min(46vw, 620px);
+    aspect-ratio: 3 / 2;
+    background-image:
+        linear-gradient(150deg, rgba(47, 111, 79, 0.28) 0%, rgba(47, 111, 79, 0) 45%),
+        url('/images/truck.jpg');
+    background-size: cover;
+    background-position: center 58%;
+    -webkit-mask-image: radial-gradient(circle at 76% 62%, black 38%, transparent 76%);
+            mask-image: radial-gradient(circle at 76% 62%, black 38%, transparent 76%);
     pointer-events: none;
+}
+
+@media (max-width: 700px) {
+    .auth-page::before {
+        display: none;
+    }
 }
 
 .auth-card {
