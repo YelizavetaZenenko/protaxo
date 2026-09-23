@@ -202,33 +202,25 @@ a {
     background: radial-gradient(ellipse 90% 60% at 22% -10%, var(--bg-2), transparent 60%), var(--bg-1);
 }
 
-/* A real truck-cab photo grounds the brand in what the shop actually works
-   on. Minimalism/Swiss-style treatment on purpose (this is an enterprise
-   auth screen, not a marketing page) — a clean, sharp-edged photo card with
-   the same shadow language as .auth-card, not a photo dissolved into the
-   background. The source shot is already isolated on a near-white studio
-   background, so it needs no color wash or vignette to sit quietly next to
-   the card. Hidden on narrower viewports, same as the ornament it replaced:
-   pure secondary accent, never the focal point. */
+/* Huge partial dial peeking in from the corner, evoking an oversized
+   instrument face without drawing another literal gauge icon. Kept very
+   low-contrast (brand-dark at 4-5% alpha on a light panel) so it reads as
+   ambience, not a second focal point next to the card. */
 .auth-page::before {
     content: "";
     position: absolute;
-    right: 4%;
-    bottom: 4%;
-    width: min(22vw, 300px);
-    aspect-ratio: 24 / 25;
-    background-image: url('/images/car.jpg');
-    background-size: cover;
-    background-position: center;
-    border-radius: 12px;
-    box-shadow: 0 20px 45px rgba(28, 43, 49, 0.14), 0 2px 8px rgba(28, 43, 49, 0.08);
+    width: 150vmax;
+    height: 150vmax;
+    right: -78vmax;
+    bottom: -86vmax;
+    border-radius: 50%;
+    background: repeating-conic-gradient(
+        from -18deg at 50% 50%,
+        transparent 0deg 2.1deg,
+        rgba(44, 74, 86, 0.05) 2.1deg 2.5deg,
+        transparent 2.5deg 9deg
+    );
     pointer-events: none;
-}
-
-@media (max-width: 960px) {
-    .auth-page::before {
-        display: none;
-    }
 }
 
 .auth-card {
