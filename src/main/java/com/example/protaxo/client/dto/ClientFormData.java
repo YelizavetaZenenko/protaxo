@@ -12,6 +12,7 @@ public class ClientFormData {
     private String name;
 
     @NotBlank(message = "Код ЄДРПОУ обов'язковий")
+    @Pattern(regexp = "^\\d{8}$", message = "Код ЄДРПОУ має складатись рівно з 8 цифр")
     private String edrpou;
 
     @NotBlank(message = "Повна назва обов'язкова")
@@ -21,8 +22,8 @@ public class ClientFormData {
     @Pattern(regexp = "^\\+38\\(0\\d{2}\\)-\\d{3}-\\d{2}-\\d{2}$", message = "Телефон має бути у форматі +38(0XX)-XXX-XX-XX")
     private String contactPersonPhone;
 
-    @NotBlank(message = "Код обов'язковий")
-    @Pattern(regexp = "^\\d{9}$", message = "Код має складатись рівно з 9 цифр")
+    @NotBlank(message = "Код ІПН обов'язковий")
+    @Pattern(regexp = "^\\d{12}$", message = "Код ІПН має складатись рівно з 12 цифр")
     private String code;
 
     @NotBlank(message = "Прізвище обов'язкове")

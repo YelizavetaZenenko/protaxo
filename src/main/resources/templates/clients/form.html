@@ -31,13 +31,13 @@
 
                 <div class="field">
                     <label for="edrpou">Код ЄДРПОУ *</label>
-                    <input type="text" id="edrpou" th:field="*{edrpou}" required>
+                    <input type="text" id="edrpou" th:field="*{edrpou}" maxlength="8" inputmode="numeric" placeholder="12345678" required>
                     <div class="field-error" th:if="${#fields.hasErrors('edrpou')}" th:errors="*{edrpou}"></div>
                 </div>
 
                 <div class="field">
-                    <label for="code">Код *</label>
-                    <input type="text" id="code" th:field="*{code}" maxlength="9" inputmode="numeric" placeholder="123456789" required>
+                    <label for="code">Код ІПН *</label>
+                    <input type="text" id="code" th:field="*{code}" maxlength="12" inputmode="numeric" placeholder="123456789012" required>
                     <div class="field-error" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></div>
                 </div>
 
@@ -246,7 +246,12 @@
         document.addEventListener('DOMContentLoaded', function () {
             var codeInput = document.getElementById('code');
             codeInput.addEventListener('input', function () {
-                codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 9);
+                codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 12);
+            });
+
+            var edrpouInput = document.getElementById('edrpou');
+            edrpouInput.addEventListener('input', function () {
+                edrpouInput.value = edrpouInput.value.replace(/\D/g, '').slice(0, 8);
             });
 
             ProtaxoPhone.mask(document.getElementById('contactPersonPhone'));
