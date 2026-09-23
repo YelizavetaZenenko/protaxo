@@ -4,6 +4,7 @@ public record DriverResponse(
         Long id,
         Long clientId,
         String fullName,
-        String phone
+        String phone,
+        String position
 ) {
 }

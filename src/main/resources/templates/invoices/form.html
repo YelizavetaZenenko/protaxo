@@ -90,7 +90,7 @@
                                    class="picker-input" placeholder="Спочатку оберіть контрагента">
                             <div class="combobox-dropdown" id="driverDropdown" hidden>
                                 <div class="combobox-options" id="driverOptions"></div>
-                                <button type="button" class="combobox-add-btn" id="addDriverBtn">+ Додати нового водія</button>
+                                <button type="button" class="combobox-add-btn" id="addDriverBtn">+ Додати нового працівника</button>
                             </div>
                         </div>
                     </div>
@@ -343,14 +343,18 @@
 
     <div class="modal-overlay" id="addDriverOverlay" hidden>
         <div class="modal">
-            <h2>Новий водій</h2>
+            <h2>Новий працівник</h2>
             <div class="alert alert-error" id="addDriverError" hidden></div>
             <div class="field field-full">
                 <label for="newDriverFullName">ПІБ *</label>
                 <input type="text" id="newDriverFullName">
             </div>
             <div class="field field-full">
-                <label for="newDriverPhone">Телефон</label>
+                <label for="newDriverPosition">Посада</label>
+                <input type="text" id="newDriverPosition" maxlength="255">
+            </div>
+            <div class="field field-full">
+                <label for="newDriverPhone">Телефон *</label>
                 <input type="tel" id="newDriverPhone" placeholder="+38(0XX)-XXX-XX-XX" maxlength="19">
             </div>
             <div class="form-actions">
@@ -936,20 +940,20 @@
                 });
             });
 
-            // "Водій": dropdown of the selected client's real drivers, with an inline
-            // "add driver" modal (mirrors the "Автомобіль" picker, simpler UI per request).
+            // "Водій": dropdown of all of the selected client's employees (the drivers table,
+            // shown as "Працівники" on the client), with an inline "add employee" modal.
             function renderDriverOptions() {
                 driverOptions.innerHTML = '';
                 if (currentDrivers.length === 0) {
                     var empty = document.createElement('div');
                     empty.className = 'combobox-empty';
-                    empty.textContent = 'У контрагента ще немає водіїв';
+                    empty.textContent = 'У контрагента ще немає працівників';
                     driverOptions.appendChild(empty);
                 }
                 currentDrivers.forEach(function (d) {
                     var opt = document.createElement('div');
                     opt.className = 'combobox-option';
-                    opt.textContent = d.phone ? d.fullName + ' (' + d.phone + ')' : d.fullName;
+                    opt.textContent = d.fullName + (d.position ? ' — ' + d.position : '') + (d.phone ? ' (' + d.phone + ')' : '');
                     opt.addEventListener('click', function () {
                         driverNameInput.value = d.fullName;
                         driverDropdown.hidden = true;
@@ -973,6 +977,7 @@
             var addDriverError = document.getElementById('addDriverError');
             var newDriverFullName = document.getElementById('newDriverFullName');
             var newDriverPhone = document.getElementById('newDriverPhone');
+            var newDriverPosition = document.getElementById('newDriverPosition');
             ProtaxoPhone.mask(newDriverPhone);
 
             document.getElementById('addDriverBtn').addEventListener('click', function () {
@@ -980,6 +985,7 @@
                 addDriverError.hidden = true;
                 newDriverFullName.value = '';
                 newDriverPhone.value = '';
+                newDriverPosition.value = 'Водій';
                 addDriverOverlay.hidden = false;
                 newDriverFullName.focus();
             });
@@ -993,6 +999,11 @@
                     addDriverError.hidden = false;
                     return;
                 }
+                if (!ProtaxoPhone.PATTERN.test(newDriverPhone.value.trim())) {
+                    addDriverError.textContent = 'Телефон має бути у форматі +38(0XX)-XXX-XX-XX';
+                    addDriverError.hidden = false;
+                    return;
+                }
                 fetch('/api/drivers', {
                     method: 'POST',
                     credentials: 'same-origin',
@@ -1000,11 +1011,12 @@
                     body: JSON.stringify({
                         clientId: Number(clientIdInput.value),
                         fullName: fullName,
-                        phone: newDriverPhone.value || null
+                        phone: newDriverPhone.value.trim(),
+                        position: newDriverPosition.value.trim() || null
                     })
                 }).then(function (resp) {
                     if (!resp.ok) {
-                        return resp.json().then(function (body) { throw new Error(body.message || 'Не вдалося створити водія'); });
+                        return resp.json().then(function (body) { throw new Error(body.message || 'Не вдалося створити працівника'); });
                     }
                     return resp.json();
                 }).then(function (created) {

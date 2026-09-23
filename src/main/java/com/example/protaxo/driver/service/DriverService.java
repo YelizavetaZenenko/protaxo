@@ -60,6 +60,7 @@ public class DriverService {
         Map<String, String[]> changes = FieldDiff.builder()
                 .add("ПІБ", driver.getFullName(), request.fullName())
                 .add("Телефон", driver.getPhone(), request.phone())
+                .add("Посада", driver.getPosition(), request.position())
                 .build();
         driverMapper.updateEntity(request, driver);
         driver.setClient(getClientOrThrow(request.clientId()));

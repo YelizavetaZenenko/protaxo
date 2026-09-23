@@ -33,4 +33,6 @@ public class Driver extends BaseEntity {
     private String fullName;
 
     private String phone;
+
+    private String position;
 }

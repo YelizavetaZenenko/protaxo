@@ -43,6 +43,12 @@
                     <div class="field-error" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></div>
                 </div>
 
+                <div class="field">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" th:field="*{email}" required>
+                    <div class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                </div>
+
                 <div class="field-full form-section">
                     <strong>Контактна особа</strong>
                 </div>
@@ -72,39 +78,8 @@
                     <div class="field-error" th:if="${#fields.hasErrors('contactPersonPhone')}" th:errors="*{contactPersonPhone}"></div>
                 </div>
 
-                <div class="field">
-                    <label for="email">Email *</label>
-                    <input type="email" id="email" th:field="*{email}" required>
-                    <div class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
-                </div>
-
-                <div class="field-full form-section" th:if="${editId} != null">
-                    <strong>Дані працівника</strong>
-                </div>
-
-                <div class="field field-full" th:if="${editId} != null">
-                    <label>Працівники</label>
-                    <table class="clean-table" id="employeesTable">
-                        <colgroup>
-                            <col style="width:40%">
-                            <col style="width:30%">
-                            <col style="width:30%">
-                        </colgroup>
-                        <thead>
-                        <tr>
-                            <th>Прізвище, ім'я</th>
-                            <th>Телефон</th>
-                            <th>Посада</th>
-                        </tr>
-                        </thead>
-                        <tbody id="employeesBody"></tbody>
-                    </table>
-                    <div class="muted" id="employeesEmpty">У цього контрагента ще немає працівників.</div>
-                    <button type="button" class="btn-outline" id="addEmployeeBtn" style="margin-top:0.75rem;">+ Додати працівника</button>
-                </div>
-
                 <div class="field-full form-section">
-                    <strong>Водії</strong>
+                    <strong>Працівники</strong>
                 </div>
 
                 <div class="field field-full" th:if="${editId} == null">
@@ -114,20 +89,23 @@
                 <div class="field field-full" th:if="${editId} != null">
                     <table class="clean-table" id="driversTable">
                         <colgroup>
-                            <col style="width:40%">
-                            <col style="width:30%">
-                            <col style="width:30%">
+                            <col style="width:34%">
+                            <col style="width:22%">
+                            <col style="width:22%">
+                            <col style="width:22%">
                         </colgroup>
                         <thead>
                         <tr>
                             <th>ПІБ</th>
+                            <th>Посада</th>
                             <th>Телефон</th>
                             <th></th>
                         </tr>
                         </thead>
                         <tbody id="driversBody">
-                        <tr th:each="d : ${drivers}" th:attr="data-id=${d.id},data-full-name=${d.fullName},data-phone=${d.phone}">
+                        <tr th:each="d : ${drivers}" th:attr="data-id=${d.id},data-full-name=${d.fullName},data-phone=${d.phone},data-position=${d.position}">
                             <td th:text="${d.fullName}"></td>
+                            <td th:text="${d.position}"></td>
                             <td th:text="${d.phone}"></td>
                             <td class="actions-cell">
                                 <button type="button" class="link-btn edit-driver-btn">Редагувати</button>
@@ -136,8 +114,8 @@
                         </tr>
                         </tbody>
                     </table>
-                    <div class="muted" id="driversEmpty" th:if="${#lists.isEmpty(drivers)}">У цього контрагента ще немає водіїв.</div>
-                    <button type="button" class="btn-outline" id="addDriverBtn" style="margin-top:0.75rem;">+ Додати водія</button>
+                    <div class="muted" id="driversEmpty" th:if="${#lists.isEmpty(drivers)}">У цього контрагента ще немає працівників.</div>
+                    <button type="button" class="btn-outline" id="addDriverBtn" style="margin-top:0.75rem;">+ Додати працівника</button>
                 </div>
 
                 <div class="field-full form-section">
@@ -187,33 +165,6 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="employeeModalOverlay" hidden>
-        <div class="modal">
-            <h2>Новий працівник</h2>
-            <div class="alert alert-error" id="employeeModalError" hidden></div>
-            <div class="field field-full">
-                <label for="employeeLastName">Прізвище</label>
-                <input type="text" id="employeeLastName">
-            </div>
-            <div class="field field-full">
-                <label for="employeeFirstName">Ім'я</label>
-                <input type="text" id="employeeFirstName">
-            </div>
-            <div class="field field-full">
-                <label for="employeePhone">Телефон</label>
-                <input type="tel" id="employeePhone" placeholder="+38(0XX)-XXX-XX-XX" maxlength="19">
-            </div>
-            <div class="field field-full">
-                <label for="employeePosition">Посада</label>
-                <input type="text" id="employeePosition">
-            </div>
-            <div class="form-actions">
-                <button type="button" class="btn" id="saveEmployeeBtn">Зберегти</button>
-                <button type="button" class="btn-outline" id="cancelEmployeeBtn">Скасувати</button>
-            </div>
-        </div>
-    </div>
-
     <div class="modal-overlay" id="confirmModalOverlay" hidden>
         <div class="modal">
             <h2>Підтвердження</h2>
@@ -227,11 +178,15 @@
 
     <div class="modal-overlay" id="driverModalOverlay" hidden>
         <div class="modal">
-            <h2 id="driverModalTitle">Новий водій</h2>
+            <h2 id="driverModalTitle">Новий працівник</h2>
             <div class="alert alert-error" id="driverModalError" hidden></div>
             <div class="field field-full">
                 <label for="driverFullName">ПІБ *</label>
                 <input type="text" id="driverFullName">
+            </div>
+            <div class="field field-full">
+                <label for="driverPosition">Посада</label>
+                <input type="text" id="driverPosition" maxlength="255" placeholder="Водій, механік, диспетчер…">
             </div>
             <div class="field field-full">
                 <label for="driverPhone">Телефон</label>
@@ -257,7 +212,6 @@
             });
 
             ProtaxoPhone.mask(document.getElementById('contactPersonPhone'));
-            ProtaxoPhone.mask(document.getElementById('employeePhone'));
             ProtaxoPhone.mask(document.getElementById('driverPhone'));
         });
     </script>
@@ -289,109 +243,6 @@
         document.addEventListener('DOMContentLoaded', function () {
             if (!editClientId) return;
 
-            var employeesBody = document.getElementById('employeesBody');
-            var employeesEmpty = document.getElementById('employeesEmpty');
-            var addEmployeeBtn = document.getElementById('addEmployeeBtn');
-            var employeeModalOverlay = document.getElementById('employeeModalOverlay');
-            var employeeModalError = document.getElementById('employeeModalError');
-            var employeeLastName = document.getElementById('employeeLastName');
-            var employeeFirstName = document.getElementById('employeeFirstName');
-            var employeePhone = document.getElementById('employeePhone');
-            var employeePosition = document.getElementById('employeePosition');
-            var allClients = [];
-
-            function employeeLabel(emp) {
-                var full = [emp.lastName, emp.firstName].filter(Boolean).join(' ');
-                return full || emp.name;
-            }
-
-            function renderEmployees() {
-                employeesBody.innerHTML = '';
-                var employees = allClients.filter(function (c) { return c.employerClientId === editClientId; });
-                if (employees.length === 0) {
-                    employeesEmpty.hidden = false;
-                    return;
-                }
-                employeesEmpty.hidden = true;
-                employees.forEach(function (emp) {
-                    var row = document.createElement('tr');
-                    var nameTd = document.createElement('td');
-                    nameTd.textContent = employeeLabel(emp);
-                    var phoneTd = document.createElement('td');
-                    phoneTd.textContent = emp.phone || '';
-                    var positionTd = document.createElement('td');
-                    positionTd.textContent = emp.position || '';
-                    row.appendChild(nameTd);
-                    row.appendChild(phoneTd);
-                    row.appendChild(positionTd);
-                    employeesBody.appendChild(row);
-                });
-            }
-
-            fetch('/api/clients', { credentials: 'same-origin' })
-                .then(function (resp) { return resp.ok ? resp.json() : []; })
-                .then(function (clients) {
-                    allClients = clients;
-                    renderEmployees();
-                });
-
-            addEmployeeBtn.addEventListener('click', function () {
-                employeeModalError.hidden = true;
-                employeeLastName.value = '';
-                employeeFirstName.value = '';
-                employeePhone.value = '';
-                employeePosition.value = '';
-                employeeModalOverlay.hidden = false;
-                employeeLastName.focus();
-            });
-
-            document.getElementById('cancelEmployeeBtn').addEventListener('click', function () {
-                employeeModalOverlay.hidden = true;
-            });
-
-            document.getElementById('saveEmployeeBtn').addEventListener('click', function () {
-                var lastName = employeeLastName.value.trim();
-                var firstName = employeeFirstName.value.trim();
-                if (!lastName && !firstName) {
-                    employeeModalError.textContent = "Вкажіть прізвище або ім'я";
-                    employeeModalError.hidden = false;
-                    return;
-                }
-                var fullName = [lastName, firstName].filter(Boolean).join(' ');
-                var body = JSON.stringify({
-                    name: fullName,
-                    lastName: lastName || null,
-                    firstName: firstName || null,
-                    phone: employeePhone.value || null,
-                    position: employeePosition.value || null,
-                    employerClientId: editClientId
-                });
-                fetch('/api/clients', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: body
-                }).then(function (resp) {
-                    if (!resp.ok) {
-                        return resp.json().then(function (b) { throw new Error(b.message || 'Не вдалося додати працівника'); });
-                    }
-                    return resp.json();
-                }).then(function (saved) {
-                    allClients.push(saved);
-                    renderEmployees();
-                    employeeModalOverlay.hidden = true;
-                }).catch(function (err) {
-                    employeeModalError.textContent = err.message;
-                    employeeModalError.hidden = false;
-                });
-            });
-        });
-    </script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            if (!editClientId) return;
-
             var driversBody = document.getElementById('driversBody');
             var driversEmpty = document.getElementById('driversEmpty');
             var addDriverBtn = document.getElementById('addDriverBtn');
@@ -400,14 +251,16 @@
             var driverModalError = document.getElementById('driverModalError');
             var driverFullName = document.getElementById('driverFullName');
             var driverPhone = document.getElementById('driverPhone');
+            var driverPosition = document.getElementById('driverPosition');
             var editingDriverId = null;
 
-            function openModal(title, id, fullName, phone) {
+            function openModal(title, id, fullName, phone, position) {
                 editingDriverId = id;
                 driverModalTitle.textContent = title;
                 driverModalError.hidden = true;
                 driverFullName.value = fullName || '';
                 driverPhone.value = phone || '';
+                driverPosition.value = position || '';
                 driverModalOverlay.hidden = false;
                 driverFullName.focus();
             }
@@ -417,10 +270,15 @@
                 row.dataset.id = driver.id;
                 row.dataset.fullName = driver.fullName;
                 row.dataset.phone = driver.phone || '';
+                row.dataset.position = driver.position || '';
 
                 var nameTd = document.createElement('td');
                 nameTd.textContent = driver.fullName;
                 row.appendChild(nameTd);
+
+                var positionTd = document.createElement('td');
+                positionTd.textContent = driver.position || '';
+                row.appendChild(positionTd);
 
                 var phoneTd = document.createElement('td');
                 phoneTd.textContent = driver.phone || '';
@@ -453,7 +311,7 @@
             }
 
             addDriverBtn.addEventListener('click', function () {
-                openModal('Новий водій', null, '', '');
+                openModal('Новий працівник', null, '', '', '');
             });
 
             var addVehicleBtn = document.getElementById('addVehicleBtn');
@@ -465,9 +323,9 @@
                 var row = e.target.closest('tr');
                 if (!row) return;
                 if (e.target.classList.contains('edit-driver-btn')) {
-                    openModal('Редагування водія', row.dataset.id, row.dataset.fullName, row.dataset.phone);
+                    openModal('Редагування працівника', row.dataset.id, row.dataset.fullName, row.dataset.phone, row.dataset.position);
                 } else if (e.target.classList.contains('delete-driver-btn')) {
-                    showConfirm('Видалити водія?', function () {
+                    showConfirm('Видалити працівника?', function () {
                         fetch('/api/drivers/' + row.dataset.id, { method: 'DELETE', credentials: 'same-origin' })
                             .then(function (resp) {
                                 if (resp.ok) {
@@ -502,7 +360,7 @@
                     driverModalError.hidden = false;
                     return;
                 }
-                var body = JSON.stringify({ clientId: editClientId, fullName: fullName, phone: phone });
+                var body = JSON.stringify({ clientId: editClientId, fullName: fullName, phone: phone, position: driverPosition.value.trim() || null });
                 var url = editingDriverId ? '/api/drivers/' + editingDriverId : '/api/drivers';
                 var method = editingDriverId ? 'PUT' : 'POST';
 
@@ -513,7 +371,7 @@
                     body: body
                 }).then(function (resp) {
                     if (!resp.ok) {
-                        return resp.json().then(function (b) { throw new Error(b.message || 'Не вдалося зберегти водія'); });
+                        return resp.json().then(function (b) { throw new Error(b.message || 'Не вдалося зберегти працівника'); });
                     }
                     return resp.json();
                 }).then(function (saved) {
@@ -522,8 +380,10 @@
                         if (row) {
                             row.dataset.fullName = saved.fullName;
                             row.dataset.phone = saved.phone || '';
+                            row.dataset.position = saved.position || '';
                             row.children[0].textContent = saved.fullName;
-                            row.children[1].textContent = saved.phone || '';
+                            row.children[1].textContent = saved.position || '';
+                            row.children[2].textContent = saved.phone || '';
                         }
                     } else {
                         addRow(saved);
