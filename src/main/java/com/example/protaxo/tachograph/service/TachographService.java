@@ -4,6 +4,7 @@ import com.example.protaxo.audit.entity.AuditAction;
 import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.common.exception.UniqueConstraints;
 import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.tachograph.dto.TachographRequest;
 import com.example.protaxo.tachograph.dto.TachographResponse;
@@ -85,7 +86,10 @@ public class TachographService {
         try {
             return tachographRepository.saveAndFlush(tachograph);
         } catch (DataIntegrityViolationException ex) {
-            throw new BusinessRuleException("Тахограф із таким заводським номером уже існує");
+            if (UniqueConstraints.isViolationOf(ex, UniqueConstraints.TACHOGRAPH_SERIAL_NUMBER)) {
+                throw new BusinessRuleException("Тахограф із таким заводським номером уже існує");
+            }
+            throw ex;
         }
     }
 

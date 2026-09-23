@@ -30,7 +30,7 @@ public class Client extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
-    @Column(unique = true)
+    @Column
     private String edrpou;
 
     @Column(name = "full_name")
@@ -42,7 +42,7 @@ public class Client extends BaseEntity {
     @Column(name = "contact_person_phone")
     private String contactPersonPhone;
 
-    @Column(length = 9)
+    @Column(length = 12)
     private String code;
 
     @Column(name = "last_name")

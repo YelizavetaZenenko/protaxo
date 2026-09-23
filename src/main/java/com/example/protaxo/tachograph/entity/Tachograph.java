@@ -36,7 +36,7 @@ public class Tachograph extends BaseEntity {
     @Column(nullable = false)
     private String model;
 
-    @Column(name = "serial_number", nullable = false, unique = true)
+    @Column(name = "serial_number", nullable = false)
     private String serialNumber;
 
     @Column(name = "production_date")

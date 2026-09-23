@@ -29,7 +29,7 @@ public class Vehicle extends BaseEntity {
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String vin;
 
     @Column(name = "registration_number", nullable = false)

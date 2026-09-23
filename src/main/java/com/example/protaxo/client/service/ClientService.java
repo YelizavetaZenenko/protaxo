@@ -9,6 +9,7 @@ import com.example.protaxo.client.mapper.ClientMapper;
 import com.example.protaxo.client.repository.ClientRepository;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.common.exception.UniqueConstraints;
 import com.example.protaxo.common.util.FieldDiff;
 import java.time.Instant;
 import java.util.List;
@@ -77,14 +78,21 @@ public class ClientService {
      * before this call — a duplicate previously surfaced as a raw DataIntegrityViolationException,
      * which GlobalExceptionHandler turns into an unhelpful JSON 409 response instead of the normal
      * form re-render with a field error. saveAndFlush forces the constraint to fire here (a plain
-     * save() can defer the INSERT/UPDATE past this method, past this try/catch). Only edrpou has a
-     * unique constraint right now, so the message doesn't need to guess which field collided.
+     * save() can defer the INSERT/UPDATE past this method, past this try/catch). Only a violation
+     * of the edrpou index itself is reported as a duplicate — any other integrity error is
+     * rethrown, never disguised as "already exists".
      */
     private Client saveOrThrowFriendly(Client client) {
+        if (client.getEdrpou() != null && client.getEdrpou().isBlank()) {
+            client.setEdrpou(null);
+        }
         try {
             return clientRepository.saveAndFlush(client);
         } catch (DataIntegrityViolationException ex) {
-            throw new BusinessRuleException("Контрагент з таким кодом ЄДРПОУ вже існує");
+            if (UniqueConstraints.isViolationOf(ex, UniqueConstraints.CLIENT_EDRPOU)) {
+                throw new BusinessRuleException("Контрагент з таким кодом ЄДРПОУ вже існує");
+            }
+            throw ex;
         }
     }
 

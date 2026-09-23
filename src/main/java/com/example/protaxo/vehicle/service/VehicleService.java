@@ -6,6 +6,7 @@ import com.example.protaxo.client.entity.Client;
 import com.example.protaxo.client.repository.ClientRepository;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.common.exception.UniqueConstraints;
 import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.vehicle.dto.VehicleRequest;
 import com.example.protaxo.vehicle.dto.VehicleResponse;
@@ -80,7 +81,10 @@ public class VehicleService {
         try {
             return vehicleRepository.saveAndFlush(vehicle);
         } catch (DataIntegrityViolationException ex) {
-            throw new BusinessRuleException("Автомобіль з таким VIN уже існує");
+            if (UniqueConstraints.isViolationOf(ex, UniqueConstraints.VEHICLE_VIN)) {
+                throw new BusinessRuleException("Автомобіль з таким VIN уже існує");
+            }
+            throw ex;
         }
     }
 
