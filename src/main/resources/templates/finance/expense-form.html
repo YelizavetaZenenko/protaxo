@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Нова витрата</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <h1>Нова витрата</h1>
+            <div th:replace="~{fragments/finance :: nav(section='expenses')}"></div>
+            <div th:replace="~{fragments/finance :: flash}"></div>
+
+            <form th:object="${expense}" th:action="@{/finance/expenses}" method="post" enctype="multipart/form-data" class="form-grid">
+                <input type="hidden" th:field="*{requestKey}">
+                <div class="field">
+                    <label for="amount">Сума *</label>
+                    <input type="number" step="0.01" min="0.01" id="amount" th:field="*{amount}" required>
+                </div>
+                <div class="field">
+                    <label for="category">Категорія *</label>
+                    <select id="category" th:field="*{category}" required>
+                        <option value="">— оберіть —</option>
+                        <option th:each="c : ${categories}" th:value="${c}" th:text="${c.label}"></option>
+                    </select>
+                </div>
+                <div class="field field-full">
+                    <label for="purpose">Призначення *</label>
+                    <input type="text" id="purpose" th:field="*{purpose}" required>
+                </div>
+                <div class="field">
+                    <label for="accountId">З якої каси / рахунку *</label>
+                    <select id="accountId" th:field="*{accountId}" required>
+                        <option value="">— оберіть —</option>
+                        <option th:each="a : ${accounts}" th:value="${a.id}" th:text="${a.name} + ' (' + ${a.kind.label} + ')'"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="counterparty">Постачальник / одержувач</label>
+                    <input type="text" id="counterparty" th:field="*{counterparty}">
+                </div>
+                <div class="field">
+                    <label for="documentRef">Документ (№ чека, накладної)</label>
+                    <input type="text" id="documentRef" th:field="*{documentRef}">
+                </div>
+                <div class="field">
+                    <label for="invoiceNumber">Наряд № (якщо витрата на конкретну роботу)</label>
+                    <input type="text" id="invoiceNumber" th:field="*{invoiceNumber}" placeholder="000123">
+                </div>
+                <div class="field field-full">
+                    <label for="attachment">Скан / фото документа (до 10 МБ)</label>
+                    <input type="file" id="attachment" name="attachment" accept="image/*,application/pdf">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn">Зберегти витрату</button>
+                    <a class="btn-outline" th:href="@{/finance/expenses}">Скасувати</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

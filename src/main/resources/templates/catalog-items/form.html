@@ -17,9 +17,14 @@
                   th:action="${editId} != null ? @{/catalog-items/{id}/edit(id=${editId})} : @{/catalog-items}"
                   method="post" class="form-grid">
 
+                <div class="alert alert-success field-full" sec:authorize="hasRole('ACCOUNTANT')">
+                    Бухгалтер змінює ціну, залишок і ставку ПДВ; тип і назва — лише для перегляду.
+                </div>
+
                 <div class="field">
                     <label for="type">Тип *</label>
-                    <select id="type" th:field="*{type}">
+                    <input type="hidden" sec:authorize="hasRole('ACCOUNTANT')" name="type" th:value="*{type}">
+                    <select id="type" th:field="*{type}" th:disabled="${#authorization.expression('hasRole(''ACCOUNTANT'')')}">
                         <option value="">— оберіть тип —</option>
                         <option th:each="t : ${types}" th:value="${t}"
                                 th:text="${t.name() == 'MATERIAL'} ? 'Товар' : 'Послуга'"></option>
@@ -28,14 +33,15 @@
                 </div>
 
                 <div class="field">
-                    <label for="basePrice">Базова ціна *</label>
+                    <label for="basePrice">Базова ціна (з ПДВ) *</label>
                     <input type="number" step="0.01" min="0" id="basePrice" th:field="*{basePrice}">
                     <div class="field-error" th:if="${#fields.hasErrors('basePrice')}" th:errors="*{basePrice}"></div>
                 </div>
 
                 <div class="field field-full">
                     <label for="name">Назва *</label>
-                    <input type="text" id="name" th:field="*{name}">
+                    <input type="text" id="name" th:field="*{name}"
+                           th:readonly="${#authorization.expression('hasRole(''ACCOUNTANT'')')}">
                     <div class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
                 </div>
 
@@ -44,6 +50,14 @@
                     <input type="number" step="0.001" min="0" inputmode="decimal" id="stockQuantity" th:field="*{stockQuantity}">
                     <div class="field-error" th:if="${#fields.hasErrors('stockQuantity')}" th:errors="*{stockQuantity}"></div>
                     <div class="muted" id="stockQuantityHint">Недоступно для послуг</div>
+                </div>
+
+                <div class="field">
+                    <label for="vatRate">Ставка ПДВ *</label>
+                    <select id="vatRate" th:field="*{vatRate}">
+                        <option th:each="r : ${vatRates}" th:value="${r}" th:text="${r.label}"></option>
+                    </select>
+                    <div class="field-error" th:if="${#fields.hasErrors('vatRate')}" th:errors="*{vatRate}"></div>
                 </div>
 
                 <div class="form-actions">

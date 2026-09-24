@@ -43,6 +43,11 @@
                     <div class="field-error" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></div>
                 </div>
 
+                <div class="field checkbox-field">
+                    <label>&nbsp;</label>
+                    <label><input type="checkbox" th:field="*{vatPayer}"> Платник ПДВ</label>
+                </div>
+
                 <div class="field">
                     <label for="email">Email *</label>
                     <input type="email" id="email" th:field="*{email}" required>

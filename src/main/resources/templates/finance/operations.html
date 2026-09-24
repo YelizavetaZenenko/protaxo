@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Історія операцій</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
+
+    <div class="container container-wide">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Історія операцій</h1>
+                <a class="btn-outline" th:href="@{/finance/operations.csv(from=${from}, to=${to}, type=${type}, accountId=${accountId}, hideCancelled=${!includeCancelled})}">Експорт CSV</a>
+            </div>
+            <div th:replace="~{fragments/finance :: nav(section='operations')}"></div>
+            <div th:replace="~{fragments/finance :: flash}"></div>
+
+            <form th:action="@{/finance/operations}" method="get" class="filter-bar">
+                <div class="field">
+                    <label for="from">Від</label>
+                    <input type="date" id="from" name="from" th:value="${from}">
+                </div>
+                <div class="field">
+                    <label for="to">До</label>
+                    <input type="date" id="to" name="to" th:value="${to}">
+                </div>
+                <div class="field">
+                    <label for="type">Тип</label>
+                    <select id="type" name="type">
+                        <option value="">— усі —</option>
+                        <option th:each="t : ${types}" th:value="${t}" th:text="${t.label}" th:selected="${t == type}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="accountId">Каса / рахунок</label>
+                    <select id="accountId" name="accountId">
+                        <option value="">— усі —</option>
+                        <option th:each="a : ${accounts}" th:value="${a.id}" th:text="${a.name}" th:selected="${a.id == accountId}"></option>
+                    </select>
+                </div>
+                <div class="field checkbox-field">
+                    <label>&nbsp;</label>
+                    <label><input type="checkbox" name="hideCancelled" value="true" th:checked="${!includeCancelled}"> Без скасованих</label>
+                </div>
+                <div class="field filter-actions-field">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn-outline">Показати</button>
+                </div>
+            </form>
+
+            <div class="table-scroll">
+                <table class="clean-table">
+                    <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Дата</th>
+                        <th>Операція</th>
+                        <th>Рахунок</th>
+                        <th class="money">Сума</th>
+                        <th>Деталі</th>
+                        <th>Автор</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="op : ${operations}" th:classappend="${op.cancelled()} ? 'row-cancelled'">
+                        <td th:text="${op.id}"></td>
+                        <td th:text="${#temporals.format(op.occurredAt, 'dd.MM.yyyy HH:mm')}"></td>
+                        <td>
+                            <span th:text="${op.type.label}"></span>
+                            <span th:if="${op.paymentMethod != null}" class="muted" th:text="' · ' + ${op.paymentMethod.label}"></span>
+                        </td>
+                        <td th:text="${op.accountName} + (${op.targetAccountName != null} ? ' → ' + ${op.targetAccountName} : '')"></td>
+                        <td class="money" th:classappend="${!op.inflow() and op.targetAccountName == null} ? 'money-out'"
+                            th:text="(${op.inflow() or op.targetAccountName != null} ? '' : '−') + ${#numbers.formatDecimal(op.amount, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td>
+                            <div th:if="${op.invoiceId != null}"><a th:href="@{/invoices/{id}(id=${op.invoiceId})}" th:text="'Наряд № ' + ${op.invoiceNumber}"></a></div>
+                            <div th:if="${op.expenseCategory != null}" th:text="${op.expenseCategory.label}"></div>
+                            <div th:if="${op.refundKind != null}" th:text="${op.refundKind.label}"></div>
+                            <div th:if="${op.originalOperationId != null}" class="muted" th:text="'до оплати № ' + ${op.originalOperationId}"></div>
+                            <div th:if="${op.changeAmount != null and op.changeAmount.signum() > 0}" class="muted"
+                                 th:text="'отримано ' + ${#numbers.formatDecimal(op.receivedAmount, 1, 'WHITESPACE', 2, 'COMMA')} + ', решта ' + ${#numbers.formatDecimal(op.changeAmount, 1, 'WHITESPACE', 2, 'COMMA')}"></div>
+                            <div th:if="${op.counterparty != null}" th:text="${op.counterparty}"></div>
+                            <div th:if="${op.documentRef != null}" class="muted" th:text="'Документ: ' + ${op.documentRef}"></div>
+                            <div th:if="${op.attachmentId != null}"><a th:href="@{/finance/attachments/{id}(id=${op.attachmentId})}" target="_blank" th:text="${op.attachmentName}"></a></div>
+                            <div th:if="${op.comment != null}" th:text="${op.comment}"></div>
+                        </td>
+                        <td th:text="${op.createdByName}"></td>
+                        <td class="keep-text">
+                            <a th:unless="${op.cancelled()}" class="link-btn link-btn-danger"
+                               th:href="@{/finance/operations/{id}/cancel(id=${op.id})}">Скасувати</a>
+                            <div th:if="${op.cancelled()}" class="muted"
+                                 th:text="'Скасовано ' + ${#temporals.format(op.cancelledAt, 'dd.MM.yyyy HH:mm')} + ', ' + ${op.cancelledByName} + ': ' + ${op.cancelReason}"></div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(operations)}">
+                        <td colspan="8">Операцій за цей період немає</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

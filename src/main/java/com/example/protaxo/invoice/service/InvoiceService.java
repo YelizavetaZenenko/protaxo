@@ -9,6 +9,9 @@ import com.example.protaxo.client.repository.ClientRepository;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.exception.NotFoundException;
 import com.example.protaxo.common.util.FieldDiff;
+import com.example.protaxo.common.vat.VatRate;
+import com.example.protaxo.finance.entity.FinanceOperationType;
+import com.example.protaxo.finance.repository.FinanceOperationRepository;
 import com.example.protaxo.invoice.dto.InvoiceItemRequest;
 import com.example.protaxo.invoice.dto.InvoiceRequest;
 import com.example.protaxo.invoice.dto.InvoiceResponse;
@@ -19,6 +22,7 @@ import com.example.protaxo.invoice.repository.InvoiceRepository;
 import com.example.protaxo.suggestion.entity.FieldSuggestionCategory;
 import com.example.protaxo.suggestion.service.FieldSuggestionService;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,6 +43,7 @@ public class InvoiceService {
     private final InvoiceMapper invoiceMapper;
     private final FieldSuggestionService fieldSuggestionService;
     private final AuditLogService auditLogService;
+    private final FinanceOperationRepository financeOperationRepository;
 
     @Transactional(readOnly = true)
     public List<InvoiceResponse> findAll() {
@@ -87,6 +92,7 @@ public class InvoiceService {
                 .add("Водій", invoice.getDriverName(), request.driverName())
                 .add("Відповідальний за ремонт", invoice.getRepairResponsibleName(), request.repairResponsibleName())
                 .add("Керівник ремонту", invoice.getRepairSupervisorName(), request.repairSupervisorName())
+                .add("Строк оплати", invoice.getPaymentDueDate(), request.paymentDueDate())
                 .build();
         invoice.setPaymentType(request.paymentType());
         invoice.setClient(getClientOrThrow(request.clientId()));
@@ -94,6 +100,7 @@ public class InvoiceService {
         restoreStock(invoice.getItems());
         invoice.getItems().clear();
         applyItems(invoice, request.items());
+        requireTotalCoversPayments(invoice);
         Invoice saved = invoiceRepository.save(invoice);
         auditLogService.record(AuditAction.UPDATE, "Invoice", saved.getId(), changes);
         return invoiceMapper.toResponse(saved);
@@ -104,12 +111,32 @@ public class InvoiceService {
         invoice.setDriverName(request.driverName());
         invoice.setRepairResponsibleName(request.repairResponsibleName());
         invoice.setRepairSupervisorName(request.repairSupervisorName());
+        invoice.setPaymentDueDate(request.paymentDueDate());
 
         fieldSuggestionService.remember(FieldSuggestionCategory.VEHICLE, request.vehicleName());
     }
 
+    /**
+     * Контрольоване коригування вартості вже оплаченого наряду (docs/Фінансовий облік.md, розд. 14):
+     * нова сума не може стати меншою за вже сплачене — інакше вийшла б переплата, яку модуль не
+     * допускає. Спершу оформлюється повернення, потім зменшується вартість.
+     */
+    private void requireTotalCoversPayments(Invoice invoice) {
+        BigDecimal netPaid = financeOperationRepository.sumForInvoice(invoice.getId(), FinanceOperationType.PAYMENT)
+                .subtract(financeOperationRepository.sumForInvoice(invoice.getId(), FinanceOperationType.REFUND));
+        BigDecimal total = invoice.getItems().stream().map(InvoiceItem::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (total.compareTo(netPaid) < 0) {
+            throw new BusinessRuleException(("Нова вартість наряду (%s грн) менша за вже сплачене (%s грн). "
+                    + "Спершу оформіть повернення клієнту в розділі оплат наряду.")
+                    .formatted(total.toPlainString(), netPaid.toPlainString()));
+        }
+    }
+
     public void softDelete(Long id) {
         Invoice invoice = getOrThrow(id);
+        if (financeOperationRepository.sumForInvoice(id, FinanceOperationType.PAYMENT).signum() > 0) {
+            throw new BusinessRuleException("По наряду є оплати — видалити його не можна. Скасуйте оплати в розділі «Оплати».");
+        }
         restoreStock(invoice.getItems());
         invoice.setDeletedAt(Instant.now());
         invoiceRepository.save(invoice);
@@ -135,7 +162,13 @@ public class InvoiceService {
             item.setItemName(catalogItem.getName());
             item.setQuantity(itemRequest.quantity());
             item.setPrice(itemRequest.price());
-            item.setAmount(itemRequest.quantity().multiply(itemRequest.price()));
+            BigDecimal amount = itemRequest.quantity().multiply(itemRequest.price()).setScale(2, RoundingMode.HALF_UP);
+            VatRate vatRate = catalogItem.getVatRate() == null ? VatRate.VAT_20 : catalogItem.getVatRate();
+            BigDecimal vatAmount = vatRate.vatFrom(amount);
+            item.setAmount(amount);
+            item.setVatRate(vatRate);
+            item.setVatAmount(vatAmount);
+            item.setAmountWithoutVat(amount.subtract(vatAmount));
             invoice.getItems().add(item);
 
             deductStock(catalogItem, itemRequest.quantity());

@@ -3,6 +3,7 @@ package com.example.protaxo.invoice.dto;
 import com.example.protaxo.invoice.entity.InvoicePaymentType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
 import java.util.List;
 
 public record InvoiceRequest(
@@ -12,6 +13,7 @@ public record InvoiceRequest(
         String driverName,
         String repairResponsibleName,
         String repairSupervisorName,
-        @Valid List<InvoiceItemRequest> items
+        @Valid List<InvoiceItemRequest> items,
+        LocalDate paymentDueDate
 ) {
 }

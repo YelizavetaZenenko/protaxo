@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Наряди й оплати</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
+
+    <div class="container container-wide">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Наряди й оплати</h1>
+            </div>
+            <div th:replace="~{fragments/finance :: nav(section='invoices')}"></div>
+            <div th:replace="~{fragments/finance :: flash}"></div>
+
+            <form th:action="@{/finance/invoices}" method="get" class="filter-bar">
+                <div class="field">
+                    <label for="q">Номер або контрагент</label>
+                    <input type="text" id="q" name="q" th:value="${q}">
+                </div>
+                <div class="field">
+                    <label for="status">Стан оплати</label>
+                    <select id="status" name="status">
+                        <option value="">— усі —</option>
+                        <option th:each="st : ${statuses}" th:value="${st}" th:text="${st.label}" th:selected="${st == status}"></option>
+                    </select>
+                </div>
+                <div class="field checkbox-field">
+                    <label>&nbsp;</label>
+                    <label><input type="checkbox" name="overdueOnly" value="true" th:checked="${overdueOnly}"> Лише прострочені</label>
+                </div>
+                <div class="field filter-actions-field">
+                    <label>&nbsp;</label>
+                    <div class="filter-actions">
+                        <button type="submit" class="btn-outline">Фільтрувати</button>
+                        <a class="link-btn" th:href="@{/finance/invoices}">Скинути</a>
+                    </div>
+                </div>
+            </form>
+
+            <div class="table-scroll">
+                <table class="clean-table">
+                    <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Дата</th>
+                        <th>Контрагент</th>
+                        <th>Строк оплати</th>
+                        <th class="money">Сума</th>
+                        <th class="money">Сплачено</th>
+                        <th class="money">Борг</th>
+                        <th>Стан</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="inv : ${invoices}" th:with="s=${settlements[inv.id]}" class="clickable-row"
+                        th:attr="data-href=@{/invoices/{id}(id=${inv.id})}">
+                        <td><a th:href="@{/invoices/{id}(id=${inv.id})}" th:text="${inv.number}"></a></td>
+                        <td th:text="${#temporals.format(inv.documentDate, 'dd.MM.yyyy')}"></td>
+                        <td th:text="${clientNames[inv.clientId]}"></td>
+                        <td th:text="${inv.paymentDueDate != null ? #temporals.format(inv.paymentDueDate, 'dd.MM.yyyy') : '—'}"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(inv.totalAmount, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(s.netPaid, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(s.debt, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td>
+                            <span class="status-badge" th:classappend="${s.status.cssClass}" th:text="${s.status.label}"></span>
+                            <span class="status-badge status-overdue" th:if="${s.overdue}">Прострочено</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(invoices)}">
+                        <td colspan="8">Нарядів за фільтром немає</td>
+                    </tr>
+                    </tbody>
+                    <tfoot th:if="${!#lists.isEmpty(invoices)}">
+                    <tr>
+                        <td colspan="4"><strong>Разом</strong></td>
+                        <td class="money"><strong th:text="${#numbers.formatDecimal(sumTotal, 1, 'WHITESPACE', 2, 'COMMA')}"></strong></td>
+                        <td></td>
+                        <td class="money"><strong th:text="${#numbers.formatDecimal(sumDebt, 1, 'WHITESPACE', 2, 'COMMA')}"></strong></td>
+                        <td></td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.clickable-row').forEach(function (row) {
+            row.addEventListener('click', function (e) {
+                if (e.target.closest('a')) return;
+                window.location.href = row.dataset.href;
+            });
+        });
+    </script>
+</body>
+</html>

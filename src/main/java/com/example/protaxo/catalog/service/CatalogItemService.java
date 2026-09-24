@@ -8,8 +8,11 @@ import com.example.protaxo.catalog.entity.CatalogItem;
 import com.example.protaxo.catalog.entity.CatalogItemType;
 import com.example.protaxo.catalog.mapper.CatalogItemMapper;
 import com.example.protaxo.catalog.repository.CatalogItemRepository;
+import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.exception.NotFoundException;
 import com.example.protaxo.common.util.FieldDiff;
+import com.example.protaxo.security.entity.Role;
+import com.example.protaxo.security.service.CurrentUserRoles;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +42,9 @@ public class CatalogItemService {
     }
 
     public CatalogItemResponse create(CatalogItemRequest request) {
+        if (CurrentUserRoles.has(Role.ACCOUNTANT)) {
+            throw new BusinessRuleException("Бухгалтер може змінювати лише ціну, залишок і ПДВ наявних позицій");
+        }
         CatalogItem catalogItem = catalogItemMapper.toEntity(request);
         clearStockForServices(catalogItem);
         CatalogItem saved = catalogItemRepository.save(catalogItem);
@@ -48,11 +54,19 @@ public class CatalogItemService {
 
     public CatalogItemResponse update(Long id, CatalogItemRequest request) {
         CatalogItem catalogItem = getOrThrow(id);
+        if (CurrentUserRoles.has(Role.ACCOUNTANT)) {
+            // Бухгалтер змінює лише ціну, залишок і ПДВ — тип і назву бере з наявного запису,
+            // навіть якщо форму підмінили.
+            request = new CatalogItemRequest(catalogItem.getType(), catalogItem.getName(),
+                    request.basePrice(), request.stockQuantity(), request.vatRate());
+        }
         Map<String, String[]> changes = FieldDiff.builder()
                 .add("Тип", catalogItem.getType(), request.type())
                 .add("Назва", catalogItem.getName(), request.name())
                 .add("Базова ціна", catalogItem.getBasePrice(), request.basePrice())
                 .add("Залишок", catalogItem.getStockQuantity(), request.stockQuantity())
+                .add("Ставка ПДВ", catalogItem.getVatRate() == null ? null : catalogItem.getVatRate().getLabel(),
+                        request.vatRate() == null ? null : request.vatRate().getLabel())
                 .build();
         catalogItemMapper.updateEntity(request, catalogItem);
         clearStockForServices(catalogItem);

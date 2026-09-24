@@ -35,7 +35,10 @@ public class AuditLogService {
             Map.entry("Invoice", "Наряд-заказ"),
             Map.entry("CatalogItem", "Позиція каталогу"),
             Map.entry("CalibrationProtocol", "Протокол калібрування"),
-            Map.entry("User", "Користувач")
+            Map.entry("User", "Користувач"),
+            Map.entry("FinanceOperation", "Фінансова операція"),
+            Map.entry("FinanceAccount", "Каса / рахунок"),
+            Map.entry("Reconciliation", "Звірка готівки")
     );
 
     private final AuditLogRepository auditLogRepository;

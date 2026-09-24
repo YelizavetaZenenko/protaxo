@@ -1,5 +1,7 @@
 package com.example.protaxo.web.controller;
 
+import com.example.protaxo.security.entity.Role;
+import com.example.protaxo.security.service.CurrentUserRoles;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -8,7 +10,7 @@ public class PageController {
 
     @GetMapping("/")
     public String index() {
-        return "redirect:/invoices";
+        return CurrentUserRoles.has(Role.ACCOUNTANT) ? "redirect:/finance" : "redirect:/invoices";
     }
 
     @GetMapping("/login")

@@ -65,6 +65,7 @@ public class ClientService {
                 .add("Телефон контактної особи", client.getContactPersonPhone(), request.contactPersonPhone())
                 .add("Телефон", client.getPhone(), request.phone())
                 .add("Email", client.getEmail(), request.email())
+                .add("Платник ПДВ", client.isVatPayer() ? "так" : "ні", request.vatPayer() ? "так" : "ні")
                 .build();
         clientMapper.updateEntity(request, client);
         client.setEmployerClient(resolveEmployer(request.employerClientId(), id));

@@ -32,6 +32,10 @@
                     <label>Код ІПН</label>
                     <div th:text="${client.code}"></div>
                 </div>
+                <div class="field">
+                    <label>Платник ПДВ</label>
+                    <div th:text="${client.vatPayer} ? 'так' : 'ні'"></div>
+                </div>
                 <div class="field" th:if="${not #strings.isEmpty(client.contactPersonName)}">
                     <label>Ім'я контактної особи</label>
                     <div th:text="${client.contactPersonName}"></div>

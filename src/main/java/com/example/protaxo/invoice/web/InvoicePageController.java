@@ -10,6 +10,11 @@ import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.util.UkrainianAmountWords;
 import com.example.protaxo.contract.dto.ContractResponse;
 import com.example.protaxo.contract.service.ContractService;
+import com.example.protaxo.finance.dto.FinanceForms;
+import com.example.protaxo.finance.dto.InvoiceSettlement;
+import com.example.protaxo.finance.entity.PaymentMethod;
+import com.example.protaxo.finance.service.FinanceQueryService;
+import com.example.protaxo.finance.web.FinancePageController;
 import com.example.protaxo.invoice.dto.ActItemRow;
 import com.example.protaxo.invoice.dto.BillItemRow;
 import com.example.protaxo.invoice.dto.InvoiceFormData;
@@ -28,7 +33,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -51,6 +55,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.thymeleaf.context.Context;
 
 @Controller
@@ -59,8 +64,6 @@ import org.thymeleaf.context.Context;
 public class InvoicePageController {
 
     private static final String CALIBRATION_SERVICE_PREFIX = "Калібрування тахографа";
-    private static final BigDecimal VAT_RATE_NUMERATOR = BigDecimal.valueOf(20);
-    private static final BigDecimal VAT_RATE_DIVISOR = BigDecimal.valueOf(120);
 
     private final InvoiceService invoiceService;
     private final ClientService clientService;
@@ -69,6 +72,7 @@ public class InvoicePageController {
     private final CalibrationProtocolService calibrationProtocolService;
     private final ContractService contractService;
     private final PdfRenderService pdfRenderService;
+    private final FinanceQueryService financeQueryService;
 
     @GetMapping
     public String list(@RequestParam(defaultValue = "date") String sort,
@@ -79,6 +83,7 @@ public class InvoicePageController {
                         Model model) {
         List<InvoiceResponse> invoices = filterInvoices(invoiceService.findAll(), filterDateFrom, filterDateTo, filterPaymentType);
         model.addAttribute("invoices", sortInvoices(invoices, sort, dir));
+        model.addAttribute("settlements", financeQueryService.settlements(invoices));
         model.addAttribute("clientNames", clientService.findAll().stream()
                 .collect(Collectors.toMap(c -> c.id(), c -> c.name(), (a, b) -> a)));
         model.addAttribute("sort", sort);
@@ -122,6 +127,23 @@ public class InvoicePageController {
         model.addAttribute("existingProtocolId", calibrationProtocolService.findByInvoiceId(id)
                 .map(CalibrationProtocolResponse::id)
                 .orElse(null));
+
+        // Оплати за нарядом (docs/Фінансовий облік.md, розд. 6): стан розрахунків, історія
+        // операцій і форма "Прийняти оплату". Форма після помилки повертається через flash.
+        InvoiceSettlement settlement = financeQueryService.settlement(response);
+        model.addAttribute("settlement", settlement);
+        model.addAttribute("financeOperations", financeQueryService.operationsForInvoice(id));
+        if (!model.containsAttribute("paymentForm")) {
+            FinanceForms.Payment paymentForm = new FinanceForms.Payment();
+            paymentForm.setInvoiceId(id);
+            paymentForm.setAmount(settlement.debt());
+            model.addAttribute("paymentForm", paymentForm);
+        }
+        // Новий ключ при кожному показі форми: подвійний клік на ту саму форму — не дубль,
+        // а навмисна друга оплата після перезавантаження сторінки — окрема операція.
+        ((FinanceForms.Payment) model.getAttribute("paymentForm")).setRequestKey(FinancePageController.newKey());
+        model.addAttribute("paymentMethods", PaymentMethod.values());
+        model.addAttribute("paymentAccounts", financeQueryService.activeAccounts());
         return "invoices/view";
     }
 
@@ -220,8 +242,12 @@ public class InvoicePageController {
     }
 
     @PostMapping("/{id}/delete")
-    public String delete(@PathVariable Long id) {
-        invoiceService.softDelete(id);
+    public String delete(@PathVariable Long id, RedirectAttributes redirect) {
+        try {
+            invoiceService.softDelete(id);
+        } catch (BusinessRuleException ex) {
+            redirect.addFlashAttribute("listError", ex.getMessage());
+        }
         return "redirect:/invoices";
     }
 
@@ -230,7 +256,7 @@ public class InvoicePageController {
      * on the sample the user provided (rahunok-na-oplatu-2026-roku-vid-01.07.2025.docx): warning
      * notice, a "зразок заповнення платіжного доручення" mini-table (with blank space reserved
      * for a QR code the user stamps on manually), supplier/buyer/contract block, an items table
-     * with a 20% VAT breakdown, total in words, and a validity date. Постачальник requisites and
+     * with a per-line VAT breakdown, total in words, and a validity date. Постачальник requisites and
      * the Договір number are placeholder/blank text — the system has no data about its own
      * company yet, and the contract number is filled in by hand.
      */
@@ -240,8 +266,8 @@ public class InvoicePageController {
 
         List<BillItemRow> rows = invoice.items().stream().map(this::toBillItemRow).toList();
         BigDecimal totalAmount = invoice.totalAmount();
-        BigDecimal totalVat = rows.stream().map(BillItemRow::vatAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalWithoutVat = totalAmount.subtract(totalVat);
+        BigDecimal totalVat = invoice.totalVat();
+        BigDecimal totalWithoutVat = invoice.totalWithoutVat();
         String amountInWords = UkrainianAmountWords.amountToWords(totalAmount);
 
         String contractNumber = contractService.findLatestByClientId(invoice.clientId())
@@ -302,12 +328,10 @@ public class InvoicePageController {
 
     private BillItemRow toBillItemRow(InvoiceItemResponse item) {
         String unit = item.catalogItemType() == CatalogItemType.SERVICE ? "послуга" : "шт.";
-        BigDecimal amount = item.amount();
-        BigDecimal vatAmount = amount.multiply(VAT_RATE_NUMERATOR)
-                .divide(VAT_RATE_DIVISOR, 2, RoundingMode.HALF_UP);
-        BigDecimal amountWithoutVat = amount.subtract(vatAmount);
+        // ПДВ рахується й зберігається під час збереження наряду (InvoiceService.applyItems) —
+        // PDF лише показує збережені суми, щоб документ збігався з обліком.
         return new BillItemRow(item.lineNumber(), item.itemName(), unit, item.quantity(), item.price(),
-                amountWithoutVat, vatAmount, amount);
+                item.amountWithoutVat(), item.vatRate().getLabel(), item.vatAmount(), item.amount());
     }
 
     private String resolveClientName(Long clientId) {
@@ -363,7 +387,7 @@ public class InvoicePageController {
                 .toList();
         return new InvoiceRequest(form.getPaymentType(), form.getClientId(),
                 form.getVehicleName(), form.getDriverName(), form.getRepairResponsibleName(),
-                form.getRepairSupervisorName(), items);
+                form.getRepairSupervisorName(), items, form.getPaymentDueDate());
     }
 
     private InvoiceFormData toFormData(InvoiceResponse response) {
@@ -374,6 +398,7 @@ public class InvoicePageController {
         form.setDriverName(response.driverName());
         form.setRepairResponsibleName(response.repairResponsibleName());
         form.setRepairSupervisorName(response.repairSupervisorName());
+        form.setPaymentDueDate(response.paymentDueDate());
         form.setItems(response.items().stream()
                 .map(i -> {
                     InvoiceItemFormData itemForm = new InvoiceItemFormData();

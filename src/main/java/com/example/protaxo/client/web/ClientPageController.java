@@ -150,7 +150,7 @@ public class ClientPageController {
                 existing != null ? existing.employerClientId() : null,
                 existing != null ? existing.position() : null,
                 existing != null ? existing.phone() : null,
-                form.getEmail());
+                form.getEmail(), form.isVatPayer());
     }
 
     private ClientFormData toFormData(ClientResponse response) {
@@ -164,6 +164,7 @@ public class ClientPageController {
         form.setFirstName(response.firstName());
         form.setMiddleName(response.middleName());
         form.setEmail(response.email());
+        form.setVatPayer(response.vatPayer());
         return form;
     }
 }

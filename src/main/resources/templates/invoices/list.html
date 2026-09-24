@@ -16,6 +16,8 @@
                 <a class="btn" th:href="@{/invoices/new}">+ Новий наряд-заказ</a>
             </div>
 
+            <div class="alert alert-error" th:if="${listError != null}" th:text="${listError}"></div>
+
             <form th:action="@{/invoices}" method="get" class="filter-bar">
                 <input type="hidden" name="sort" th:value="${sort}">
                 <input type="hidden" name="dir" th:value="${dir}">
@@ -45,12 +47,13 @@
 
             <table class="clean-table">
                 <colgroup>
-                    <col style="width:12%">
-                    <col style="width:16%">
+                    <col style="width:10%">
+                    <col style="width:14%">
+                    <col style="width:14%">
                     <col style="width:20%">
-                    <col style="width:20%">
-                    <col style="width:12%">
-                    <col style="width:20%">
+                    <col style="width:11%">
+                    <col style="width:13%">
+                    <col style="width:18%">
                 </colgroup>
                 <thead>
                 <tr>
@@ -71,6 +74,7 @@
                     </th>
                     <th>Контрагент</th>
                     <th>Сума</th>
+                    <th>Оплата</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -81,6 +85,10 @@
                     <td th:text="${inv.paymentType.label}"></td>
                     <td th:text="${clientNames[inv.clientId]}"></td>
                     <td th:text="${#numbers.formatDecimal(inv.totalAmount, 1, 2)}"></td>
+                    <td th:with="st=${settlements[inv.id]}">
+                        <span class="status-badge" th:classappend="${st.status.cssClass}" th:text="${st.status.label}"></span>
+                        <span class="status-badge status-overdue" th:if="${st.overdue}">Прострочено</span>
+                    </td>
                     <td class="actions-cell">
                         <a class="link-btn" th:href="@{/invoices/{id}/edit(id=${inv.id})}">Редагувати</a>
                         <form sec:authorize="hasRole('ADMIN')" th:action="@{/invoices/{id}/delete(id=${inv.id})}" method="post" style="display:inline">
@@ -90,7 +98,7 @@
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(invoices)}">
-                    <td colspan="6">Наряд-заказів ще немає</td>
+                    <td colspan="7">Наряд-заказів ще немає</td>
                 </tr>
                 </tbody>
             </table>

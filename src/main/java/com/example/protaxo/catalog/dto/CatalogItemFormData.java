@@ -1,6 +1,7 @@
 package com.example.protaxo.catalog.dto;
 
 import com.example.protaxo.catalog.entity.CatalogItemType;
+import com.example.protaxo.common.vat.VatRate;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -21,4 +22,7 @@ public class CatalogItemFormData {
 
     @DecimalMin(value = "0.000", message = "Залишок має бути невід'ємним числом")
     private BigDecimal stockQuantity;
+
+    @NotNull(message = "Оберіть ставку ПДВ")
+    private VatRate vatRate = VatRate.VAT_20;
 }

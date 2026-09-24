@@ -19,6 +19,7 @@ public record ClientResponse(
         Long employerClientId,
         String position,
         String phone,
-        String email
+        String email,
+        boolean vatPayer
 ) {
 }

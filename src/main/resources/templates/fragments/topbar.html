@@ -2,14 +2,22 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
     <div class="topbar" th:fragment="topbar(active)">
-        <a class="brand" th:href="@{/invoices}">ProTaxo ERP</a>
-        <nav>
+        <a class="brand" th:href="@{/}">ProTaxo ERP</a>
+        <!-- Бухгалтер — окремий акаунт "лише бухгалтерія" (docs/Фінансовий облік.md): бачить
+             фінанси й каталог, решта розділів для нього закрита і в SecurityConfig. -->
+        <nav sec:authorize="hasRole('ACCOUNTANT')">
+            <a th:href="@{/finance}" th:classappend="${active == 'finance'} ? 'active'">Бухгалтерія</a>
+            <a th:href="@{/catalog-items}" th:classappend="${active == 'catalog'} ? 'active'">Каталог</a>
+        </nav>
+        <nav sec:authorize="!hasRole('ACCOUNTANT')">
             <a th:href="@{/clients}" th:classappend="${active == 'clients'} ? 'active'">Контрагенти</a>
             <a th:href="@{/vehicles}" th:classappend="${active == 'vehicles'} ? 'active'">Автомобілі</a>
             <a th:href="@{/contracts}" th:classappend="${active == 'contracts'} ? 'active'">Договори</a>
             <a th:href="@{/invoices}" th:classappend="${active == 'invoices'} ? 'active'">Наряд-заказ</a>
             <a th:href="@{/catalog-items}" th:classappend="${active == 'catalog'} ? 'active'">Каталог</a>
             <a th:href="@{/calibration-protocols}" th:classappend="${active == 'calibration'} ? 'active'">Протоколи</a>
+            <a sec:authorize="hasRole('ADMIN')" th:href="@{/finance}" th:classappend="${active == 'finance'} ? 'active'">Бухгалтерія</a>
+            <a sec:authorize="hasRole('MASTER')" th:href="@{/finance/cash}" th:classappend="${active == 'finance'} ? 'active'">Каса</a>
             <a th:if="${canViewAuditLog}" th:href="@{/audit-log}" th:classappend="${active == 'audit'} ? 'active'">Журнал дій</a>
         </nav>
 

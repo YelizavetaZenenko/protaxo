@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Каса</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Каса</h1>
+            </div>
+            <th:block sec:authorize="hasAnyRole('ADMIN', 'ACCOUNTANT')">
+                <div th:replace="~{fragments/finance :: nav(section='cash')}"></div>
+            </th:block>
+
+            <div class="finance-section-head">
+                <div class="period-switch">
+                    <a th:href="@{/finance/cash(period='day', date=${date}, method=${method})}" th:classappend="${period == 'day'} ? 'active'">День</a>
+                    <a th:href="@{/finance/cash(period='week', date=${date}, method=${method})}" th:classappend="${period == 'week'} ? 'active'">Тиждень</a>
+                    <a th:href="@{/finance/cash(period='month', date=${date}, method=${method})}" th:classappend="${period == 'month'} ? 'active'">Місяць</a>
+                </div>
+                <div>
+                    <a class="link-btn" th:href="@{/finance/cash(period=${period}, date=${prevDate}, method=${method})}">← раніше</a>
+                    <strong th:text="${from == to} ? ${#temporals.format(from, 'dd.MM.yyyy')} : ${#temporals.format(from, 'dd.MM.yyyy')} + ' – ' + ${#temporals.format(to, 'dd.MM.yyyy')}"></strong>
+                    <a class="link-btn" th:href="@{/finance/cash(period=${period}, date=${nextDate}, method=${method})}">пізніше →</a>
+                </div>
+            </div>
+
+            <form th:action="@{/finance/cash}" method="get" class="filter-bar">
+                <input type="hidden" name="period" th:value="${period}">
+                <div class="field">
+                    <label for="date">Дата</label>
+                    <input type="date" id="date" name="date" th:value="${date}">
+                </div>
+                <div class="field">
+                    <label for="method">Спосіб оплати</label>
+                    <select id="method" name="method">
+                        <option value="">— усі —</option>
+                        <option th:each="m : ${paymentMethods}" th:value="${m}" th:text="${m.label}" th:selected="${m == method}"></option>
+                    </select>
+                </div>
+                <div class="field filter-actions-field">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn-outline">Показати</button>
+                </div>
+            </form>
+
+            <div class="kpi-grid" style="margin-bottom:1.5rem">
+                <div class="kpi">
+                    <div class="kpi-label" th:text="${method == null} ? 'Надійшло від клієнтів' : 'Надійшло: ' + ${method.label}"></div>
+                    <div class="kpi-value" th:text="${#numbers.formatDecimal(received, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-label">Повернено клієнтам</div>
+                    <div class="kpi-value" th:text="${#numbers.formatDecimal(refunded, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-label">Разом за період</div>
+                    <div class="kpi-value" th:text="${#numbers.formatDecimal(net, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                </div>
+                <div class="kpi" th:if="${method == null}">
+                    <div class="kpi-label">За способами</div>
+                    <div class="kpi-sub" th:each="m : ${paymentMethods}"
+                         th:text="${m.label} + ': ' + ${#numbers.formatDecimal(totals.netBy(m), 1, 'WHITESPACE', 2, 'COMMA')}"></div>
+                </div>
+            </div>
+
+            <div class="table-scroll">
+                <table class="clean-table">
+                    <thead>
+                    <tr>
+                        <th>Час</th>
+                        <th>Операція</th>
+                        <th>Наряд</th>
+                        <th>Спосіб</th>
+                        <th class="money">Сума</th>
+                        <th>Хто прийняв</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="op : ${operations}">
+                        <td th:text="${#temporals.format(op.occurredAt, 'dd.MM HH:mm')}"></td>
+                        <td th:text="${op.type.label}"></td>
+                        <td><a th:if="${op.invoiceId != null}" th:href="@{/invoices/{id}(id=${op.invoiceId})}" th:text="'№ ' + ${op.invoiceNumber}"></a></td>
+                        <td th:text="${op.paymentMethod != null ? op.paymentMethod.label : ''}"></td>
+                        <td class="money" th:classappend="${!op.inflow()} ? 'money-out'"
+                            th:text="(${op.inflow()} ? '' : '−') + ${#numbers.formatDecimal(op.amount, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td th:text="${op.createdByName}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(operations)}">
+                        <td colspan="6">За цей період оплат немає</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

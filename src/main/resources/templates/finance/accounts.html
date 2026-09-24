@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Каси й рахунки</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
+
+    <div class="container container-wide">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Каси й рахунки</h1>
+                <a class="btn" th:href="@{/finance/accounts/new}">+ Додати рахунок</a>
+            </div>
+            <div th:replace="~{fragments/finance :: nav(section='accounts')}"></div>
+            <div th:replace="~{fragments/finance :: flash}"></div>
+
+            <section class="finance-section">
+                <table class="clean-table">
+                    <thead>
+                    <tr>
+                        <th>Назва</th>
+                        <th>Вид</th>
+                        <th class="money">Початковий залишок</th>
+                        <th class="money">Поточний залишок</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="b : ${balances}" th:classappend="${!b.active} ? 'row-cancelled'">
+                        <td th:text="${b.name} + (${b.active} ? '' : ' (неактивний)')"></td>
+                        <td th:text="${b.kind.label}"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(b.openingBalance, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(b.balance, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td class="actions-cell keep-text">
+                            <a class="link-btn" th:href="@{/finance/operations(accountId=${b.id})}">Операції</a>
+                            <a class="link-btn" th:href="@{/finance/accounts/{id}/edit(id=${b.id})}">Редагувати</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <p class="muted">Картка й переказ обліковуються окремо від готівки: оплата карткою потрапляє на термінал,
+                    переказ — на банківський рахунок, і не збільшує готівку в касі.</p>
+            </section>
+
+            <section class="finance-section">
+                <div class="finance-section-head"><h2>Переміщення коштів</h2></div>
+                <p class="muted">Наприклад, здача готівки з каси в банк. Не є ні надходженням від клієнтів, ні витратою.</p>
+                <form th:object="${transfer}" th:action="@{/finance/transfers}" method="post" class="payment-form">
+                    <input type="hidden" th:field="*{requestKey}">
+                    <div class="field">
+                        <label for="fromAccountId">Звідки</label>
+                        <select id="fromAccountId" th:field="*{fromAccountId}" required>
+                            <option value="">— оберіть —</option>
+                            <option th:each="a : ${activeAccounts}" th:value="${a.id}" th:text="${a.name}"></option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="toAccountId">Куди</label>
+                        <select id="toAccountId" th:field="*{toAccountId}" required>
+                            <option value="">— оберіть —</option>
+                            <option th:each="a : ${activeAccounts}" th:value="${a.id}" th:text="${a.name}"></option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="transferAmount">Сума</label>
+                        <input type="number" step="0.01" min="0.01" id="transferAmount" th:field="*{amount}" required>
+                    </div>
+                    <div class="field">
+                        <label for="transferComment">Коментар</label>
+                        <input type="text" id="transferComment" th:field="*{comment}">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Перемістити</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="finance-section">
+                <div class="finance-section-head"><h2>Внесення / вилучення власником</h2></div>
+                <p class="muted">Особисте вилучення коштів власником не є витратою на діяльність і не зменшує виручку.</p>
+                <form th:object="${ownerMovement}" th:action="@{/finance/owner-movements}" method="post" class="payment-form">
+                    <input type="hidden" th:field="*{requestKey}">
+                    <div class="field">
+                        <label for="ownerType">Операція</label>
+                        <select id="ownerType" th:field="*{type}">
+                            <option th:each="t : ${ownerTypes}" th:value="${t}" th:text="${t.label}"></option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="ownerAccountId">Каса / рахунок</label>
+                        <select id="ownerAccountId" th:field="*{accountId}" required>
+                            <option value="">— оберіть —</option>
+                            <option th:each="a : ${activeAccounts}" th:value="${a.id}" th:text="${a.name}"></option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="ownerAmount">Сума</label>
+                        <input type="number" step="0.01" min="0.01" id="ownerAmount" th:field="*{amount}" required>
+                    </div>
+                    <div class="field">
+                        <label for="ownerComment">Коментар</label>
+                        <input type="text" id="ownerComment" th:field="*{comment}">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Провести</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="finance-section">
+                <div class="finance-section-head">
+                    <h2>Останні внутрішні рухи (30 днів)</h2>
+                </div>
+                <table class="clean-table">
+                    <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Операція</th>
+                        <th>Рахунок</th>
+                        <th class="money">Сума</th>
+                        <th>Коментар</th>
+                        <th>Автор</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="op : ${recentMovements}" th:classappend="${op.cancelled()} ? 'row-cancelled'">
+                        <td th:text="${#temporals.format(op.occurredAt, 'dd.MM.yyyy HH:mm')}"></td>
+                        <td th:text="${op.type.label}"></td>
+                        <td th:text="${op.accountName} + (${op.targetAccountName != null} ? ' → ' + ${op.targetAccountName} : '')"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(op.amount, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td th:text="${op.comment}"></td>
+                        <td th:text="${op.createdByName}"></td>
+                        <td class="keep-text">
+                            <a th:unless="${op.cancelled()}" class="link-btn link-btn-danger" th:href="@{/finance/operations/{id}/cancel(id=${op.id})}">Скасувати</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(recentMovements)}">
+                        <td colspan="7">Немає</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+    </div>
+</body>
+</html>

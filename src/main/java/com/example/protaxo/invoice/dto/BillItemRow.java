@@ -9,6 +9,7 @@ public record BillItemRow(
         BigDecimal quantity,
         BigDecimal price,
         BigDecimal amountWithoutVat,
+        String vatRateLabel,
         BigDecimal vatAmount,
         BigDecimal amount
 ) {

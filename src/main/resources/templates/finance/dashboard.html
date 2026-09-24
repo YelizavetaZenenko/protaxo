@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Бухгалтерія</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
+
+    <div class="container container-wide">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Бухгалтерія</h1>
+            </div>
+            <div th:replace="~{fragments/finance :: nav(section='overview')}"></div>
+            <div th:replace="~{fragments/finance :: flash}"></div>
+
+            <section class="finance-section">
+                <div class="finance-section-head">
+                    <h2>Залишки коштів</h2>
+                    <span class="muted" th:text="'станом на ' + ${#temporals.format(balancesAt, 'dd.MM.yyyy HH:mm')}"></span>
+                </div>
+                <div class="kpi-grid">
+                    <a class="kpi" th:each="b : ${balances}" th:if="${b.active}"
+                       th:href="@{/finance/operations(accountId=${b.id})}" style="text-decoration:none;color:inherit">
+                        <div class="kpi-label" th:text="${b.name} + ' · ' + ${b.kind.label}"></div>
+                        <div class="kpi-value" th:classappend="${b.balance.signum() < 0} ? 'money-out'"
+                             th:text="${#numbers.formatDecimal(b.balance, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                    </a>
+                </div>
+            </section>
+
+            <section class="finance-section">
+                <div class="finance-section-head">
+                    <h2>Обороти за період</h2>
+                    <form th:action="@{/finance}" method="get" class="filter-bar" style="margin:0;padding:0;border:0">
+                        <div class="field">
+                            <label for="from">Від</label>
+                            <input type="date" id="from" name="from" th:value="${from}">
+                        </div>
+                        <div class="field">
+                            <label for="to">До</label>
+                            <input type="date" id="to" name="to" th:value="${to}">
+                        </div>
+                        <div class="field filter-actions-field">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn-outline">Показати</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="kpi-grid">
+                    <div class="kpi">
+                        <div class="kpi-label">Надходження від клієнтів</div>
+                        <div class="kpi-value" th:text="${#numbers.formatDecimal(totals.payments, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                        <div class="kpi-sub" th:each="m : ${paymentMethods}"
+                             th:text="${m.label} + ': ' + ${#numbers.formatDecimal(totals.paymentsBy(m), 1, 'WHITESPACE', 2, 'COMMA')}"></div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Повернення клієнтам</div>
+                        <div class="kpi-value" th:text="${#numbers.formatDecimal(totals.refunds, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Витрати</div>
+                        <div class="kpi-value" th:text="${#numbers.formatDecimal(totals.expenses, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                        <div class="kpi-sub"><a th:href="@{/finance/expenses(from=${from}, to=${to})}">деталізація</a></div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Внесено / вилучено власником</div>
+                        <div class="kpi-value"
+                             th:text="${#numbers.formatDecimal(totals.ownerDeposits, 1, 'WHITESPACE', 2, 'COMMA')} + ' / ' + ${#numbers.formatDecimal(totals.ownerWithdrawals, 1, 'WHITESPACE', 2, 'COMMA')}"></div>
+                        <div class="kpi-sub">не виручка і не витрата</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Чистий рух коштів</div>
+                        <div class="kpi-value" th:classappend="${totals.netCashFlow().signum() < 0} ? 'money-out'"
+                             th:text="${#numbers.formatDecimal(totals.netCashFlow(), 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                        <div class="kpi-sub">надходження − виплати; це не прибуток</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="finance-section">
+                <div class="finance-section-head">
+                    <h2>Борги клієнтів</h2>
+                    <a th:href="@{/finance/invoices(status='NOT_PAID')}" class="muted">усі неоплачені →</a>
+                </div>
+                <div class="kpi-grid" style="margin-bottom:1rem">
+                    <div class="kpi">
+                        <div class="kpi-label" th:text="'Неоплачені залишки (' + ${debtCount} + ' нарядів)'"></div>
+                        <div class="kpi-value" th:text="${#numbers.formatDecimal(debtTotal, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                    </div>
+                    <div class="kpi" th:classappend="${overdueTotal.signum() > 0} ? 'kpi-warn'">
+                        <div class="kpi-label">З них прострочено</div>
+                        <div class="kpi-value" th:text="${#numbers.formatDecimal(overdueTotal, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                    </div>
+                </div>
+                <table class="clean-table" th:if="${!#lists.isEmpty(debts)}">
+                    <thead>
+                    <tr>
+                        <th>Наряд</th>
+                        <th>Контрагент</th>
+                        <th>Строк оплати</th>
+                        <th class="money">Сума</th>
+                        <th class="money">Борг</th>
+                        <th>Стан</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="s : ${debts}" th:with="inv=${invoicesById[s.invoiceId]}">
+                        <td><a th:href="@{/invoices/{id}(id=${s.invoiceId})}" th:text="'№ ' + ${inv.number}"></a></td>
+                        <td th:text="${clientNames[inv.clientId]}"></td>
+                        <td th:text="${s.dueDate != null ? #temporals.format(s.dueDate, 'dd.MM.yyyy') : '—'}"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(s.total, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(s.debt, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td>
+                            <span class="status-badge" th:classappend="${s.status.cssClass}" th:text="${s.status.label}"></span>
+                            <span class="status-badge status-overdue" th:if="${s.overdue}">Прострочено</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <p class="muted" th:if="${#lists.isEmpty(debts)}">Боргів немає.</p>
+            </section>
+
+            <section class="finance-section">
+                <div class="finance-section-head">
+                    <h2>Відкриті розбіжності звірок</h2>
+                    <a th:href="@{/finance/reconciliations}" class="muted">усі звірки →</a>
+                </div>
+                <table class="clean-table" th:if="${!#lists.isEmpty(openReconciliations)}">
+                    <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Каса</th>
+                        <th class="money">За програмою</th>
+                        <th class="money">Фактично</th>
+                        <th class="money">Різниця</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${openReconciliations}">
+                        <td th:text="${#temporals.format(r.countedAt, 'dd.MM.yyyy HH:mm')}"></td>
+                        <td th:text="${r.accountName}"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(r.expectedBalance, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(r.actualBalance, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td class="money" th:classappend="${r.difference.signum() < 0} ? 'money-out'"
+                            th:text="${r.differenceLabel()} + ' ' + ${#numbers.formatDecimal(r.difference.abs(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td><a class="link-btn" th:href="@{/finance/reconciliations/{id}/resolve(id=${r.id})}">Розглянути</a></td>
+                    </tr>
+                    </tbody>
+                </table>
+                <p class="muted" th:if="${#lists.isEmpty(openReconciliations)}">Відкритих розбіжностей немає.</p>
+            </section>
+        </div>
+    </div>
+</body>
+</html>

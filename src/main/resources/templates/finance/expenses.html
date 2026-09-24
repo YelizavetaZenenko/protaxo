@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Витрати</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
+
+    <div class="container container-wide">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Витрати</h1>
+                <a class="btn" th:href="@{/finance/expenses/new}">+ Нова витрата</a>
+            </div>
+            <div th:replace="~{fragments/finance :: nav(section='expenses')}"></div>
+            <div th:replace="~{fragments/finance :: flash}"></div>
+
+            <form th:action="@{/finance/expenses}" method="get" class="filter-bar">
+                <div class="field">
+                    <label for="from">Від</label>
+                    <input type="date" id="from" name="from" th:value="${from}">
+                </div>
+                <div class="field">
+                    <label for="to">До</label>
+                    <input type="date" id="to" name="to" th:value="${to}">
+                </div>
+                <div class="field filter-actions-field">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn-outline">Показати</button>
+                </div>
+            </form>
+
+            <div class="kpi-grid" style="margin-bottom:1.5rem">
+                <div class="kpi">
+                    <div class="kpi-label">Усього витрат</div>
+                    <div class="kpi-value" th:text="${#numbers.formatDecimal(totals.expenses, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                </div>
+                <div class="kpi" th:each="entry : ${totals.expensesByCategory}">
+                    <div class="kpi-label" th:text="${entry.key.label}"></div>
+                    <div class="kpi-value" th:text="${#numbers.formatDecimal(entry.value, 1, 'WHITESPACE', 2, 'COMMA')}"></div>
+                </div>
+            </div>
+
+            <p class="muted">Внутрішній запис витрати не підтверджує її податкове врахування чи право на податковий кредит.</p>
+
+            <div class="table-scroll">
+                <table class="clean-table">
+                    <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Категорія</th>
+                        <th>Призначення</th>
+                        <th>Одержувач</th>
+                        <th>З рахунку</th>
+                        <th class="money">Сума</th>
+                        <th>Документ</th>
+                        <th>Автор</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="op : ${expenses}" th:classappend="${op.cancelled()} ? 'row-cancelled'">
+                        <td th:text="${#temporals.format(op.occurredAt, 'dd.MM.yyyy HH:mm')}"></td>
+                        <td th:text="${op.expenseCategory.label}"></td>
+                        <td>
+                            <span th:text="${op.comment}"></span>
+                            <div th:if="${op.invoiceId != null}"><a th:href="@{/invoices/{id}(id=${op.invoiceId})}" th:text="'Наряд № ' + ${op.invoiceNumber}"></a></div>
+                        </td>
+                        <td th:text="${op.counterparty}"></td>
+                        <td th:text="${op.accountName}"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(op.amount, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td>
+                            <div th:if="${op.documentRef != null}" th:text="${op.documentRef}"></div>
+                            <a th:if="${op.attachmentId != null}" th:href="@{/finance/attachments/{id}(id=${op.attachmentId})}" target="_blank" th:text="${op.attachmentName}"></a>
+                        </td>
+                        <td th:text="${op.createdByName}"></td>
+                        <td class="keep-text">
+                            <a th:unless="${op.cancelled()}" class="link-btn link-btn-danger" th:href="@{/finance/operations/{id}/cancel(id=${op.id})}">Скасувати</a>
+                            <span th:if="${op.cancelled()}" class="muted" th:text="'Скасовано: ' + ${op.cancelReason}"></span>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(expenses)}">
+                        <td colspan="9">Витрат за цей період немає</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

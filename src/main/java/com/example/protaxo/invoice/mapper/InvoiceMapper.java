@@ -6,6 +6,7 @@ import com.example.protaxo.invoice.entity.Invoice;
 import com.example.protaxo.invoice.entity.InvoiceItem;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
+import java.util.function.Function;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -17,6 +18,8 @@ public interface InvoiceMapper {
     @Mapping(source = "client.id", target = "clientId")
     @Mapping(target = "buyerOrderLabel", expression = "java(buildBuyerOrderLabel(invoice))")
     @Mapping(target = "totalAmount", expression = "java(computeTotal(invoice))")
+    @Mapping(target = "totalVat", expression = "java(sum(invoice, InvoiceItem::getVatAmount))")
+    @Mapping(target = "totalWithoutVat", expression = "java(sum(invoice, InvoiceItem::getAmountWithoutVat))")
     InvoiceResponse toResponse(Invoice invoice);
 
     @Mapping(source = "catalogItem.id", target = "catalogItemId")
@@ -29,8 +32,13 @@ public interface InvoiceMapper {
     }
 
     default BigDecimal computeTotal(Invoice invoice) {
+        return sum(invoice, InvoiceItem::getAmount);
+    }
+
+    /** Підсумки документа — суми рядків, тож завжди узгоджені з позиціями (розд. 11 концепції). */
+    default BigDecimal sum(Invoice invoice, Function<InvoiceItem, BigDecimal> field) {
         return invoice.getItems().stream()
-                .map(InvoiceItem::getAmount)
+                .map(field)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

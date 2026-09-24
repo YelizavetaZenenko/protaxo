@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Повернення коштів</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <h1>Повернення коштів клієнту</h1>
+            <div th:replace="~{fragments/finance :: flash}"></div>
+
+            <div class="view-meta">
+                <div class="field">
+                    <label>Оплата</label>
+                    <div th:text="'№ ' + ${payment.id} + ' від ' + ${#temporals.format(payment.occurredAt, 'dd.MM.yyyy HH:mm')}"></div>
+                </div>
+                <div class="field">
+                    <label>Наряд</label>
+                    <div><a th:href="@{/invoices/{id}(id=${payment.invoiceId})}" th:text="'№ ' + ${payment.invoiceNumber}"></a></div>
+                </div>
+                <div class="field">
+                    <label>Сума оплати</label>
+                    <div th:text="${#numbers.formatDecimal(payment.amount, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴ · ' + ${payment.paymentMethod.label}"></div>
+                </div>
+                <div class="field">
+                    <label>Можна повернути</label>
+                    <div th:text="${#numbers.formatDecimal(payment.refundableAmount(), 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                </div>
+            </div>
+
+            <p class="muted">
+                Повернення — окрема операція з посиланням на цю оплату; сама оплата лишається в історії.
+                Якщо повертаєте гроші через скасування робіт, після повернення зменште вартість наряду —
+                інакше сума повернення знову з'явиться як борг клієнта.
+            </p>
+
+            <form th:object="${refund}" th:action="@{/finance/payments/{id}/refund(id=${payment.id})}" method="post" class="form-grid">
+                <input type="hidden" th:field="*{requestKey}">
+                <div class="field">
+                    <label for="amount">Сума повернення *</label>
+                    <input type="number" step="0.01" min="0.01" id="amount" th:field="*{amount}" required>
+                </div>
+                <div class="field">
+                    <label for="kind">Причина *</label>
+                    <select id="kind" th:field="*{kind}">
+                        <option th:each="k : ${refundKinds}" th:value="${k}" th:text="${k.label}"></option>
+                    </select>
+                </div>
+                <div class="field" th:if="${#lists.size(accounts) > 1}">
+                    <label for="accountId">Звідки повертаємо</label>
+                    <select id="accountId" th:field="*{accountId}">
+                        <option th:each="a : ${accounts}" th:value="${a.id}" th:text="${a.name}"></option>
+                    </select>
+                </div>
+                <div class="field field-full">
+                    <label for="reason">Пояснення *</label>
+                    <textarea id="reason" th:field="*{reason}" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn">Провести повернення</button>
+                    <a class="btn-outline" th:href="@{/invoices/{id}(id=${payment.invoiceId})}">Скасувати</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

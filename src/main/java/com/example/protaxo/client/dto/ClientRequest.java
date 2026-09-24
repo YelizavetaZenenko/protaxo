@@ -25,6 +25,7 @@ public record ClientRequest(
         String position,
         @Pattern(regexp = "^(\\+38\\(0\\d{2}\\)-\\d{3}-\\d{2}-\\d{2})?$", message = "Телефон має бути у форматі +38(0XX)-XXX-XX-XX")
         String phone,
-        @Email(message = "Некоректний email") String email
+        @Email(message = "Некоректний email") String email,
+        boolean vatPayer
 ) {
 }

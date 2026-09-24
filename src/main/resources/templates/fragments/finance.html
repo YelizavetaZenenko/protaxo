@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+    <!-- Підменю панелі бухгалтера (docs/Фінансовий облік.md, розд. 12). -->
+    <nav class="finance-nav" th:fragment="nav(section)">
+        <a th:href="@{/finance}" th:classappend="${section == 'overview'} ? 'active'">Огляд</a>
+        <a th:href="@{/finance/invoices}" th:classappend="${section == 'invoices'} ? 'active'">Наряди й оплати</a>
+        <a th:href="@{/finance/cash}" th:classappend="${section == 'cash'} ? 'active'">Каса за період</a>
+        <a th:href="@{/finance/accounts}" th:classappend="${section == 'accounts'} ? 'active'">Каси й рахунки</a>
+        <a th:href="@{/finance/expenses}" th:classappend="${section == 'expenses'} ? 'active'">Витрати</a>
+        <a th:href="@{/finance/reconciliations}" th:classappend="${section == 'reconciliations'} ? 'active'">Звірки</a>
+        <a th:href="@{/finance/operations}" th:classappend="${section == 'operations'} ? 'active'">Історія операцій</a>
+    </nav>
+
+    <div th:fragment="flash">
+        <div class="alert alert-error" th:if="${financeError != null}" th:text="${financeError}"></div>
+        <div class="alert alert-success" th:if="${financeSuccess != null}" th:text="${financeSuccess}"></div>
+    </div>
+</body>
+</html>

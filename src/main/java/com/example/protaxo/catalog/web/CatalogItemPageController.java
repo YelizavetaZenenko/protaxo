@@ -5,6 +5,7 @@ import com.example.protaxo.catalog.dto.CatalogItemRequest;
 import com.example.protaxo.catalog.dto.CatalogItemResponse;
 import com.example.protaxo.catalog.entity.CatalogItemType;
 import com.example.protaxo.catalog.service.CatalogItemService;
+import com.example.protaxo.common.vat.VatRate;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -100,10 +101,12 @@ public class CatalogItemPageController {
 
     private void addReferenceData(Model model) {
         model.addAttribute("types", CatalogItemType.values());
+        model.addAttribute("vatRates", VatRate.values());
     }
 
     private CatalogItemRequest toRequest(CatalogItemFormData form) {
-        return new CatalogItemRequest(form.getType(), form.getName(), form.getBasePrice(), form.getStockQuantity());
+        return new CatalogItemRequest(form.getType(), form.getName(), form.getBasePrice(), form.getStockQuantity(),
+                form.getVatRate());
     }
 
     private CatalogItemFormData toFormData(CatalogItemResponse response) {
@@ -112,6 +115,7 @@ public class CatalogItemPageController {
         form.setName(response.name());
         form.setBasePrice(response.basePrice());
         form.setStockQuantity(response.stockQuantity());
+        form.setVatRate(response.vatRate());
         return form;
     }
 }

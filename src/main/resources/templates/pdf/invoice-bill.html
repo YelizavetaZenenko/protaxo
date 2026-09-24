@@ -135,7 +135,8 @@
             <th>Од.</th>
             <th>Ціна</th>
             <th>Сума без ПДВ</th>
-            <th>ПДВ 20%</th>
+            <th>Ставка ПДВ</th>
+            <th>ПДВ</th>
             <th>Сума з ПДВ</th>
         </tr>
         </thead>
@@ -147,6 +148,7 @@
             <td class="center" th:text="${row.unit}">шт.</td>
             <td class="num" th:text="${#numbers.formatDecimal(row.price, 1, 2)}">0,00</td>
             <td class="num" th:text="${#numbers.formatDecimal(row.amountWithoutVat, 1, 2)}">0,00</td>
+            <td class="center" th:text="${row.vatRateLabel}">20%</td>
             <td class="num" th:text="${#numbers.formatDecimal(row.vatAmount, 1, 2)}">0,00</td>
             <td class="num" th:text="${#numbers.formatDecimal(row.amount, 1, 2)}">0,00</td>
         </tr>

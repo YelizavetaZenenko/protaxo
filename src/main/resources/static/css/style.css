@@ -1148,3 +1148,224 @@ body.has-protocol-drafts-sidebar .container {
     cursor: not-allowed;
     opacity: 0.7;
 }
+
+/* ------------------------------------------------------------------ Фінанси
+   docs/Фінансовий облік.md. Залишки (на момент) і обороти (за період) — окремими блоками,
+   щоб не змішувались візуально (розд. 12 концепції). */
+
+.finance-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    border-bottom: 1px solid var(--border);
+    margin: 0 0 1.5rem;
+}
+
+.finance-nav a {
+    padding: 0.55rem 0.9rem;
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    font-size: 0.95rem;
+}
+
+.finance-nav a.active {
+    color: var(--accent-dark);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+}
+
+.finance-section + .finance-section {
+    margin-top: 2rem;
+}
+
+.finance-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+
+.finance-section-head h2 {
+    font-size: 1.05rem;
+    margin: 0;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+}
+
+.kpi {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    background: var(--surface);
+}
+
+.kpi-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+}
+
+.kpi-value {
+    font-size: 1.35rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.kpi-sub {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.25rem;
+}
+
+.kpi-warn {
+    border-color: #f2c1bd;
+    background: #fdf6f5;
+}
+
+.kpi-warn .kpi-value {
+    color: var(--danger);
+}
+
+.money {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    text-align: right;
+}
+
+th.money {
+    text-align: right;
+}
+
+.money-out {
+    color: var(--danger);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.status-paid {
+    background: #eaf4ee;
+    color: var(--accent-dark);
+}
+
+.status-partial {
+    background: #fff4e0;
+    color: #8a5a00;
+}
+
+.status-unpaid {
+    background: #eef1f0;
+    color: var(--muted);
+}
+
+.status-overdue {
+    background: #fbeceb;
+    color: var(--danger);
+}
+
+.row-cancelled td {
+    color: var(--muted);
+    text-decoration: line-through;
+}
+
+.row-cancelled td.keep-text {
+    text-decoration: none;
+}
+
+.settlement-box {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.payment-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0 1rem;
+    align-items: end;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    margin-bottom: 1rem;
+}
+
+.payment-form .form-actions {
+    margin: 0 0 1rem;
+}
+
+.field textarea {
+    width: 100%;
+    min-height: 4.5rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.field input[type="checkbox"] {
+    width: auto;
+}
+
+.checkbox-field label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.period-switch {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.period-switch a {
+    padding: 0.45rem 0.9rem;
+    text-decoration: none;
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.period-switch a + a {
+    border-left: 1px solid var(--border);
+}
+
+.period-switch a.active {
+    background: var(--accent);
+    color: #fff;
+}
+
+.table-scroll {
+    overflow-x: auto;
+}
+
+@media (max-width: 700px) {
+    .form-grid,
+    .view-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .card {
+        padding: 1.25rem;
+    }
+}

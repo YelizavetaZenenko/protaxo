@@ -1,6 +1,7 @@
 package com.example.protaxo.invoice.dto;
 
 import com.example.protaxo.catalog.entity.CatalogItemType;
+import com.example.protaxo.common.vat.VatRate;
 import java.math.BigDecimal;
 
 public record InvoiceItemResponse(
@@ -11,6 +12,9 @@ public record InvoiceItemResponse(
         String itemName,
         BigDecimal quantity,
         BigDecimal price,
-        BigDecimal amount
+        BigDecimal amount,
+        VatRate vatRate,
+        BigDecimal vatAmount,
+        BigDecimal amountWithoutVat
 ) {
 }

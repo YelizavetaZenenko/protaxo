@@ -1,6 +1,7 @@
 package com.example.protaxo.catalog.entity;
 
 import com.example.protaxo.common.entity.BaseEntity;
+import com.example.protaxo.common.vat.VatRate;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -8,6 +9,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -36,4 +38,9 @@ public class CatalogItem extends BaseEntity {
 
     @Column(name = "stock_quantity", precision = 12, scale = 3)
     private BigDecimal stockQuantity;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "vat_rate", nullable = false)
+    @Builder.Default
+    private VatRate vatRate = VatRate.VAT_20;
 }

@@ -163,15 +163,14 @@ public class UserManagementService {
      * without this check a MASTER with the toggle on could set their own (or anyone's) {@code role}
      * to ADMIN via a normal invite/edit POST, a full privilege escalation the permission toggle was
      * never meant to grant. Only an actual ROLE_ADMIN authority may assign the ADMIN role.
+     * Same for ACCOUNTANT — that role reaches all the money (docs/Фінансовий облік.md).
      */
     private void requireAdminToAssign(Role role) {
-        if (role != Role.ADMIN) {
+        if (role != Role.ADMIN && role != Role.ACCOUNTANT) {
             return;
         }
-        boolean callerIsAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
-                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
-        if (!callerIsAdmin) {
-            throw new BusinessRuleException("Лише адміністратор може призначити роль адміністратора");
+        if (!CurrentUserRoles.has(Role.ADMIN)) {
+            throw new BusinessRuleException("Лише адміністратор може призначити роль «%s»".formatted(role.getLabel()));
         }
     }
 }

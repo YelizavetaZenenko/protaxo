@@ -32,6 +32,10 @@
                     <label>Базова ціна</label>
                     <div th:text="${#numbers.formatDecimal(catalogItem.basePrice, 1, 2)}"></div>
                 </div>
+                <div class="field">
+                    <label>Ставка ПДВ</label>
+                    <div th:text="${catalogItem.vatRate.label}"></div>
+                </div>
                 <div class="field" th:if="${catalogItem.type.name() == 'MATERIAL'}">
                     <label>Залишок</label>
                     <div th:text="${catalogItem.stockQuantity != null ? catalogItem.stockQuantityDisplay() : '—'}"></div>

@@ -1,6 +1,7 @@
 package com.example.protaxo.catalog.dto;
 
 import com.example.protaxo.catalog.entity.CatalogItemType;
+import com.example.protaxo.common.vat.VatRate;
 import java.math.BigDecimal;
 
 public record CatalogItemResponse(
@@ -8,7 +9,8 @@ public record CatalogItemResponse(
         CatalogItemType type,
         String name,
         BigDecimal basePrice,
-        BigDecimal stockQuantity
+        BigDecimal stockQuantity,
+        VatRate vatRate
 ) {
 
     /** "5" instead of "5.000", "2.5" instead of "2.500" — same pattern as BillItemRow#quantityDisplay. */

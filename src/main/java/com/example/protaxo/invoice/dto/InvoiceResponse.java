@@ -2,6 +2,7 @@ package com.example.protaxo.invoice.dto;
 
 import com.example.protaxo.invoice.entity.InvoicePaymentType;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,6 +18,9 @@ public record InvoiceResponse(
         String repairSupervisorName,
         String buyerOrderLabel,
         List<InvoiceItemResponse> items,
-        BigDecimal totalAmount
+        BigDecimal totalAmount,
+        BigDecimal totalVat,
+        BigDecimal totalWithoutVat,
+        LocalDate paymentDueDate
 ) {
 }

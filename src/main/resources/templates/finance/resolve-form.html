@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Розгляд розбіжності</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <h1>Розгляд розбіжності звірки</h1>
+            <div th:replace="~{fragments/finance :: flash}"></div>
+
+            <div class="view-meta">
+                <div class="field">
+                    <label>Каса</label>
+                    <div th:text="${reconciliation.accountName}"></div>
+                </div>
+                <div class="field">
+                    <label>Дата звірки</label>
+                    <div th:text="${#temporals.format(reconciliation.countedAt, 'dd.MM.yyyy HH:mm')} + ', ' + ${reconciliation.createdByName}"></div>
+                </div>
+                <div class="field">
+                    <label>За програмою / фактично</label>
+                    <div th:text="${#numbers.formatDecimal(reconciliation.expectedBalance, 1, 'WHITESPACE', 2, 'COMMA')} + ' / ' + ${#numbers.formatDecimal(reconciliation.actualBalance, 1, 'WHITESPACE', 2, 'COMMA')}"></div>
+                </div>
+                <div class="field">
+                    <label>Різниця</label>
+                    <div th:text="${reconciliation.differenceLabel()} + ' ' + ${#numbers.formatDecimal(reconciliation.difference.abs(), 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                </div>
+                <div class="field field-full" th:if="${reconciliation.comment != null}">
+                    <label>Коментар до звірки</label>
+                    <div th:text="${reconciliation.comment}"></div>
+                </div>
+            </div>
+
+            <form th:if="${reconciliation.status.name() == 'OPEN'}" th:object="${resolve}"
+                  th:action="@{/finance/reconciliations/{id}/resolve(id=${reconciliation.id})}" method="post" class="form-grid">
+                <div class="field field-full">
+                    <label for="resolutionComment">Висновок *</label>
+                    <textarea id="resolutionComment" th:field="*{resolutionComment}" required
+                              placeholder="Напр.: знайдено неврахований чек на 50 грн / нестача — помилка з рештою"></textarea>
+                </div>
+                <div class="field field-full checkbox-field">
+                    <label>
+                        <input type="checkbox" th:field="*{createAdjustment}">
+                        <span th:text="'Провести коригування залишку на ' + ${reconciliation.difference.signum() > 0 ? '+' : '−'} + ${#numbers.formatDecimal(reconciliation.difference.abs(), 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></span>
+                    </label>
+                </div>
+                <p class="muted field-full">Без позначки розбіжність лише закривається як розглянута (наприклад, якщо
+                    причину знайдено й буде проведено правильну операцію). З позначкою — окрема операція
+                    «Коригування за звіркою» вирівняє залишок за програмою з фактичним.</p>
+                <div class="form-actions">
+                    <button type="submit" class="btn">Закрити розбіжність</button>
+                    <a class="btn-outline" th:href="@{/finance/reconciliations}">Назад</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

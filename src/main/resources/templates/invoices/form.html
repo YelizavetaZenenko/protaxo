@@ -48,6 +48,12 @@
                     <div class="field-error" th:if="${#fields.hasErrors('paymentType')}" th:errors="*{paymentType}"></div>
                 </div>
 
+                <div class="field">
+                    <label for="paymentDueDate">Строк оплати</label>
+                    <input type="date" id="paymentDueDate" th:field="*{paymentDueDate}">
+                    <div class="muted">Після цієї дати неоплачений залишок вважається простроченим</div>
+                </div>
+
                 <div class="field combobox-field">
                     <label for="clientSearchInput">Контрагент *</label>
                     <div class="combobox">
@@ -1168,6 +1174,7 @@
                     });
                     return {
                         paymentType: document.getElementById('paymentType').value,
+                        paymentDueDate: document.getElementById('paymentDueDate').value,
                         clientId: clientIdInput.value,
                         clientName: clientSearchInput.value,
                         vehicleName: vehicleNameInput.value,
@@ -1181,6 +1188,7 @@
                 function restoreSnapshot(snapshot) {
                     if (!snapshot) return;
                     document.getElementById('paymentType').value = snapshot.paymentType || '';
+                    document.getElementById('paymentDueDate').value = snapshot.paymentDueDate || '';
                     if (snapshot.clientId) {
                         selectClient(Number(snapshot.clientId), snapshot.clientName || '');
                     }

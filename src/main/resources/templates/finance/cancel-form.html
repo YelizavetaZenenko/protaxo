@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Скасування операції</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <h1 th:text="'Скасування операції № ' + ${operation.id}"></h1>
+            <div th:replace="~{fragments/finance :: flash}"></div>
+
+            <div class="view-meta">
+                <div class="field">
+                    <label>Операція</label>
+                    <div th:text="${operation.type.label}"></div>
+                </div>
+                <div class="field">
+                    <label>Дата</label>
+                    <div th:text="${#temporals.format(operation.occurredAt, 'dd.MM.yyyy HH:mm')}"></div>
+                </div>
+                <div class="field">
+                    <label>Сума</label>
+                    <div th:text="${#numbers.formatDecimal(operation.amount, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                </div>
+                <div class="field">
+                    <label>Рахунок</label>
+                    <div th:text="${operation.accountName} + (${operation.targetAccountName != null} ? ' → ' + ${operation.targetAccountName} : '')"></div>
+                </div>
+                <div class="field" th:if="${operation.invoiceId != null}">
+                    <label>Наряд</label>
+                    <div><a th:href="@{/invoices/{id}(id=${operation.invoiceId})}" th:text="'№ ' + ${operation.invoiceNumber}"></a></div>
+                </div>
+                <div class="field">
+                    <label>Автор</label>
+                    <div th:text="${operation.createdByName}"></div>
+                </div>
+            </div>
+
+            <div th:if="${operation.cancelled()}" class="alert alert-error"
+                 th:text="'Операцію вже скасовано ' + ${#temporals.format(operation.cancelledAt, 'dd.MM.yyyy HH:mm')} + ': ' + ${operation.cancelReason}"></div>
+
+            <form th:unless="${operation.cancelled()}" th:action="@{/finance/operations/{id}/cancel(id=${operation.id})}" method="post" class="form-grid">
+                <input type="hidden" name="returnTo" th:value="${operation.invoiceId != null} ? '/invoices/' + ${operation.invoiceId} : '/finance/operations'">
+                <p class="muted field-full">
+                    Операція не видаляється: вона лишиться в історії позначеною як скасована, з вашим іменем,
+                    часом і причиною, але більше не впливатиме на залишки й борги. Щоб виправити помилку,
+                    скасуйте операцію й проведіть правильну.
+                </p>
+                <div class="field field-full">
+                    <label for="reason">Причина скасування *</label>
+                    <textarea id="reason" name="reason" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-danger">Скасувати операцію</button>
+                    <a class="btn-outline" th:href="@{/finance/operations}">Назад</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +60,10 @@ public class Invoice extends BaseEntity {
 
     @Column(name = "repair_supervisor_name")
     private String repairSupervisorName;
+
+    /** Строк оплати; прострочення рахується окремо від стану оплати (docs/Фінансовий облік.md, розд. 6). */
+    @Column(name = "payment_due_date")
+    private LocalDate paymentDueDate;
 
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("lineNumber ASC")

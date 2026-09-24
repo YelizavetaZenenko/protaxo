@@ -38,4 +38,7 @@ public class ClientFormData {
     @NotBlank(message = "Email обов'язковий")
     @Email(message = "Некоректний email")
     private String email;
+
+    /** Платник ПДВ (docs/Фінансовий облік.md, розд. 5). */
+    private boolean vatPayer;
 }

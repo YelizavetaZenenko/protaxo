@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Звірки готівки</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
+
+    <div class="container container-wide">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Звірки готівки</h1>
+            </div>
+            <div th:replace="~{fragments/finance :: nav(section='reconciliations')}"></div>
+            <div th:replace="~{fragments/finance :: flash}"></div>
+
+            <section class="finance-section">
+                <div class="finance-section-head"><h2>Провести звірку</h2></div>
+                <p class="muted">Внутрішня перевірка, не Z-звіт. Перерахуйте готівку й внесіть фактичну суму —
+                    програма порівняє її із залишком за обліком на цей момент. Залишок автоматично не змінюється:
+                    розбіжність зберігається і чекає на розгляд.</p>
+                <form th:object="${count}" th:action="@{/finance/reconciliations}" method="post" class="payment-form">
+                    <div class="field">
+                        <label for="accountId">Каса</label>
+                        <select id="accountId" th:field="*{accountId}" required>
+                            <option th:each="a : ${cashAccounts}" th:value="${a.id}" th:text="${a.name}"></option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="actualBalance">Фактично перераховано</label>
+                        <input type="number" step="0.01" min="0" id="actualBalance" th:field="*{actualBalance}" required>
+                    </div>
+                    <div class="field">
+                        <label for="countComment">Коментар</label>
+                        <input type="text" id="countComment" th:field="*{comment}">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Зберегти звірку</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="finance-section">
+                <div class="finance-section-head"><h2>Історія звірок</h2></div>
+                <div class="table-scroll">
+                    <table class="clean-table">
+                        <thead>
+                        <tr>
+                            <th>Дата</th>
+                            <th>Каса</th>
+                            <th class="money">За програмою</th>
+                            <th class="money">Фактично</th>
+                            <th class="money">Різниця</th>
+                            <th>Стан</th>
+                            <th>Хто рахував</th>
+                            <th>Коментарі</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="r : ${reconciliations}">
+                            <td th:text="${#temporals.format(r.countedAt, 'dd.MM.yyyy HH:mm')}"></td>
+                            <td th:text="${r.accountName}"></td>
+                            <td class="money" th:text="${#numbers.formatDecimal(r.expectedBalance, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                            <td class="money" th:text="${#numbers.formatDecimal(r.actualBalance, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                            <td class="money" th:classappend="${r.difference.signum() < 0} ? 'money-out'"
+                                th:text="${r.difference.signum() == 0} ? '0,00' : ${r.differenceLabel()} + ' ' + ${#numbers.formatDecimal(r.difference.abs(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                            <td><span class="status-badge"
+                                      th:classappend="${r.status.name() == 'OPEN'} ? 'status-overdue' : 'status-paid'"
+                                      th:text="${r.status.label}"></span></td>
+                            <td th:text="${r.createdByName}"></td>
+                            <td>
+                                <div th:if="${r.comment != null}" th:text="${r.comment}"></div>
+                                <div th:if="${r.resolutionComment != null}" class="muted"
+                                     th:text="'Розглянуто ' + ${#temporals.format(r.resolvedAt, 'dd.MM.yyyy')} + ', ' + ${r.resolvedByName} + ': ' + ${r.resolutionComment}"></div>
+                            </td>
+                            <td>
+                                <a th:if="${r.status.name() == 'OPEN'}" class="link-btn"
+                                   th:href="@{/finance/reconciliations/{id}/resolve(id=${r.id})}">Розглянути</a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(reconciliations)}">
+                            <td colspan="9">Звірок ще не було</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</body>
+</html>

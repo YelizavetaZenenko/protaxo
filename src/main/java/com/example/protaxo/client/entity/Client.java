@@ -71,4 +71,7 @@ public class Client extends BaseEntity {
     private String phone;
 
     private String email;
+
+    @Column(name = "vat_payer", nullable = false)
+    private boolean vatPayer;
 }

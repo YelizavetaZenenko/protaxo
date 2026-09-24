@@ -1,8 +1,11 @@
 package com.example.protaxo.invoice.entity;
 
 import com.example.protaxo.catalog.entity.CatalogItem;
+import com.example.protaxo.common.vat.VatRate;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -48,6 +51,17 @@ public class InvoiceItem {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
+    /** Сума рядка З ПДВ (ціна вводиться з ПДВ). */
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal amount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "vat_rate", nullable = false)
+    private VatRate vatRate;
+
+    @Column(name = "vat_amount", nullable = false, precision = 14, scale = 2)
+    private BigDecimal vatAmount;
+
+    @Column(name = "amount_without_vat", nullable = false, precision = 14, scale = 2)
+    private BigDecimal amountWithoutVat;
 }

@@ -13,7 +13,7 @@
         <div class="card">
             <div class="toolbar">
                 <h1>Каталог товарів і послуг</h1>
-                <a class="btn" th:href="@{/catalog-items/new(activeType=${activeType})}">+ Нова позиція</a>
+                <a class="btn" sec:authorize="!hasRole('ACCOUNTANT')" th:href="@{/catalog-items/new(activeType=${activeType})}">+ Нова позиція</a>
             </div>
 
             <div class="doc-tabs" style="margin-top:0;">
@@ -39,8 +39,9 @@
             <table class="clean-table">
                 <colgroup>
                     <col style="width:8%">
-                    <col style="width:42%">
-                    <col style="width:20%">
+                    <col style="width:37%">
+                    <col style="width:15%">
+                    <col style="width:10%">
                     <col style="width:15%">
                     <col style="width:15%">
                 </colgroup>
@@ -49,6 +50,7 @@
                     <th>ID</th>
                     <th>Назва</th>
                     <th>Базова ціна</th>
+                    <th>ПДВ</th>
                     <th>Залишок</th>
                     <th></th>
                 </tr>
@@ -58,6 +60,7 @@
                     <td th:text="${ci.id}"></td>
                     <td th:text="${ci.name}"></td>
                     <td th:text="${#numbers.formatDecimal(ci.basePrice, 1, 2)}"></td>
+                    <td th:text="${ci.vatRate.label}"></td>
                     <td th:text="${ci.stockQuantity != null ? ci.stockQuantityDisplay() : '—'}"></td>
                     <td class="actions-cell">
                         <a class="link-btn" th:href="@{/catalog-items/{id}/edit(id=${ci.id})}">Редагувати</a>
@@ -68,7 +71,7 @@
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(catalogItems)}">
-                    <td colspan="5" th:text="${activeType.name() == 'MATERIAL'} ? 'Товарів ще немає' : 'Послуг ще немає'"></td>
+                    <td colspan="6" th:text="${activeType.name() == 'MATERIAL'} ? 'Товарів ще немає' : 'Послуг ще немає'"></td>
                 </tr>
                 </tbody>
             </table>

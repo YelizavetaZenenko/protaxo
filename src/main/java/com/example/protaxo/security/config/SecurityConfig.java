@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 
 @Configuration
@@ -43,10 +44,23 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/repair-workers/*").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/master-cards").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/*/*/delete").hasRole("ADMIN")
-                        .anyRequest().authenticated())
+                        // Фінанси (docs/Фінансовий облік.md): майстер бачить лише підсумки каси
+                        // й приймає оплату за нарядом; решта модуля — адміністратор і бухгалтер.
+                        .requestMatchers("/finance/cash").hasAnyRole("ADMIN", "ACCOUNTANT", "MASTER")
+                        .requestMatchers(HttpMethod.POST, "/finance/payments").hasAnyRole("ADMIN", "ACCOUNTANT", "MASTER")
+                        .requestMatchers("/finance/**").hasAnyRole("ADMIN", "ACCOUNTANT")
+                        // Бухгалтер — окремий акаунт "лише бухгалтерія": перегляд наряду з оплатами
+                        // та його PDF, каталог (ціна/залишок/ПДВ, див. CatalogItemService), профіль.
+                        // Усе інше для нього закрито переліком нижче через anyRequest.
+                        .requestMatchers("/invoices/new").hasAnyRole("ADMIN", "MASTER")
+                        .requestMatchers(HttpMethod.GET, "/invoices/*", "/invoices/*/bill-pdf", "/invoices/*/act-pdf").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/catalog-items", "/catalog-items/*", "/catalog-items/*/edit").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/catalog-items/*/edit").authenticated()
+                        .requestMatchers("/profile", "/profile/**", "/", "/error").authenticated()
+                        .anyRequest().hasAnyRole("ADMIN", "MASTER"))
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/invoices", true)
+                        .successHandler(roleLandingHandler())
                         .permitAll())
                 .logout(logout -> logout
                         .logoutSuccessUrl("/login?logout")
@@ -54,6 +68,15 @@ public class SecurityConfig {
                 .httpBasic(httpBasic -> {});
 
         return http.build();
+    }
+
+    /** Після входу: бухгалтер — одразу в панель фінансів, решта — у наряд-закази, як і раніше. */
+    private AuthenticationSuccessHandler roleLandingHandler() {
+        return (request, response, authentication) -> {
+            boolean accountant = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ACCOUNTANT"));
+            response.sendRedirect(request.getContextPath() + (accountant ? "/finance" : "/invoices"));
+        };
     }
 
     private AuthorizationManager<RequestAuthorizationContext> requiresPermission(PermissionKey key) {

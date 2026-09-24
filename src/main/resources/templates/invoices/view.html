@@ -14,14 +14,17 @@
             <div class="toolbar">
                 <h1 th:text="'Наряд-заказ № ' + ${invoice.number}"></h1>
                 <div class="actions-cell">
-                    <a class="btn-outline" th:href="@{/invoices/{id}/edit(id=${invoice.id})}">Редагувати</a>
+                    <a sec:authorize="!hasRole('ACCOUNTANT')" class="btn-outline" th:href="@{/invoices/{id}/edit(id=${invoice.id})}">Редагувати</a>
                     <a class="btn-outline" th:href="@{/invoices/{id}/bill-pdf(id=${invoice.id})}" target="_blank">Рахунок PDF</a>
                     <a class="btn-outline" th:href="@{/invoices/{id}/act-pdf(id=${invoice.id})}" target="_blank">Акт PDF</a>
-                    <a class="btn-outline" th:href="@{/invoices}">Назад до списку</a>
-                    <a th:if="${hasCalibrationService and existingProtocolId == null}" class="btn-outline"
-                       th:href="@{/calibration-protocols/new(invoiceId=${invoice.id})}">Створити протокол</a>
-                    <a th:if="${hasCalibrationService and existingProtocolId != null}" class="btn-outline"
-                       th:href="@{/calibration-protocols/{id}(id=${existingProtocolId})}">Переглянути протокол</a>
+                    <a sec:authorize="!hasRole('ACCOUNTANT')" class="btn-outline" th:href="@{/invoices}">Назад до списку</a>
+                    <a sec:authorize="hasRole('ACCOUNTANT')" class="btn-outline" th:href="@{/finance/invoices}">Назад до списку</a>
+                    <th:block sec:authorize="!hasRole('ACCOUNTANT')">
+                        <a th:if="${hasCalibrationService and existingProtocolId == null}" class="btn-outline"
+                           th:href="@{/calibration-protocols/new(invoiceId=${invoice.id})}">Створити протокол</a>
+                        <a th:if="${hasCalibrationService and existingProtocolId != null}" class="btn-outline"
+                           th:href="@{/calibration-protocols/{id}(id=${existingProtocolId})}">Переглянути протокол</a>
+                    </th:block>
                 </div>
             </div>
 
@@ -33,6 +36,10 @@
                 <div class="field">
                     <label>Тип оплати</label>
                     <div th:text="${invoice.paymentType.label}"></div>
+                </div>
+                <div class="field" th:if="${invoice.paymentDueDate != null}">
+                    <label>Строк оплати</label>
+                    <div th:text="${#temporals.format(invoice.paymentDueDate, 'dd.MM.yyyy')}"></div>
                 </div>
                 <div class="field field-full">
                     <label>Контрагент</label>
@@ -76,9 +83,11 @@
                     <th style="width:5%">№</th>
                     <th>Номенклатура</th>
                     <th style="width:14%">Тип</th>
-                    <th style="width:12%">Кількість</th>
-                    <th style="width:14%">Ціна</th>
-                    <th style="width:14%">Вартість</th>
+                    <th style="width:9%">Кількість</th>
+                    <th style="width:11%">Ціна з ПДВ</th>
+                    <th style="width:11%">Без ПДВ</th>
+                    <th style="width:11%">ПДВ</th>
+                    <th style="width:11%">Вартість</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -88,20 +97,190 @@
                     <td th:text="${item.catalogItemType == T(com.example.protaxo.catalog.entity.CatalogItemType).SERVICE ? 'Послуга' : 'Товар'}"></td>
                     <td th:text="${#numbers.formatDecimal(item.quantity, 1, 3)}"></td>
                     <td th:text="${#numbers.formatDecimal(item.price, 1, 2)}"></td>
+                    <td th:text="${#numbers.formatDecimal(item.amountWithoutVat, 1, 2)}"></td>
+                    <td>
+                        <span th:text="${#numbers.formatDecimal(item.vatAmount, 1, 2)}"></span>
+                        <span class="muted" th:text="${item.vatRate.label}"></span>
+                    </td>
                     <td th:text="${#numbers.formatDecimal(item.amount, 1, 2)}"></td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(invoice.items)}">
-                    <td colspan="6">Позицій ще немає</td>
+                    <td colspan="8">Позицій ще немає</td>
                 </tr>
                 </tbody>
                 <tfoot>
                 <tr>
                     <td colspan="5">Загалом</td>
+                    <td th:text="${#numbers.formatDecimal(invoice.totalWithoutVat, 1, 2)}"></td>
+                    <td th:text="${#numbers.formatDecimal(invoice.totalVat, 1, 2)}"></td>
                     <td th:text="${#numbers.formatDecimal(invoice.totalAmount, 1, 2)}"></td>
                 </tr>
                 </tfoot>
             </table>
+
+            <!-- Оплати за нарядом (docs/Фінансовий облік.md, розд. 6). Внутрішній облік —
+                 не фіскальний чек і не ПРРО. -->
+            <h2 class="view-section-title" id="payments" style="margin-top:2rem">Оплати</h2>
+            <div th:replace="~{fragments/finance :: flash}"></div>
+
+            <div class="settlement-box">
+                <div class="kpi">
+                    <div class="kpi-label">До сплати</div>
+                    <div class="kpi-value" th:text="${#numbers.formatDecimal(settlement.total, 1, 'WHITESPACE', 2, 'COMMA')}"></div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-label">Сплачено</div>
+                    <div class="kpi-value" th:text="${#numbers.formatDecimal(settlement.netPaid, 1, 'WHITESPACE', 2, 'COMMA')}"></div>
+                    <div class="kpi-sub" th:if="${settlement.refunded.signum() > 0}"
+                         th:text="'з них повернено ' + ${#numbers.formatDecimal(settlement.refunded, 1, 'WHITESPACE', 2, 'COMMA')}"></div>
+                </div>
+                <div class="kpi" th:classappend="${settlement.overdue} ? 'kpi-warn'">
+                    <div class="kpi-label">Залишок боргу</div>
+                    <div class="kpi-value" th:text="${#numbers.formatDecimal(settlement.debt, 1, 'WHITESPACE', 2, 'COMMA')}"></div>
+                    <div class="kpi-sub">
+                        <span class="status-badge" th:classappend="${settlement.status.cssClass}" th:text="${settlement.status.label}"></span>
+                        <span class="status-badge status-overdue" th:if="${settlement.overdue}">Прострочено</span>
+                    </div>
+                </div>
+            </div>
+
+            <form th:if="${settlement.debt.signum() > 0}" th:object="${paymentForm}" th:action="@{/finance/payments}"
+                  method="post" class="payment-form" id="paymentForm">
+                <input type="hidden" th:field="*{invoiceId}">
+                <input type="hidden" th:field="*{requestKey}">
+                <div class="field">
+                    <label for="payAmount">Сума оплати</label>
+                    <input type="number" step="0.01" min="0.01" th:max="${settlement.debt}" id="payAmount" th:field="*{amount}" required>
+                </div>
+                <div class="field">
+                    <label for="payMethod">Спосіб</label>
+                    <select id="payMethod" th:field="*{method}">
+                        <option th:each="m : ${paymentMethods}" th:value="${m}" th:text="${m.label}"
+                                th:attr="data-kind=${m.accountKind}"></option>
+                    </select>
+                </div>
+                <div class="field" id="payAccountField">
+                    <label for="payAccount">Каса / рахунок</label>
+                    <select id="payAccount" th:field="*{accountId}">
+                        <option th:each="a : ${paymentAccounts}" th:value="${a.id}" th:text="${a.name}"
+                                th:attr="data-kind=${a.kind}"></option>
+                    </select>
+                </div>
+                <div class="field" id="receivedField">
+                    <label for="payReceived">Отримано від клієнта</label>
+                    <input type="number" step="0.01" min="0" id="payReceived" th:field="*{receivedAmount}" placeholder="необов'язково">
+                    <div class="muted" id="changeHint"></div>
+                </div>
+                <div class="field">
+                    <label for="payComment">Коментар</label>
+                    <input type="text" id="payComment" th:field="*{comment}">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn" id="paySubmit">Прийняти оплату</button>
+                </div>
+            </form>
+
+            <table class="clean-table" th:if="${!#lists.isEmpty(financeOperations)}">
+                <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Операція</th>
+                    <th>Каса / рахунок</th>
+                    <th class="money">Сума</th>
+                    <th>Деталі</th>
+                    <th>Хто</th>
+                    <th sec:authorize="hasAnyRole('ADMIN', 'ACCOUNTANT')"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="op : ${financeOperations}" th:classappend="${op.cancelled()} ? 'row-cancelled'">
+                    <td th:text="${#temporals.format(op.occurredAt, 'dd.MM.yyyy HH:mm')}"></td>
+                    <td>
+                        <span th:text="${op.type.label}"></span>
+                        <span class="muted" th:if="${op.paymentMethod != null}" th:text="' · ' + ${op.paymentMethod.label}"></span>
+                    </td>
+                    <td th:text="${op.accountName}"></td>
+                    <td class="money" th:classappend="${!op.inflow()} ? 'money-out'"
+                        th:text="(${op.inflow()} ? '' : '−') + ${#numbers.formatDecimal(op.amount, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                    <td>
+                        <div th:if="${op.changeAmount != null and op.changeAmount.signum() > 0}"
+                             th:text="'Отримано ' + ${#numbers.formatDecimal(op.receivedAmount, 1, 'WHITESPACE', 2, 'COMMA')} + ', решта ' + ${#numbers.formatDecimal(op.changeAmount, 1, 'WHITESPACE', 2, 'COMMA')}"></div>
+                        <div th:if="${op.refundKind != null}" th:text="${op.refundKind.label} + ' (до оплати № ' + ${op.originalOperationId} + ')'"></div>
+                        <div th:if="${op.refundedAmount != null and op.refundedAmount.signum() > 0}" class="muted"
+                             th:text="'Повернено ' + ${#numbers.formatDecimal(op.refundedAmount, 1, 'WHITESPACE', 2, 'COMMA')}"></div>
+                        <div th:if="${op.comment != null}" th:text="${op.comment}"></div>
+                        <div th:if="${op.cancelled()}" class="muted"
+                             th:text="'Скасовано ' + ${#temporals.format(op.cancelledAt, 'dd.MM.yyyy HH:mm')} + ', ' + ${op.cancelledByName} + ': ' + ${op.cancelReason}"></div>
+                    </td>
+                    <td th:text="${op.createdByName}"></td>
+                    <td sec:authorize="hasAnyRole('ADMIN', 'ACCOUNTANT')" class="actions-cell keep-text">
+                        <a th:if="${!op.cancelled() and op.type.name() == 'PAYMENT' and op.refundableAmount().signum() > 0}"
+                           class="link-btn" th:href="@{/finance/payments/{id}/refund(id=${op.id})}">Повернути</a>
+                        <a th:unless="${op.cancelled()}" class="link-btn link-btn-danger"
+                           th:href="@{/finance/operations/{id}/cancel(id=${op.id})}">Скасувати</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <p class="muted" th:if="${#lists.isEmpty(financeOperations)}">Оплат ще не було.</p>
         </div>
     </div>
+    <script>
+        /**
+         * Форма "Прийняти оплату": список кас/рахунків звужується до виду, що відповідає способу
+         * (готівка → каса, картка → термінал, переказ → банк; сервер перевіряє те саме), поле
+         * "Отримано від клієнта" — лише для готівки, решта рахується одразу. Кнопка блокується
+         * після першого натискання; повторна відправка все одно не створить дубль (requestKey).
+         */
+        document.addEventListener('DOMContentLoaded', function () {
+            var form = document.getElementById('paymentForm');
+            if (!form) return;
+            var method = document.getElementById('payMethod');
+            var account = document.getElementById('payAccount');
+            var accountField = document.getElementById('payAccountField');
+            var amount = document.getElementById('payAmount');
+            var received = document.getElementById('payReceived');
+            var receivedField = document.getElementById('receivedField');
+            var changeHint = document.getElementById('changeHint');
+
+            function syncMethod() {
+                var kind = method.options[method.selectedIndex].dataset.kind;
+                var visible = [];
+                Array.prototype.forEach.call(account.options, function (opt) {
+                    var match = opt.dataset.kind === kind;
+                    opt.hidden = !match;
+                    opt.disabled = !match;
+                    if (match) visible.push(opt);
+                });
+                var current = account.options[account.selectedIndex];
+                if (!current || current.disabled) {
+                    account.value = visible.length ? visible[0].value : '';
+                }
+                accountField.hidden = visible.length <= 1;
+                receivedField.hidden = method.value !== 'CASH';
+                if (method.value !== 'CASH') received.value = '';
+                syncChange();
+            }
+
+            function syncChange() {
+                var a = parseFloat(amount.value), r = parseFloat(received.value);
+                if (!isNaN(a) && !isNaN(r) && r >= a) {
+                    changeHint.textContent = 'Решта клієнту: ' + (r - a).toFixed(2).replace('.', ',');
+                } else if (!isNaN(a) && !isNaN(r)) {
+                    changeHint.textContent = 'Менше за суму оплати';
+                } else {
+                    changeHint.textContent = '';
+                }
+            }
+
+            method.addEventListener('change', syncMethod);
+            amount.addEventListener('input', syncChange);
+            received.addEventListener('input', syncChange);
+            form.addEventListener('submit', function () {
+                document.getElementById('paySubmit').disabled = true;
+            });
+            syncMethod();
+        });
+    </script>
 </body>
 </html>
