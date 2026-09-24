@@ -9,30 +9,42 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockHttpSession;
 
-/** Вихід після закриття всіх вкладок: скорочення сесії й повернення звичайного таймауту. */
+/** Вихід після закриття всіх вкладок: скорочення сесії, порядок beacon/пульсу, звичайний таймаут. */
 class SessionLifecycleTest {
 
-    private final SessionLifecycleController controller = new SessionLifecycleController(Duration.ofSeconds(20));
-    private final SessionTimeoutResetFilter filter = new SessionTimeoutResetFilter(Duration.ofMinutes(3));
+    private final SessionLifecycleController controller = new SessionLifecycleController(Duration.ofSeconds(10));
+    private final SessionTimeoutResetFilter filter = new SessionTimeoutResetFilter(Duration.ofSeconds(60));
 
     @Test
     void closingLastTabShortensSession() {
-        MockHttpSession session = new MockHttpSession();
-        session.setMaxInactiveInterval(180);
+        MockHttpSession session = session(60);
+        controller.ping(1_000L, requestWith(session));
 
-        controller.closing(requestWith(session));
+        controller.closing(5_000L, requestWith(session));
 
-        assertThat(session.getMaxInactiveInterval()).isEqualTo(20);
+        assertThat(session.getMaxInactiveInterval()).isEqualTo(10);
     }
 
     @Test
-    void nextRequestAfterNavigationRestoresNormalTimeout() throws Exception {
-        MockHttpSession session = new MockHttpSession();
-        session.setMaxInactiveInterval(20);
+    void beaconArrivingAfterNewPagePulseIsIgnored() {
+        MockHttpSession session = session(60);
+        // F5: нова сторінка стартувала (6000) пізніше за pagehide старої (5000), і її пульс дійшов першим.
+        controller.ping(6_000L, requestWith(session));
+
+        controller.closing(5_000L, requestWith(session));
+
+        assertThat(session.getMaxInactiveInterval()).isEqualTo(60);
+    }
+
+    @Test
+    void pulseAfterBeaconRestoresNormalTimeout() throws Exception {
+        MockHttpSession session = session(60);
+        controller.closing(5_000L, requestWith(session));
+        assertThat(session.getMaxInactiveInterval()).isEqualTo(10);
 
         filter.doFilter(requestWith(session), new MockHttpServletResponse(), new MockFilterChain());
 
-        assertThat(session.getMaxInactiveInterval()).isEqualTo(180);
+        assertThat(session.getMaxInactiveInterval()).isEqualTo(60);
     }
 
     @Test
@@ -42,6 +54,12 @@ class SessionLifecycleTest {
         filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
 
         assertThat(request.getSession(false)).isNull();
+    }
+
+    private MockHttpSession session(int timeoutSeconds) {
+        MockHttpSession session = new MockHttpSession();
+        session.setMaxInactiveInterval(timeoutSeconds);
+        return session;
     }
 
     private MockHttpServletRequest requestWith(MockHttpSession session) {

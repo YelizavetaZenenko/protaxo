@@ -12,7 +12,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Будь-який запит повертає сесії звичайний таймаут ({@code server.servlet.session.timeout}).
+ * Будь-який запит повертає сесії звичайний таймаут ({@code app.session.idle-timeout} — у секундах;
+ * {@code server.servlet.session.timeout} Tomcat округлює до хвилин, тож задає лише старт сесії).
  * Потрібно, бо {@code POST /session/closing} (закрилась "остання" вкладка) скорочує сесію до
  * кількох секунд, а насправді це міг бути лише перехід на іншу сторінку чи F5 — тоді наступна
  * сторінка приходить одразу й скасовує скорочення. Сам /session/closing виставляє короткий
@@ -23,7 +24,7 @@ public class SessionTimeoutResetFilter extends OncePerRequestFilter {
 
     private final int timeoutSeconds;
 
-    public SessionTimeoutResetFilter(@Value("${server.servlet.session.timeout:30m}") Duration timeout) {
+    public SessionTimeoutResetFilter(@Value("${app.session.idle-timeout:60s}") Duration timeout) {
         this.timeoutSeconds = (int) timeout.toSeconds();
     }
 

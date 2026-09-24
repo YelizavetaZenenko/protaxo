@@ -87,17 +87,26 @@
         <script th:inline="javascript">
             /**
              * Вихід із системи, коли закрито всі вкладки сайту (див. docs/Безпека і ролі.md).
-             * Серверна сесія коротка (3 хв); кожна відкрита вкладка раз на хвилину пінгує
-             * /session/ping. Відкриті вкладки реєструються в localStorage; коли закривається
-             * остання з них, sendBeacon на /session/closing скорочує сесію до 20 с. Перехід на
-             * іншу сторінку чи F5 теж викликає pagehide, але нова сторінка за 3 с пінгує сервер,
-             * і сесія знову стає звичайною. Якщо beacon не дійде, сесія сама згасне за 3 хв.
+             *
+             * Пульс: кожна сторінка одразу після завантаження й далі кожні 15 с пінгує
+             * /session/ping?start=<час старту сторінки>. Таймер живе у Web Worker-і — Chrome не
+             * гальмує його у фонових вкладках (звичайний setInterval там раз на хвилину). Без пульсу
+             * серверна сесія згасає за 60 с — це й запасний варіант, коли браузер закривають цілком
+             * і він не встигає нічого надіслати.
+             *
+             * Закриття: відкриті вкладки реєструються в localStorage; на pagehide вкладка знімає себе,
+             * і якщо живих не лишилось — sendBeacon /session/closing?t=<зараз> скорочує сесію до 10 с.
+             * Перехід на іншу сторінку чи F5 теж дає pagehide, але нова сторінка стартує пізніше:
+             * сервер порівнює мітки часу й не розлогінює (SessionLifecycleController).
              */
             (function () {
                 var csrfToken = /*[[${_csrf != null ? _csrf.token : ''}]]*/ '';
                 var KEY = 'protaxoOpenTabs';
-                var ALIVE_MS = 90000; // фонові вкладки Chrome оновлюють мітку щонайменше раз на хвилину
+                var PULSE_MS = 15000;
+                var ALIVE_MS = 40000;
                 var tabId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+                var pageStart = Date.now();
+                var pingUrl = location.origin + '/session/ping';
 
                 function readTabs() {
                     try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; }
@@ -112,16 +121,23 @@
                     writeTabs(tabs);
                 }
                 function ping() {
-                    fetch('/session/ping', { credentials: 'same-origin', redirect: 'manual', cache: 'no-store' })
+                    fetch(pingUrl + '?start=' + pageStart, { credentials: 'same-origin', redirect: 'manual', cache: 'no-store' })
                         .catch(function () { /* мережа — наступний пульс спробує знову */ });
                 }
+                function pulse() { touch(); ping(); }
 
-                touch();
-                setTimeout(ping, 3000);
-                setInterval(function () { touch(); ping(); }, 60000);
+                pulse();
+                var worker = null;
+                try {
+                    var code = 'setInterval(function(){postMessage(0)},' + PULSE_MS + ');';
+                    worker = new Worker(URL.createObjectURL(new Blob([code], { type: 'text/javascript' })));
+                    worker.onmessage = pulse;
+                } catch (e) {
+                    setInterval(pulse, PULSE_MS);
+                }
 
                 window.addEventListener('pageshow', function (e) {
-                    if (e.persisted) { touch(); ping(); } // повернення з bfcache кнопкою "Назад"
+                    if (e.persisted) { pageStart = Date.now(); pulse(); } // повернення з bfcache ("Назад")
                 });
                 window.addEventListener('pagehide', function () {
                     var tabs = readTabs(), now = Date.now();
@@ -129,7 +145,7 @@
                     writeTabs(tabs);
                     var othersOpen = Object.keys(tabs).some(function (id) { return now - tabs[id] <= ALIVE_MS; });
                     if (!othersOpen && navigator.sendBeacon) {
-                        navigator.sendBeacon('/session/closing', new URLSearchParams({ _csrf: csrfToken }));
+                        navigator.sendBeacon('/session/closing?t=' + now, new URLSearchParams({ _csrf: csrfToken }));
                     }
                 });
             })();

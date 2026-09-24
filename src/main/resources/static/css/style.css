@@ -1369,3 +1369,33 @@ th.money {
         padding: 1.25rem;
     }
 }
+
+/* ------------------------------------------------------------------ Друк (бланк ревізії складу тощо) */
+@media print {
+    .topbar,
+    .no-print,
+    .drafts-sidebar {
+        display: none !important;
+    }
+
+    body {
+        background: #fff;
+    }
+
+    .card {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+    }
+
+    .container,
+    .container-wide {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    tr[hidden] {
+        display: table-row !important;
+    }
+}

@@ -49,6 +49,8 @@ public class SecurityConfig {
                         .requestMatchers("/finance/cash").hasAnyRole("ADMIN", "ACCOUNTANT", "MASTER")
                         .requestMatchers(HttpMethod.POST, "/finance/payments").hasAnyRole("ADMIN", "ACCOUNTANT", "MASTER")
                         .requestMatchers("/finance/**").hasAnyRole("ADMIN", "ACCOUNTANT")
+                        // Ревізія складу (docs/Ревізія складу.md) — змінює залишки в каталозі.
+                        .requestMatchers("/stock-revisions", "/stock-revisions/**").hasAnyRole("ADMIN", "ACCOUNTANT")
                         // Бухгалтер — окремий акаунт "лише бухгалтерія": перегляд наряду з оплатами
                         // та його PDF, каталог (ціна/залишок/ПДВ, див. CatalogItemService), профіль.
                         // Усе інше для нього закрито переліком нижче через anyRequest.

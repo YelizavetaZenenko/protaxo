@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title th:text="'ProTaxo — Ревізія складу № ' + ${revision.id}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='catalog')}"></div>
+
+    <div class="container container-wide">
+        <div class="card">
+            <div class="toolbar">
+                <h1 th:text="'Ревізія складу № ' + ${revision.id}"></h1>
+                <div class="actions-cell no-print">
+                    <button type="button" class="btn-outline" onclick="window.print()"
+                            th:text="${revision.draft()} ? 'Друк бланку' : 'Друк'">Друк</button>
+                    <a class="btn-outline" th:href="@{/stock-revisions}">До списку ревізій</a>
+                </div>
+            </div>
+
+            <div class="alert alert-error no-print" th:if="${revisionError != null}" th:text="${revisionError}"></div>
+            <div class="alert alert-success no-print" th:if="${revisionSuccess != null}" th:text="${revisionSuccess}"></div>
+
+            <div class="view-meta">
+                <div class="field">
+                    <label>Створено</label>
+                    <div th:text="${#temporals.format(revision.createdAt, 'dd.MM.yyyy HH:mm')} + ', ' + ${revision.createdByName}"></div>
+                </div>
+                <div class="field">
+                    <label>Стан</label>
+                    <div>
+                        <span th:text="${revision.status.label}"></span>
+                        <span th:if="${revision.completedAt != null}" class="muted"
+                              th:text="${#temporals.format(revision.completedAt, 'dd.MM.yyyy HH:mm')} + ', ' + ${revision.completedByName}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================== Проведена ревізія ======================== -->
+            <th:block th:unless="${revision.draft()}">
+                <div class="kpi-grid" style="margin-bottom:1.25rem">
+                    <div class="kpi">
+                        <div class="kpi-label">Перераховано позицій</div>
+                        <div class="kpi-value" th:text="${revision.countedLines()} + ' з ' + ${#lists.size(revision.lines)}"></div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">З розбіжностями</div>
+                        <div class="kpi-value" th:text="${revision.discrepancyLines()}"></div>
+                    </div>
+                    <div class="kpi" th:classappend="${revision.shortageValue().signum() > 0} ? 'kpi-warn'">
+                        <div class="kpi-label">Нестача</div>
+                        <div class="kpi-value" th:text="${#numbers.formatDecimal(revision.shortageValue(), 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Надлишок</div>
+                        <div class="kpi-value" th:text="${#numbers.formatDecimal(revision.surplusValue(), 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                    </div>
+                </div>
+                <p th:if="${revision.comment != null}" th:text="${revision.comment}"></p>
+
+                <label class="no-print" style="display:inline-flex;gap:.5rem;align-items:center;margin-bottom:.75rem">
+                    <input type="checkbox" id="onlyDiff"> Лише позиції з розбіжностями
+                </label>
+                <div class="table-scroll">
+                    <table class="clean-table" id="revisionTable">
+                        <thead>
+                        <tr>
+                            <th>Товар</th>
+                            <th class="money">За обліком</th>
+                            <th class="money">Фактично</th>
+                            <th class="money">Різниця</th>
+                            <th class="money">Ціна</th>
+                            <th class="money">Сума різниці, ₴</th>
+                            <th>Коментар</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="l : ${revision.lines}" th:attr="data-diff=${l.hasDifference()}">
+                            <td th:text="${l.itemName}"></td>
+                            <td class="money" th:text="${l.expectedQuantity.stripTrailingZeros().toPlainString()}"></td>
+                            <td class="money" th:text="${l.counted()} ? ${l.actualQuantity.stripTrailingZeros().toPlainString()} : 'не рахували'"></td>
+                            <td class="money" th:classappend="${l.difference != null and l.difference.signum() < 0} ? 'money-out'"
+                                th:text="${l.difference == null} ? '—' : (${l.difference.signum() > 0} ? '+' : '') + ${l.difference.stripTrailingZeros().toPlainString()}"></td>
+                            <td class="money" th:text="${l.unitPrice == null} ? '—' : ${#numbers.formatDecimal(l.unitPrice, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                            <td class="money" th:classappend="${l.differenceValue().signum() < 0} ? 'money-out'"
+                                th:text="${l.hasDifference()} ? ${#numbers.formatDecimal(l.differenceValue(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
+                            <td th:text="${l.comment}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </th:block>
+
+            <!-- ======================== Чернетка ======================== -->
+            <form th:if="${revision.draft()}" th:action="@{/stock-revisions/{id}(id=${revision.id})}" method="post" id="revisionForm">
+                <p class="muted no-print">
+                    Внесіть фактичну кількість кожного товару. Порожнє поле — позицію не рахували, її залишок
+                    не зміниться. Колонка «За обліком» — залишок на момент створення ревізії; під час проведення
+                    він перезнімається, тож продажі, зроблені тим часом, врахуються.
+                </p>
+                <div class="filter-bar no-print">
+                    <div class="field">
+                        <label for="search">Пошук товару</label>
+                        <input type="text" id="search" placeholder="Назва">
+                    </div>
+                    <div class="field checkbox-field">
+                        <label>&nbsp;</label>
+                        <label><input type="checkbox" id="onlyUncounted"> Лише неперераховані</label>
+                    </div>
+                    <div class="field">
+                        <label>&nbsp;</label>
+                        <div class="muted" id="progress"></div>
+                    </div>
+                </div>
+
+                <div class="table-scroll">
+                    <table class="clean-table items-table" id="revisionTable">
+                        <thead>
+                        <tr>
+                            <th>Товар</th>
+                            <th class="money" style="width:12%">За обліком</th>
+                            <th style="width:14%">Фактично</th>
+                            <th class="money" style="width:10%">Різниця</th>
+                            <th style="width:26%">Коментар</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="l, st : ${revision.lines}" class="revision-row" th:attr="data-name=${#strings.toLowerCase(l.itemName)}">
+                            <td th:text="${l.itemName}"></td>
+                            <td class="money expected" th:attr="data-expected=${l.expectedQuantity}"
+                                th:text="${l.expectedQuantity.stripTrailingZeros().toPlainString()}"></td>
+                            <td>
+                                <input type="hidden" th:name="'lines[' + ${st.index} + '].id'" th:value="${l.id}">
+                                <input type="number" step="0.001" min="0" inputmode="decimal" class="actual-input"
+                                       th:name="'lines[' + ${st.index} + '].actualQuantity'"
+                                       th:value="${l.actualQuantity == null} ? '' : ${l.actualQuantity.stripTrailingZeros().toPlainString()}">
+                            </td>
+                            <td class="money diff-cell"></td>
+                            <td>
+                                <input type="text" maxlength="255" th:name="'lines[' + ${st.index} + '].comment'" th:value="${l.comment}">
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="field no-print" style="margin-top:1rem">
+                    <label for="comment">Коментар до ревізії</label>
+                    <textarea id="comment" name="comment" th:text="${revision.comment}"></textarea>
+                </div>
+
+                <div class="form-actions no-print">
+                    <button type="submit" name="action" value="save" class="btn-outline">Зберегти чернетку</button>
+                    <button type="submit" name="action" value="complete" class="btn"
+                            onclick="return confirm('Провести ревізію? Залишки в каталозі стануть фактичними, змінити ревізію після цього не можна.')">Провести ревізію</button>
+                </div>
+            </form>
+
+            <form th:if="${revision.draft()}" th:action="@{/stock-revisions/{id}/delete-draft(id=${revision.id})}" method="post"
+                  class="no-print" style="margin-top:1rem">
+                <button type="submit" class="link-btn link-btn-danger"
+                        onclick="return confirm('Видалити чернетку ревізії? Введені кількості буде втрачено.')">Видалити чернетку</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        /** Чернетка: різниця рахується одразу під час введення; пошук і фільтр неперерахованих.
+            Проведена: фільтр "лише з розбіжностями". Сервер рахує різницю сам під час проведення. */
+        document.addEventListener('DOMContentLoaded', function () {
+            var rows = Array.prototype.slice.call(document.querySelectorAll('.revision-row'));
+            var search = document.getElementById('search');
+            var onlyUncounted = document.getElementById('onlyUncounted');
+            var progress = document.getElementById('progress');
+
+            function fmt(n) {
+                return (Math.round(n * 1000) / 1000).toString().replace('.', ',');
+            }
+            function updateRow(row) {
+                var input = row.querySelector('.actual-input');
+                var cell = row.querySelector('.diff-cell');
+                var expected = parseFloat(row.querySelector('.expected').dataset.expected);
+                if (input.value === '') { cell.textContent = ''; cell.classList.remove('money-out'); return; }
+                var diff = parseFloat(input.value) - expected;
+                cell.textContent = diff === 0 ? '0' : (diff > 0 ? '+' : '') + fmt(diff);
+                cell.classList.toggle('money-out', diff < 0);
+            }
+            function applyFilter() {
+                var q = search ? search.value.trim().toLowerCase() : '';
+                var counted = 0;
+                rows.forEach(function (row) {
+                    var filled = row.querySelector('.actual-input').value !== '';
+                    if (filled) counted++;
+                    var visible = (!q || row.dataset.name.indexOf(q) !== -1) && !(onlyUncounted && onlyUncounted.checked && filled);
+                    row.hidden = !visible;
+                });
+                if (progress) progress.textContent = 'Перераховано ' + counted + ' з ' + rows.length;
+            }
+            rows.forEach(function (row) {
+                updateRow(row);
+                row.querySelector('.actual-input').addEventListener('input', function () { updateRow(row); applyFilter(); });
+            });
+            if (rows.length) {
+                search.addEventListener('input', applyFilter);
+                onlyUncounted.addEventListener('change', applyFilter);
+                applyFilter();
+            }
+
+            var onlyDiff = document.getElementById('onlyDiff');
+            if (onlyDiff) {
+                onlyDiff.addEventListener('change', function () {
+                    document.querySelectorAll('#revisionTable tbody tr').forEach(function (row) {
+                        row.hidden = onlyDiff.checked && row.dataset.diff !== 'true';
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

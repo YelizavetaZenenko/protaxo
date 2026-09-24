@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Ревізія складу</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='catalog')}"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Ревізія складу</h1>
+                <div class="actions-cell">
+                    <a class="btn-outline" th:href="@{/catalog-items}">До каталогу</a>
+                    <a th:if="${draftId != null}" class="btn" th:href="@{/stock-revisions/{id}(id=${draftId})}">Продовжити чернетку</a>
+                    <form th:if="${draftId == null}" th:action="@{/stock-revisions}" method="post" style="display:inline">
+                        <button type="submit" class="btn">+ Нова ревізія</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="alert alert-error" th:if="${revisionError != null}" th:text="${revisionError}"></div>
+            <div class="alert alert-success" th:if="${revisionSuccess != null}" th:text="${revisionSuccess}"></div>
+
+            <p class="muted">
+                Ревізія — перерахунок фактичних залишків товарів. Нова ревізія знімає перелік усіх товарів
+                з обліковими залишками; внесіть фактичні кількості (можна частинами, зберігаючи чернетку) і
+                проведіть — залишки в каталозі стануть фактичними, а нестачі й надлишки збережуться в ревізії.
+            </p>
+
+            <table class="clean-table">
+                <thead>
+                <tr>
+                    <th>№</th>
+                    <th>Створено</th>
+                    <th>Стан</th>
+                    <th>Перераховано</th>
+                    <th>Розбіжностей</th>
+                    <th class="money">Нестача, ₴</th>
+                    <th class="money">Надлишок, ₴</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${revisions}" class="clickable-row" th:attr="data-href=@{/stock-revisions/{id}(id=${r.id})}">
+                    <td><a th:href="@{/stock-revisions/{id}(id=${r.id})}" th:text="${r.id}"></a></td>
+                    <td>
+                        <div th:text="${#temporals.format(r.createdAt, 'dd.MM.yyyy HH:mm')}"></div>
+                        <div class="muted" th:text="${r.createdByName}"></div>
+                    </td>
+                    <td>
+                        <span class="status-badge" th:classappend="${r.draft()} ? 'status-partial' : 'status-paid'" th:text="${r.status.label}"></span>
+                        <div class="muted" th:if="${r.completedAt != null}"
+                             th:text="${#temporals.format(r.completedAt, 'dd.MM.yyyy HH:mm')} + ', ' + ${r.completedByName}"></div>
+                    </td>
+                    <td th:text="${r.countedLines()} + ' з ' + ${#lists.size(r.lines)}"></td>
+                    <td th:text="${r.draft()} ? '—' : ${r.discrepancyLines()}"></td>
+                    <td class="money" th:text="${r.draft()} ? '—' : ${#numbers.formatDecimal(r.shortageValue(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                    <td class="money" th:text="${r.draft()} ? '—' : ${#numbers.formatDecimal(r.surplusValue(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(revisions)}">
+                    <td colspan="7">Ревізій ще не було</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.clickable-row').forEach(function (row) {
+            row.addEventListener('click', function (e) {
+                if (e.target.closest('a')) return;
+                window.location.href = row.dataset.href;
+            });
+        });
+    </script>
+</body>
+</html>

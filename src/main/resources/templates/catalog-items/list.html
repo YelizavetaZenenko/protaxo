@@ -13,7 +13,10 @@
         <div class="card">
             <div class="toolbar">
                 <h1>Каталог товарів і послуг</h1>
-                <a class="btn" sec:authorize="!hasRole('ACCOUNTANT')" th:href="@{/catalog-items/new(activeType=${activeType})}">+ Нова позиція</a>
+                <div class="actions-cell">
+                    <a class="btn-outline" sec:authorize="hasAnyRole('ADMIN', 'ACCOUNTANT')" th:href="@{/stock-revisions}">Ревізія складу</a>
+                    <a class="btn" sec:authorize="!hasRole('ACCOUNTANT')" th:href="@{/catalog-items/new(activeType=${activeType})}">+ Нова позиція</a>
+                </div>
             </div>
 
             <div class="doc-tabs" style="margin-top:0;">
