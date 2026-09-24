@@ -56,7 +56,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/invoices/*", "/invoices/*/bill-pdf", "/invoices/*/act-pdf").authenticated()
                         .requestMatchers(HttpMethod.GET, "/catalog-items", "/catalog-items/*", "/catalog-items/*/edit").authenticated()
                         .requestMatchers(HttpMethod.POST, "/catalog-items/*/edit").authenticated()
-                        .requestMatchers("/profile", "/profile/**", "/", "/error").authenticated()
+                        .requestMatchers("/profile", "/profile/**", "/", "/error", "/session/**").authenticated()
                         .anyRequest().hasAnyRole("ADMIN", "MASTER"))
                 .formLogin(form -> form
                         .loginPage("/login")
