@@ -1,5 +1,6 @@
 package com.example.protaxo.invoice.dto;
 
+import com.example.protaxo.invoice.entity.ActStatus;
 import com.example.protaxo.invoice.entity.InvoicePaymentType;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -21,6 +22,7 @@ public record InvoiceResponse(
         BigDecimal totalAmount,
         BigDecimal totalVat,
         BigDecimal totalWithoutVat,
-        LocalDate paymentDueDate
+        LocalDate paymentDueDate,
+        ActStatus actStatus
 ) {
 }

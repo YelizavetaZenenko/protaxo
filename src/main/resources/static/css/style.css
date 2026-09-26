@@ -1370,6 +1370,533 @@ th.money {
     }
 }
 
+/* ------------------------------------------------------------------ Панель бухгалтера
+   Вкладки Огляд / Наряди й оплати / Документи / Витрати (docs/Фінансовий облік.md). Сторінка
+   без загальної картки: шапка на фоні, під нею картки-показники й білі блоки. */
+
+.acc-page {
+    max-width: 1080px;
+}
+
+.acc-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+}
+
+.acc-eyebrow {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 0.2rem;
+}
+
+.acc-title {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.acc-subtitle {
+    display: inline-block;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.3rem;
+}
+
+a.acc-subtitle {
+    color: var(--accent);
+}
+
+.acc-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.acc-header-actions .btn {
+    font-weight: 600;
+}
+
+.acc-header-actions .btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.acc-period {
+    position: relative;
+}
+
+.acc-period-pill {
+    list-style: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 0.4rem 0.7rem;
+    white-space: nowrap;
+}
+
+.acc-period-pill::-webkit-details-marker {
+    display: none;
+}
+
+.acc-period[open] .acc-period-pill {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.acc-period-form {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.4rem);
+    z-index: 20;
+    width: 260px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow-card);
+    padding: 0.9rem;
+    display: grid;
+    gap: 0.6rem;
+}
+
+.acc-period-form .field {
+    margin: 0;
+}
+
+.acc-period-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.8rem;
+    font-size: 0.85rem;
+}
+
+.acc-period-presets a {
+    text-decoration: none;
+}
+
+.btn-sm,
+.btn-outline.btn-sm {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    border-radius: 7px;
+}
+
+.acc-page .finance-nav {
+    margin-bottom: 1rem;
+    align-items: flex-end;
+}
+
+.acc-page .finance-nav > a {
+    padding: 0.5rem 0.2rem;
+    margin-right: 1rem;
+}
+
+.finance-more {
+    position: relative;
+    margin-left: auto;
+}
+
+.finance-more summary {
+    list-style: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 0.95rem;
+    padding: 0.55rem 0.9rem;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+
+.finance-more summary::-webkit-details-marker {
+    display: none;
+}
+
+.finance-more summary.active {
+    color: var(--accent-dark);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+}
+
+.finance-more-caret {
+    font-size: 0.75rem;
+}
+
+.finance-more-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.25rem);
+    z-index: 20;
+    min-width: 210px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow-card);
+    padding: 0.35rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.finance-nav .finance-more-menu a {
+    border: none;
+    margin: 0;
+    padding: 0.5rem 0.7rem;
+    border-radius: 6px;
+    color: var(--text);
+}
+
+.finance-nav .finance-more-menu a:hover {
+    background: var(--bg);
+}
+
+.finance-nav .finance-more-menu a.active {
+    background: #eaf4ee;
+    color: var(--accent-dark);
+}
+
+.acc-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.acc-kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+}
+
+.acc-kpi-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.acc-kpi-value {
+    font-size: 1.45rem;
+    font-weight: 700;
+    margin: 0.55rem 0 0.4rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.acc-kpi-sub {
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.acc-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.1rem 0.6rem;
+    margin-bottom: 1rem;
+}
+
+.acc-card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.9rem;
+}
+
+.acc-card-head h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.acc-card-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.acc-card-meta {
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-decoration: none;
+}
+
+a.acc-card-meta:hover {
+    color: var(--accent);
+}
+
+.acc-card-more {
+    padding: 0.7rem 0.4rem 0.5rem;
+    font-size: 0.85rem;
+}
+
+.acc-card-more a {
+    text-decoration: none;
+}
+
+.acc-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.9rem;
+}
+
+.acc-toolbar .acc-chips {
+    margin-bottom: 0;
+}
+
+.acc-search input {
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    width: 230px;
+}
+
+.acc-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.9rem;
+}
+
+.acc-chips a {
+    font-size: 0.8rem;
+    color: var(--text);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.3rem 0.6rem;
+    background: var(--surface);
+}
+
+.acc-chips a:hover {
+    border-color: #c9cdd4;
+}
+
+.acc-chips a.active {
+    border-color: var(--accent);
+    background: #eaf4ee;
+    color: var(--accent-dark);
+}
+
+.acc-table th {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 0.55rem 0.5rem;
+}
+
+.acc-table td {
+    padding: 0.7rem 0.5rem;
+    font-size: 0.85rem;
+    vertical-align: middle;
+}
+
+.acc-table tbody tr:last-child td {
+    box-shadow: none;
+}
+
+.acc-table .money {
+    text-align: right;
+}
+
+.acc-doc-link {
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.acc-doc-link:hover {
+    text-decoration: underline;
+}
+
+.acc-plain-link {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.acc-plain-link:hover {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
+.acc-cell-main {
+    font-weight: 500;
+}
+
+.acc-cell-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+}
+
+.acc-cell-sub a {
+    color: var(--muted);
+}
+
+.acc-row-action {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.acc-row-action .link-btn {
+    font-weight: 600;
+    font-family: inherit;
+}
+
+.acc-empty {
+    color: var(--muted);
+    text-align: center;
+    padding: 1.5rem 0.5rem;
+}
+
+.acc-note {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin: 0.6rem 0.4rem 0.5rem;
+}
+
+.acc-status-form {
+    margin: 0;
+}
+
+.status-select {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    font-family: inherit;
+    cursor: pointer;
+    padding-right: 0.55rem;
+}
+
+.status-select:hover {
+    filter: brightness(0.96);
+}
+
+.status-select option {
+    background: #fff;
+    color: var(--text);
+}
+
+.acc-bottom {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 1rem;
+}
+
+.acc-bottom .acc-card {
+    padding-bottom: 0.3rem;
+}
+
+.acc-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    box-shadow: inset 0 -1px 0 0 var(--border);
+}
+
+.acc-item:last-child {
+    box-shadow: none;
+}
+
+.acc-item-title {
+    font-size: 0.88rem;
+    font-weight: 500;
+}
+
+.acc-item-sub {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 0.15rem;
+}
+
+.acc-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.72rem;
+    color: var(--muted);
+    padding: 0.25rem 0.1rem 2rem;
+}
+
+.acc-dialog {
+    border: none;
+    border-radius: 12px;
+    padding: 1.4rem;
+    width: min(460px, calc(100vw - 2rem));
+    box-shadow: 0 20px 50px rgba(28, 43, 49, 0.25);
+}
+
+.acc-dialog::backdrop {
+    background: rgba(28, 43, 49, 0.35);
+}
+
+.acc-dialog-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.acc-dialog-head h2 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.acc-dialog-close {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.acc-dialog-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 0.75rem;
+}
+
+.acc-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+@media (max-width: 860px) {
+    .acc-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .acc-bottom {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    .acc-kpis,
+    .acc-dialog-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .acc-search input {
+        width: 100%;
+    }
+}
+
 /* ------------------------------------------------------------------ Друк (бланк ревізії складу тощо) */
 @media print {
     .topbar,

@@ -6,6 +6,7 @@ import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.finance.dto.FinanceForms;
 import com.example.protaxo.finance.dto.InvoiceSettlement;
 import com.example.protaxo.finance.dto.OperationView;
+import com.example.protaxo.finance.dto.PeriodTotals;
 import com.example.protaxo.finance.dto.SettlementStatus;
 import com.example.protaxo.finance.entity.ExpenseCategory;
 import com.example.protaxo.finance.entity.FinanceAccount;
@@ -13,11 +14,15 @@ import com.example.protaxo.finance.entity.FinanceAccountKind;
 import com.example.protaxo.finance.entity.FinanceAttachment;
 import com.example.protaxo.finance.entity.FinanceOperation;
 import com.example.protaxo.finance.entity.FinanceOperationType;
+import com.example.protaxo.finance.entity.FinanceSettings;
 import com.example.protaxo.finance.entity.PaymentMethod;
 import com.example.protaxo.finance.entity.RefundKind;
+import com.example.protaxo.finance.entity.TaxSystem;
 import com.example.protaxo.finance.service.FinanceQueryService;
 import com.example.protaxo.finance.service.FinanceService;
+import com.example.protaxo.finance.service.FinanceSettingsService;
 import com.example.protaxo.invoice.dto.InvoiceResponse;
+import com.example.protaxo.invoice.entity.ActStatus;
 import com.example.protaxo.invoice.service.InvoiceService;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -70,41 +75,163 @@ public class FinancePageController {
     private final FinanceQueryService queryService;
     private final InvoiceService invoiceService;
     private final ClientService clientService;
+    private final FinanceSettingsService settingsService;
 
-    // ================================================================== Огляд
+    // ================================================================== Панель бухгалтера
+
+    /** Рядок таблиць «Контроль оплат» / «Наряди й оплати» / «Документи за нарядами». */
+    public record PanelRow(InvoiceResponse invoice, InvoiceSettlement settlement, String clientName) {
+    }
+
+    private static final int OVERVIEW_ROWS = 10;
 
     @GetMapping
     public String dashboard(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+                            @RequestParam(defaultValue = "all") String filter,
                             Model model) {
+        List<PanelRow> rows = panel(from, to, "overview", model);
+        LocalDate periodFrom = (LocalDate) model.getAttribute("from");
+        LocalDate periodTo = (LocalDate) model.getAttribute("to");
+        // Огляд: наряди за період плюс усі, що ще мають борг (старий борг не "зникає" зі зміною періоду).
+        List<PanelRow> relevant = rows.stream()
+                .filter(r -> r.settlement().debt().signum() > 0 || inPeriod(r.invoice(), periodFrom, periodTo))
+                .toList();
+        List<PanelRow> filtered = applyFilter(relevant, filter);
+        model.addAttribute("rows", filtered.stream().limit(OVERVIEW_ROWS).toList());
+        model.addAttribute("rowsTotal", filtered.size());
+        model.addAttribute("filter", filter);
+        model.addAttribute("overdueCount", rows.stream().filter(r -> r.settlement().overdue()).count());
+        model.addAttribute("actsPending", rows.stream().filter(r -> r.invoice().actStatus().needsAttention()).count());
+        model.addAttribute("openReconciliations", queryService.openReconciliations());
+        return "finance/dashboard";
+    }
+
+    @GetMapping("/invoices")
+    public String invoices(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+                           @RequestParam(defaultValue = "all") String filter,
+                           @RequestParam(required = false) String q,
+                           Model model) {
+        List<PanelRow> rows = panel(from, to, "invoices", model);
+        String needle = q == null ? "" : q.trim().toLowerCase(Locale.ROOT);
+        List<PanelRow> searched = rows.stream()
+                .filter(r -> needle.isEmpty()
+                        || r.invoice().number().contains(needle)
+                        || r.clientName().toLowerCase(Locale.ROOT).contains(needle)
+                        || (r.invoice().vehicleName() != null && r.invoice().vehicleName().toLowerCase(Locale.ROOT).contains(needle)))
+                .toList();
+        List<PanelRow> filtered = applyFilter(searched, filter);
+        model.addAttribute("rows", filtered);
+        model.addAttribute("rowsTotal", searched.size());
+        model.addAttribute("filter", filter);
+        model.addAttribute("q", q);
+        return "finance/invoices";
+    }
+
+    @GetMapping("/documents")
+    public String documents(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+                            @RequestParam(defaultValue = "false") boolean pendingOnly,
+                            Model model) {
+        List<PanelRow> rows = panel(from, to, "documents", model);
+        model.addAttribute("rows", rows.stream()
+                .filter(r -> !pendingOnly || r.invoice().actStatus().needsAttention())
+                .toList());
+        model.addAttribute("pendingOnly", pendingOnly);
+        model.addAttribute("actsPending", rows.stream().filter(r -> r.invoice().actStatus().needsAttention()).count());
+        model.addAttribute("actStatuses", ActStatus.values());
+        return "finance/documents";
+    }
+
+    @PostMapping("/documents/{id}/act-status")
+    public String updateActStatus(@PathVariable Long id, @RequestParam ActStatus status,
+                                  @RequestParam(required = false) String returnTo, RedirectAttributes redirect) {
+        invoiceService.updateActStatus(id, status);
+        redirect.addFlashAttribute("financeSuccess", "Наряд № %s: %s".formatted(
+                invoiceService.findById(id).number(), status.getLabel().toLowerCase(Locale.ROOT)));
+        return "redirect:" + safeReturn(returnTo, "/finance/documents");
+    }
+
+    @GetMapping("/settings")
+    public String settings(Model model) {
+        FinanceSettings current = settingsService.get();
+        if (!model.containsAttribute("settingsForm")) {
+            FinanceForms.Settings form = new FinanceForms.Settings();
+            form.setBusinessName(current.getBusinessName());
+            form.setTaxSystem(current.getTaxSystem());
+            form.setVatPayer(current.isVatPayer());
+            model.addAttribute("settingsForm", form);
+        }
+        model.addAttribute("settings", current);
+        model.addAttribute("taxSystems", TaxSystem.values());
+        model.addAttribute("section", "settings");
+        model.addAttribute("active", "settings");
+        return "finance/settings";
+    }
+
+    @PostMapping("/settings")
+    public String saveSettings(@ModelAttribute("settingsForm") FinanceForms.Settings form, RedirectAttributes redirect) {
+        settingsService.update(form);
+        redirect.addFlashAttribute("financeSuccess", "Налаштування обліку збережено");
+        return "redirect:/finance";
+    }
+
+    /**
+     * Спільне для вкладок панелі: шапка (назва ФОП, період), чотири картки показників і дані
+     * форми «+ Додати оплату». Повертає всі наряди, найновіші першими.
+     */
+    private List<PanelRow> panel(LocalDate from, LocalDate to, String section, Model model) {
         LocalDate today = LocalDate.now();
         LocalDate periodFrom = from != null ? from : today.withDayOfMonth(1);
         LocalDate periodTo = to != null ? to : today;
+        if (periodTo.isBefore(periodFrom)) {
+            LocalDate swap = periodFrom;
+            periodFrom = periodTo;
+            periodTo = swap;
+        }
 
         List<InvoiceResponse> invoices = invoiceService.findAll();
         Map<Long, InvoiceSettlement> settlements = queryService.settlements(invoices);
-        List<InvoiceSettlement> debts = settlements.values().stream()
-                .filter(s -> s.debt().signum() > 0)
-                .sorted(Comparator.comparing(InvoiceSettlement::overdue).reversed()
-                        .thenComparing(InvoiceSettlement::debt, Comparator.reverseOrder()))
+        Map<Long, String> clientNames = clientNames();
+        List<PanelRow> rows = invoices.stream()
+                .sorted(Comparator.comparing(InvoiceResponse::documentDate).reversed())
+                .map(inv -> new PanelRow(inv, settlements.get(inv.id()), clientNames.getOrDefault(inv.clientId(), "—")))
                 .toList();
+        List<PanelRow> debtRows = rows.stream().filter(r -> r.settlement().debt().signum() > 0).toList();
 
-        model.addAttribute("balancesAt", Instant.now());
-        model.addAttribute("balances", queryService.balances(Instant.now()));
+        PeriodTotals totals = queryService.totals(startOf(periodFrom), startOf(periodTo.plusDays(1)));
+        BigDecimal received = totals.netRevenue();
+
         model.addAttribute("from", periodFrom);
         model.addAttribute("to", periodTo);
-        model.addAttribute("totals", queryService.totals(startOf(periodFrom), startOf(periodTo.plusDays(1))));
-        model.addAttribute("debts", debts.stream().limit(10).toList());
-        model.addAttribute("debtCount", debts.size());
-        model.addAttribute("debtTotal", debts.stream().map(InvoiceSettlement::debt).reduce(BigDecimal.ZERO, BigDecimal::add));
-        model.addAttribute("overdueTotal", debts.stream().filter(InvoiceSettlement::overdue)
-                .map(InvoiceSettlement::debt).reduce(BigDecimal.ZERO, BigDecimal::add));
-        model.addAttribute("invoicesById", invoices.stream().collect(Collectors.toMap(InvoiceResponse::id, i -> i)));
-        model.addAttribute("clientNames", clientNames());
-        model.addAttribute("openReconciliations", queryService.openReconciliations());
+        model.addAttribute("section", section);
+        model.addAttribute("active", section);
+        model.addAttribute("settings", settingsService.get());
+        model.addAttribute("totals", totals);
+        model.addAttribute("received", received);
+        model.addAttribute("net", received.subtract(totals.expenses()));
+        model.addAttribute("debtTotal", debtRows.stream().map(r -> r.settlement().debt()).reduce(BigDecimal.ZERO, BigDecimal::add));
+        model.addAttribute("debtCount", debtRows.size());
+        model.addAttribute("debtRows", debtRows);
         model.addAttribute("paymentMethods", PaymentMethod.values());
-        model.addAttribute("active", "overview");
-        return "finance/dashboard";
+        model.addAttribute("paymentAccounts", queryService.activeAccounts());
+        model.addAttribute("paymentKey", newKey());
+        return rows;
+    }
+
+    private static List<PanelRow> applyFilter(List<PanelRow> rows, String filter) {
+        return switch (filter) {
+            case "debt" -> rows.stream().filter(r -> r.settlement().debt().signum() > 0).toList();
+            case "overdue" -> rows.stream().filter(r -> r.settlement().overdue()).toList();
+            case "paid" -> rows.stream().filter(r -> r.settlement().status() == SettlementStatus.PAID).toList();
+            default -> rows;
+        };
+    }
+
+    private static boolean inPeriod(InvoiceResponse invoice, LocalDate from, LocalDate to) {
+        LocalDate date = invoice.documentDate().toLocalDate();
+        return !date.isBefore(from) && !date.isAfter(to);
     }
 
     // ================================================================== Каса (майстер)
@@ -175,8 +302,9 @@ public class FinancePageController {
     // ================================================================== Оплати
 
     @PostMapping("/payments")
-    public String recordPayment(@ModelAttribute FinanceForms.Payment form, RedirectAttributes redirect) {
-        String back = "redirect:/invoices/" + form.getInvoiceId();
+    public String recordPayment(@ModelAttribute FinanceForms.Payment form,
+                                @RequestParam(required = false) String returnTo, RedirectAttributes redirect) {
+        String back = "redirect:" + safeReturn(returnTo, "/invoices/" + form.getInvoiceId());
         try {
             FinanceOperation payment = financeService.recordPayment(form);
             String message = "Оплату %s прийнято".formatted(money(payment.getAmount()));
@@ -189,36 +317,6 @@ public class FinancePageController {
             redirect.addFlashAttribute("paymentForm", form);
         }
         return back;
-    }
-
-    @GetMapping("/invoices")
-    public String invoices(@RequestParam(required = false) SettlementStatus status,
-                           @RequestParam(defaultValue = "false") boolean overdueOnly,
-                           @RequestParam(required = false) String q,
-                           Model model) {
-        List<InvoiceResponse> invoices = invoiceService.findAll();
-        Map<Long, InvoiceSettlement> settlements = queryService.settlements(invoices);
-        Map<Long, String> clientNames = clientNames();
-        String needle = q == null ? null : q.trim().toLowerCase();
-        List<InvoiceResponse> filtered = invoices.stream()
-                .filter(inv -> status == null || settlements.get(inv.id()).status() == status)
-                .filter(inv -> !overdueOnly || settlements.get(inv.id()).overdue())
-                .filter(inv -> needle == null || needle.isEmpty()
-                        || inv.number().contains(needle)
-                        || clientNames.getOrDefault(inv.clientId(), "").toLowerCase().contains(needle))
-                .sorted(Comparator.comparing(InvoiceResponse::documentDate).reversed())
-                .toList();
-        model.addAttribute("invoices", filtered);
-        model.addAttribute("settlements", settlements);
-        model.addAttribute("clientNames", clientNames);
-        model.addAttribute("statuses", SettlementStatus.values());
-        model.addAttribute("status", status);
-        model.addAttribute("overdueOnly", overdueOnly);
-        model.addAttribute("q", q);
-        model.addAttribute("sumTotal", filtered.stream().map(InvoiceResponse::totalAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
-        model.addAttribute("sumDebt", filtered.stream().map(inv -> settlements.get(inv.id()).debt()).reduce(BigDecimal.ZERO, BigDecimal::add));
-        model.addAttribute("active", "invoices");
-        return "finance/invoices";
     }
 
     // ================================================================== Повернення
@@ -353,15 +451,11 @@ public class FinancePageController {
     public String expenses(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                            Model model) {
-        LocalDate periodFrom = from != null ? from : LocalDate.now().withDayOfMonth(1);
-        LocalDate periodTo = to != null ? to : LocalDate.now();
-        Instant start = startOf(periodFrom);
-        Instant end = startOf(periodTo.plusDays(1));
-        model.addAttribute("expenses", queryService.search(start, end, List.of(FinanceOperationType.EXPENSE), null, true));
-        model.addAttribute("totals", queryService.totals(start, end));
-        model.addAttribute("from", periodFrom);
-        model.addAttribute("to", periodTo);
-        model.addAttribute("active", "expenses");
+        panel(from, to, "expenses", model);
+        LocalDate periodFrom = (LocalDate) model.getAttribute("from");
+        LocalDate periodTo = (LocalDate) model.getAttribute("to");
+        model.addAttribute("expenses", queryService.search(startOf(periodFrom), startOf(periodTo.plusDays(1)),
+                List.of(FinanceOperationType.EXPENSE), null, true));
         return "finance/expenses";
     }
 
@@ -584,11 +678,12 @@ public class FinancePageController {
         return UUID.randomUUID().toString();
     }
 
-    private static final Set<String> RETURN_PREFIXES = Set.of("/finance/", "/invoices/");
+    private static final Set<String> RETURN_PREFIXES = Set.of("/finance/", "/finance?", "/invoices/");
 
     /** Лише внутрішні шляхи — щоб {@code returnTo} не став відкритим редіректом. */
     private String safeReturn(String returnTo, String fallback) {
-        if (returnTo != null && !returnTo.contains("//") && RETURN_PREFIXES.stream().anyMatch(returnTo::startsWith)) {
+        if (returnTo != null && !returnTo.contains("//") && !returnTo.contains("\\")
+                && (returnTo.equals("/finance") || RETURN_PREFIXES.stream().anyMatch(returnTo::startsWith))) {
             return returnTo;
         }
         return fallback;

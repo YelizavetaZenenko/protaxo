@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Документи</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
+
+    <div class="container container-wide acc-page">
+        <div th:replace="~{fragments/finance :: header}"></div>
+        <div th:replace="~{fragments/finance :: nav(section='documents')}"></div>
+        <div th:replace="~{fragments/finance :: flash}"></div>
+        <div th:replace="~{fragments/finance :: kpis}"></div>
+
+        <section class="acc-card">
+            <div class="acc-card-head">
+                <h2>Документи за нарядами</h2>
+                <a class="acc-card-meta" th:if="${!pendingOnly}" th:href="@{/finance/documents(from=${from}, to=${to}, pendingOnly=true)}"
+                   th:text="${actsPending == 0} ? 'Усе підписано' : ${actsPending} + ' потребують уваги'"></a>
+                <a class="acc-card-meta" th:if="${pendingOnly}" th:href="@{/finance/documents(from=${from}, to=${to})}">Показати всі</a>
+            </div>
+            <div class="table-scroll">
+                <table class="acc-table">
+                    <thead>
+                    <tr>
+                        <th>Наряд / клієнт</th>
+                        <th>Рахунок</th>
+                        <th>Акт</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${rows}" th:with="inv=${r.invoice}">
+                        <td>
+                            <div class="acc-cell-main" th:text="'№ ' + ${inv.number}"></div>
+                            <div class="acc-cell-sub" th:text="${r.clientName}"></div>
+                        </td>
+                        <td>
+                            <a class="acc-plain-link" th:href="@{/invoices/{id}/bill-pdf(id=${inv.id})}" target="_blank"
+                               th:text="'Рахунок № ' + ${inv.number}"></a>
+                        </td>
+                        <td>
+                            <!-- Стан акта змінюється прямо тут: select виглядає як бейдж. -->
+                            <form th:action="@{/finance/documents/{id}/act-status(id=${inv.id})}" method="post" class="acc-status-form">
+                                <input type="hidden" name="returnTo" th:value="${'/finance/documents?from=' + from + '&to=' + to + (pendingOnly ? '&pendingOnly=true' : '')}">
+                                <select name="status" class="status-badge status-select" th:classappend="${inv.actStatus.cssClass}"
+                                        onchange="this.form.submit()" title="Змінити стан акта">
+                                    <option th:each="st : ${actStatuses}" th:value="${st}" th:text="${st.label}"
+                                            th:selected="${st == inv.actStatus}"></option>
+                                </select>
+                            </form>
+                        </td>
+                        <td class="acc-row-action">
+                            <a class="link-btn" th:href="@{/invoices/{id}/act-pdf(id=${inv.id})}" target="_blank">Переглянути</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(rows)}">
+                        <td colspan="4" class="acc-empty" th:text="${pendingOnly} ? 'Усі акти підписані' : 'Нарядів ще немає'"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div th:replace="~{fragments/finance :: footer}"></div>
+    </div>
+
+    <div th:replace="~{fragments/finance :: paymentDialog}"></div>
+</body>
+</html>

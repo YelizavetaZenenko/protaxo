@@ -5,6 +5,7 @@ import com.example.protaxo.finance.entity.FinanceAccountKind;
 import com.example.protaxo.finance.entity.FinanceOperationType;
 import com.example.protaxo.finance.entity.PaymentMethod;
 import com.example.protaxo.finance.entity.RefundKind;
+import com.example.protaxo.finance.entity.TaxSystem;
 import java.math.BigDecimal;
 import lombok.Data;
 
@@ -90,5 +91,12 @@ public final class FinanceForms {
         private FinanceAccountKind kind = FinanceAccountKind.BANK;
         private BigDecimal openingBalance = BigDecimal.ZERO;
         private boolean active = true;
+    }
+
+    @Data
+    public static class Settings {
+        private String businessName;
+        private TaxSystem taxSystem;
+        private boolean vatPayer;
     }
 }

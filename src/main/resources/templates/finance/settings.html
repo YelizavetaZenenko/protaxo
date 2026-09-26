@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Налаштування обліку</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
+
+    <div class="container container-wide">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Налаштування обліку</h1>
+            </div>
+            <div th:replace="~{fragments/finance :: nav(section='settings')}"></div>
+            <div th:replace="~{fragments/finance :: flash}"></div>
+
+            <form th:object="${settingsForm}" th:action="@{/finance/settings}" method="post" class="form-grid" style="max-width:560px">
+                <div class="field">
+                    <label for="businessName">Назва ФОП / підприємства</label>
+                    <input type="text" id="businessName" th:field="*{businessName}" placeholder="ФОП Прізвище Ім'я По батькові">
+                    <div class="muted">Показується під заголовком панелі бухгалтера.</div>
+                </div>
+                <div class="field">
+                    <label for="taxSystem">Система оподаткування</label>
+                    <select id="taxSystem" th:field="*{taxSystem}">
+                        <option value="">— не вказано —</option>
+                        <option th:each="t : ${taxSystems}" th:value="${t}" th:text="${t.label}"></option>
+                    </select>
+                </div>
+                <div class="field checkbox-field">
+                    <label><input type="checkbox" th:field="*{vatPayer}"> Платник ПДВ</label>
+                </div>
+                <div class="field">
+                    <label>Банківська виписка</label>
+                    <div><span class="status-badge status-paid" th:text="${settings.bankStatementSource.label}"></span>
+                        <span class="muted">Надходження на рахунок вносяться як оплати вручну; імпорту виписки поки немає.</span></div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn">Зберегти</button>
+                    <a class="btn-outline" th:href="@{/finance}">Скасувати</a>
+                </div>
+                <p class="muted" th:if="${settings.updatedAt != null}"
+                   th:text="'Змінено ' + ${#temporals.format(settings.updatedAt, 'dd.MM.yyyy HH:mm')} + ', ' + ${settings.updatedBy}"></p>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

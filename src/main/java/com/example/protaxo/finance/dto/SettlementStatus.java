@@ -4,7 +4,7 @@ package com.example.protaxo.finance.dto;
 public enum SettlementStatus {
 
     NOT_PAID("Не оплачено", "status-unpaid"),
-    PARTIALLY_PAID("Частково оплачено", "status-partial"),
+    PARTIALLY_PAID("Часткова оплата", "status-partial"),
     PAID("Оплачено", "status-paid");
 
     private final String label;

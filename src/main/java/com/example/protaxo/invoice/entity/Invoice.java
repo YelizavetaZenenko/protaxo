@@ -65,6 +65,12 @@ public class Invoice extends BaseEntity {
     @Column(name = "payment_due_date")
     private LocalDate paymentDueDate;
 
+    /** Стан акта виконаних робіт — для вкладки «Документи» панелі бухгалтера. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "act_status", nullable = false)
+    @Builder.Default
+    private ActStatus actStatus = ActStatus.NOT_CREATED;
+
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("lineNumber ASC")
     @Builder.Default

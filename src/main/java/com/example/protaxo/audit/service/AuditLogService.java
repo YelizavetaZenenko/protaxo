@@ -39,6 +39,7 @@ public class AuditLogService {
             Map.entry("FinanceOperation", "Фінансова операція"),
             Map.entry("FinanceAccount", "Каса / рахунок"),
             Map.entry("Reconciliation", "Звірка готівки"),
+            Map.entry("FinanceSettings", "Налаштування обліку"),
             Map.entry("StockRevision", "Ревізія складу")
     );
 

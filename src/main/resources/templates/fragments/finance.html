@@ -1,20 +1,263 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-    <!-- Підменю панелі бухгалтера (docs/Фінансовий облік.md, розд. 12). -->
+    <!-- Підменю бухгалтерії (docs/Фінансовий облік.md, розд. 12): чотири вкладки панелі
+         бухгалтера + рідше потрібні розділи в меню «Ще». Вкладки зберігають обраний період. -->
     <nav class="finance-nav" th:fragment="nav(section)">
-        <a th:href="@{/finance}" th:classappend="${section == 'overview'} ? 'active'">Огляд</a>
-        <a th:href="@{/finance/invoices}" th:classappend="${section == 'invoices'} ? 'active'">Наряди й оплати</a>
-        <a th:href="@{/finance/cash}" th:classappend="${section == 'cash'} ? 'active'">Каса за період</a>
-        <a th:href="@{/finance/accounts}" th:classappend="${section == 'accounts'} ? 'active'">Каси й рахунки</a>
-        <a th:href="@{/finance/expenses}" th:classappend="${section == 'expenses'} ? 'active'">Витрати</a>
-        <a th:href="@{/finance/reconciliations}" th:classappend="${section == 'reconciliations'} ? 'active'">Звірки</a>
-        <a th:href="@{/finance/operations}" th:classappend="${section == 'operations'} ? 'active'">Історія операцій</a>
+        <a th:href="@{/finance(from=${from}, to=${to})}" th:classappend="${section == 'overview'} ? 'active'">Огляд</a>
+        <a th:href="@{/finance/invoices(from=${from}, to=${to})}" th:classappend="${section == 'invoices'} ? 'active'">Наряди й оплати</a>
+        <a th:href="@{/finance/documents(from=${from}, to=${to})}" th:classappend="${section == 'documents'} ? 'active'">Документи</a>
+        <a th:href="@{/finance/expenses(from=${from}, to=${to})}" th:classappend="${section == 'expenses'} ? 'active'">Витрати</a>
+        <details class="finance-more"
+                 th:with="inMore=${section == 'cash' or section == 'accounts' or section == 'reconciliations' or section == 'operations' or section == 'settings'}">
+            <summary th:classappend="${inMore} ? 'active'">Ще <span class="finance-more-caret">▾</span></summary>
+            <div class="finance-more-menu">
+                <a th:href="@{/finance/cash}" th:classappend="${section == 'cash'} ? 'active'">Каса за період</a>
+                <a th:href="@{/finance/accounts}" th:classappend="${section == 'accounts'} ? 'active'">Каси й рахунки</a>
+                <a th:href="@{/finance/reconciliations}" th:classappend="${section == 'reconciliations'} ? 'active'">Звірки</a>
+                <a th:href="@{/finance/operations}" th:classappend="${section == 'operations'} ? 'active'">Історія операцій</a>
+                <a th:href="@{/finance/settings}" th:classappend="${section == 'settings'} ? 'active'">Налаштування обліку</a>
+            </div>
+        </details>
+        <script>
+            document.addEventListener('click', function (e) {
+                document.querySelectorAll('details.finance-more[open]').forEach(function (d) {
+                    if (!d.contains(e.target)) d.removeAttribute('open');
+                });
+            });
+        </script>
     </nav>
 
     <div th:fragment="flash">
         <div class="alert alert-error" th:if="${financeError != null}" th:text="${financeError}"></div>
         <div class="alert alert-success" th:if="${financeSuccess != null}" th:text="${financeSuccess}"></div>
+    </div>
+
+    <!-- Шапка панелі бухгалтера: назва, ФОП, період і «+ Додати оплату». -->
+    <div th:fragment="header" class="acc-header">
+        <div>
+            <div class="acc-eyebrow">Фінанси тахосервісу</div>
+            <h1 class="acc-title">Панель бухгалтера</h1>
+            <div class="acc-subtitle" th:if="${settings.businessName != null}" th:text="${settings.businessName}"></div>
+            <a class="acc-subtitle" th:unless="${settings.businessName != null}" th:href="@{/finance/settings}">Вказати назву ФОП</a>
+        </div>
+        <div class="acc-header-actions">
+            <details class="acc-period">
+                <summary class="acc-period-pill" th:text="${@financeFormat.period(from, to)}"></summary>
+                <form class="acc-period-form" method="get">
+                    <input type="hidden" name="filter" th:if="${filter != null}" th:value="${filter}">
+                    <div class="acc-period-presets">
+                        <th:block th:with="today=${#temporals.createToday()}">
+                            <a th:href="${'?from=' + today.withDayOfMonth(1) + '&to=' + today}">Цей місяць</a>
+                            <a th:href="${'?from=' + today.minusMonths(1).withDayOfMonth(1) + '&to=' + today.withDayOfMonth(1).minusDays(1)}">Минулий місяць</a>
+                            <a th:href="${'?from=' + today.withDayOfYear(1) + '&to=' + today}">Цей рік</a>
+                        </th:block>
+                    </div>
+                    <div class="field">
+                        <label for="periodFrom">Від</label>
+                        <input type="date" id="periodFrom" name="from" th:value="${from}">
+                    </div>
+                    <div class="field">
+                        <label for="periodTo">До</label>
+                        <input type="date" id="periodTo" name="to" th:value="${to}">
+                    </div>
+                    <button type="submit" class="btn btn-sm">Показати</button>
+                </form>
+            </details>
+            <button type="button" class="btn" data-open-payment th:disabled="${#lists.isEmpty(debtRows)}"
+                    th:title="${#lists.isEmpty(debtRows)} ? 'Неоплачених нарядів немає'">+ Додати оплату</button>
+        </div>
+    </div>
+
+    <!-- Чотири картки показників — однакові на всіх вкладках панелі. -->
+    <div th:fragment="kpis" class="acc-kpis">
+        <div class="acc-kpi">
+            <div class="acc-kpi-label">Надійшло від клієнтів</div>
+            <div class="acc-kpi-value" th:text="${@financeFormat.money(received)}"></div>
+            <div class="acc-kpi-sub" th:text="${totals.refunds.signum() > 0}
+                    ? 'За період, без повернень ' + ${@financeFormat.money(totals.refunds)}
+                    : 'За обраний період'"></div>
+        </div>
+        <div class="acc-kpi">
+            <div class="acc-kpi-label">Витрати</div>
+            <div class="acc-kpi-value" th:text="${@financeFormat.money(totals.expenses)}"></div>
+            <div class="acc-kpi-sub">Запчастини та робота сервісу</div>
+        </div>
+        <div class="acc-kpi">
+            <div class="acc-kpi-label">До отримання</div>
+            <div class="acc-kpi-value" th:text="${@financeFormat.money(debtTotal)}"></div>
+            <div class="acc-kpi-sub" th:text="${debtCount == 0} ? 'Боргів немає' : ${@financeFormat.plural(debtCount, 'наряд', 'наряди', 'нарядів')} + ' з боргом'"></div>
+        </div>
+        <div class="acc-kpi">
+            <div class="acc-kpi-label">Рух коштів, нетто</div>
+            <div class="acc-kpi-value" th:classappend="${net.signum() < 0} ? 'money-out'" th:text="${@financeFormat.money(net)}"></div>
+            <div class="acc-kpi-sub">Надходження мінус витрати</div>
+        </div>
+    </div>
+
+    <!-- Таблиця «Контроль оплат» / «Наряди й оплати». -->
+    <table th:fragment="paymentsTable(rows)" class="acc-table">
+        <thead>
+        <tr>
+            <th>Наряд / дата</th>
+            <th>Клієнт / автомобіль</th>
+            <th class="money">Сума</th>
+            <th class="money">Залишок</th>
+            <th>Оплата</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="r : ${rows}" th:with="s=${r.settlement}, inv=${r.invoice}">
+            <td>
+                <a class="acc-doc-link" th:href="@{/invoices/{id}(id=${inv.id})}" th:text="'№ ' + ${inv.number}"></a>
+                <div class="acc-cell-sub" th:text="${#temporals.format(inv.documentDate, 'dd.MM.yyyy')}"></div>
+            </td>
+            <td>
+                <div class="acc-cell-main" th:text="${r.clientName}"></div>
+                <div class="acc-cell-sub" th:if="${inv.vehicleName != null}" th:text="${inv.vehicleName}"></div>
+            </td>
+            <td class="money" th:text="${@financeFormat.money(s.total)}"></td>
+            <td class="money" th:text="${@financeFormat.money(s.debt)}"></td>
+            <td>
+                <span th:if="${s.overdue}" class="status-badge status-overdue">Прострочено</span>
+                <span th:unless="${s.overdue}" class="status-badge" th:classappend="${s.status.cssClass}" th:text="${s.status.label}"></span>
+                <div class="acc-cell-sub" th:if="${s.debt.signum() == 0}">Повний розрахунок</div>
+                <div class="acc-cell-sub" th:if="${s.debt.signum() > 0 and s.dueDate != null}"
+                     th:text="'Термін: ' + ${@financeFormat.dayMonth(s.dueDate)}"></div>
+                <div class="acc-cell-sub" th:if="${s.debt.signum() > 0 and s.dueDate == null}">Термін не вказано</div>
+            </td>
+            <td class="acc-row-action">
+                <button type="button" class="link-btn" th:if="${s.debt.signum() > 0}"
+                        th:attr="data-open-payment=${inv.id}">Оплата</button>
+                <a class="link-btn" th:unless="${s.debt.signum() > 0}" th:href="@{/invoices/{id}(id=${inv.id})}">Деталі</a>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(rows)}">
+            <td colspan="6" class="acc-empty">Нарядів за цим фільтром немає</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- Фільтри таблиці оплат; baseUrl — адреса поточної вкладки. -->
+    <div th:fragment="filters(baseUrl)" class="acc-chips">
+        <a th:href="@{${baseUrl}(from=${from}, to=${to}, q=${q})}" th:classappend="${filter == 'all'} ? 'active'">Усі</a>
+        <a th:href="@{${baseUrl}(from=${from}, to=${to}, q=${q}, filter='debt')}" th:classappend="${filter == 'debt'} ? 'active'">З боргом</a>
+        <a th:href="@{${baseUrl}(from=${from}, to=${to}, q=${q}, filter='overdue')}" th:classappend="${filter == 'overdue'} ? 'active'">Прострочені</a>
+        <a th:href="@{${baseUrl}(from=${from}, to=${to}, q=${q}, filter='paid')}" th:classappend="${filter == 'paid'} ? 'active'">Оплачені</a>
+    </div>
+
+    <div th:fragment="footer" class="acc-footer">
+        <span th:text="'Дані станом на ' + ${#temporals.format(#temporals.createNow(), 'dd.MM.yyyy HH:mm')}"></span>
+        <span>Облік: наряд → рахунок → оплата → акт</span>
+    </div>
+
+    <!-- Вікно «Додати оплату»: той самий POST /finance/payments, що й на сторінці наряду;
+         після збереження повертає на поточну вкладку. -->
+    <div th:fragment="paymentDialog">
+        <dialog class="acc-dialog" id="paymentDialog">
+            <form th:action="@{/finance/payments}" method="post" id="panelPaymentForm">
+                <input type="hidden" name="requestKey" th:value="${paymentKey}">
+                <input type="hidden" name="returnTo" value="" id="payReturnTo">
+                <div class="acc-dialog-head">
+                    <h2>Додати оплату</h2>
+                    <button type="button" class="acc-dialog-close" data-close-payment aria-label="Закрити">✕</button>
+                </div>
+                <div class="field">
+                    <label for="payInvoice">Наряд</label>
+                    <select id="payInvoice" name="invoiceId" required>
+                        <option th:each="r : ${debtRows}" th:value="${r.invoice.id}"
+                                th:attr="data-debt=${r.settlement.debt}"
+                                th:text="'№ ' + ${r.invoice.number} + ' · ' + ${r.clientName} + ' · борг ' + ${@financeFormat.money(r.settlement.debt)}"></option>
+                    </select>
+                </div>
+                <div class="acc-dialog-grid">
+                    <div class="field">
+                        <label for="payAmount">Сума оплати</label>
+                        <input type="number" step="0.01" min="0.01" id="payAmount" name="amount" required>
+                    </div>
+                    <div class="field">
+                        <label for="payMethod">Спосіб</label>
+                        <select id="payMethod" name="method">
+                            <option th:each="m : ${paymentMethods}" th:value="${m}" th:text="${m.label}"
+                                    th:attr="data-kind=${m.accountKind}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="payAccount">Каса / рахунок</label>
+                    <select id="payAccount" name="accountId">
+                        <option th:each="a : ${paymentAccounts}" th:value="${a.id}" th:text="${a.name}"
+                                th:attr="data-kind=${a.kind}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="payComment">Коментар</label>
+                    <input type="text" id="payComment" name="comment" placeholder="необов'язково">
+                </div>
+                <div class="acc-dialog-actions">
+                    <button type="button" class="btn-outline" data-close-payment>Скасувати</button>
+                    <button type="submit" class="btn" id="paySubmit">Прийняти оплату</button>
+                </div>
+            </form>
+        </dialog>
+        <script>
+            /**
+             * «+ Додати оплату» (шапка) і «Оплата» (рядок таблиці) відкривають одне вікно; з рядка
+             * наряд і сума боргу підставляються одразу. Каси/рахунки звужуються до виду, що
+             * відповідає способу оплати (сервер перевіряє те саме).
+             */
+            (function () {
+                var dialog = document.getElementById('paymentDialog');
+                if (!dialog) return;
+                var form = document.getElementById('panelPaymentForm');
+                var invoice = document.getElementById('payInvoice');
+                var amount = document.getElementById('payAmount');
+                var method = document.getElementById('payMethod');
+                var account = document.getElementById('payAccount');
+                document.getElementById('payReturnTo').value = location.pathname + location.search;
+
+                function syncAmount() {
+                    var opt = invoice.options[invoice.selectedIndex];
+                    if (!opt) return;
+                    amount.value = opt.dataset.debt;
+                    amount.max = opt.dataset.debt;
+                }
+                function syncAccounts() {
+                    var kind = method.options[method.selectedIndex].dataset.kind;
+                    var first = null;
+                    Array.prototype.forEach.call(account.options, function (o) {
+                        var match = o.dataset.kind === kind;
+                        o.hidden = !match;
+                        o.disabled = !match;
+                        if (match && !first) first = o;
+                    });
+                    var current = account.options[account.selectedIndex];
+                    if ((!current || current.disabled) && first) account.value = first.value;
+                }
+
+                document.querySelectorAll('[data-open-payment]').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var id = btn.getAttribute('data-open-payment');
+                        if (id) invoice.value = id;
+                        syncAmount();
+                        syncAccounts();
+                        dialog.showModal();
+                        amount.focus();
+                        amount.select();
+                    });
+                });
+                document.querySelectorAll('[data-close-payment]').forEach(function (btn) {
+                    btn.addEventListener('click', function () { dialog.close(); });
+                });
+                dialog.addEventListener('click', function (e) { if (e.target === dialog) dialog.close(); });
+                invoice.addEventListener('change', syncAmount);
+                method.addEventListener('change', syncAccounts);
+                form.addEventListener('submit', function () {
+                    document.getElementById('paySubmit').disabled = true;
+                });
+            })();
+        </script>
     </div>
 </body>
 </html>

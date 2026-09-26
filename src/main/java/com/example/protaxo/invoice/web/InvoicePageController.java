@@ -313,6 +313,7 @@ public class InvoicePageController {
         context.setVariable("totalAmount", totalAmount);
         context.setVariable("amountInWords", amountInWords);
         byte[] pdf = pdfRenderService.render("act", context);
+        invoiceService.markActPrinted(id);
 
         response.setContentType(MediaType.APPLICATION_PDF_VALUE);
         response.setHeader("Content-Disposition", "inline; filename=\"act-" + id + ".pdf\"");

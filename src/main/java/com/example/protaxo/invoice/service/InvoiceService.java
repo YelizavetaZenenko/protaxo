@@ -15,6 +15,7 @@ import com.example.protaxo.finance.repository.FinanceOperationRepository;
 import com.example.protaxo.invoice.dto.InvoiceItemRequest;
 import com.example.protaxo.invoice.dto.InvoiceRequest;
 import com.example.protaxo.invoice.dto.InvoiceResponse;
+import com.example.protaxo.invoice.entity.ActStatus;
 import com.example.protaxo.invoice.entity.Invoice;
 import com.example.protaxo.invoice.entity.InvoiceItem;
 import com.example.protaxo.invoice.mapper.InvoiceMapper;
@@ -129,6 +130,28 @@ public class InvoiceService {
             throw new BusinessRuleException(("Нова вартість наряду (%s грн) менша за вже сплачене (%s грн). "
                     + "Спершу оформіть повернення клієнту в розділі оплат наряду.")
                     .formatted(total.toPlainString(), netPaid.toPlainString()));
+        }
+    }
+
+    /** Бухгалтер відмічає стан акта (вкладка «Документи» панелі бухгалтера). */
+    public void updateActStatus(Long id, ActStatus status) {
+        Invoice invoice = getOrThrow(id);
+        if (invoice.getActStatus() == status) {
+            return;
+        }
+        Map<String, String[]> changes = FieldDiff.builder()
+                .add("Акт", invoice.getActStatus().getLabel(), status.getLabel())
+                .build();
+        invoice.setActStatus(status);
+        invoiceRepository.save(invoice);
+        auditLogService.record(AuditAction.UPDATE, "Invoice", id, changes);
+    }
+
+    /** Перший друк акта: «не створено» → «на підписі». Пізніші стани не чіпає. */
+    public void markActPrinted(Long id) {
+        Invoice invoice = getOrThrow(id);
+        if (invoice.getActStatus() == ActStatus.NOT_CREATED) {
+            updateActStatus(id, ActStatus.ON_SIGNING);
         }
     }
 

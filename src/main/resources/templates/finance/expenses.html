@@ -9,86 +9,62 @@
 <body>
     <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
 
-    <div class="container container-wide">
-        <div class="card">
-            <div class="toolbar">
-                <h1>Витрати</h1>
-                <a class="btn" th:href="@{/finance/expenses/new}">+ Нова витрата</a>
-            </div>
-            <div th:replace="~{fragments/finance :: nav(section='expenses')}"></div>
-            <div th:replace="~{fragments/finance :: flash}"></div>
+    <div class="container container-wide acc-page">
+        <div th:replace="~{fragments/finance :: header}"></div>
+        <div th:replace="~{fragments/finance :: nav(section='expenses')}"></div>
+        <div th:replace="~{fragments/finance :: flash}"></div>
+        <div th:replace="~{fragments/finance :: kpis}"></div>
 
-            <form th:action="@{/finance/expenses}" method="get" class="filter-bar">
-                <div class="field">
-                    <label for="from">Від</label>
-                    <input type="date" id="from" name="from" th:value="${from}">
-                </div>
-                <div class="field">
-                    <label for="to">До</label>
-                    <input type="date" id="to" name="to" th:value="${to}">
-                </div>
-                <div class="field filter-actions-field">
-                    <label>&nbsp;</label>
-                    <button type="submit" class="btn-outline">Показати</button>
-                </div>
-            </form>
-
-            <div class="kpi-grid" style="margin-bottom:1.5rem">
-                <div class="kpi">
-                    <div class="kpi-label">Усього витрат</div>
-                    <div class="kpi-value" th:text="${#numbers.formatDecimal(totals.expenses, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
-                </div>
-                <div class="kpi" th:each="entry : ${totals.expensesByCategory}">
-                    <div class="kpi-label" th:text="${entry.key.label}"></div>
-                    <div class="kpi-value" th:text="${#numbers.formatDecimal(entry.value, 1, 'WHITESPACE', 2, 'COMMA')}"></div>
+        <section class="acc-card">
+            <div class="acc-card-head">
+                <h2>Витрати сервісу</h2>
+                <div class="acc-card-head-actions">
+                    <span class="acc-card-meta" th:text="${@financeFormat.period(from, to)}"></span>
+                    <a class="btn-outline btn-sm" th:href="@{/finance/expenses/new}">+ Нова витрата</a>
                 </div>
             </div>
-
-            <p class="muted">Внутрішній запис витрати не підтверджує її податкове врахування чи право на податковий кредит.</p>
-
             <div class="table-scroll">
-                <table class="clean-table">
+                <table class="acc-table">
                     <thead>
                     <tr>
                         <th>Дата</th>
-                        <th>Категорія</th>
                         <th>Призначення</th>
-                        <th>Одержувач</th>
-                        <th>З рахунку</th>
+                        <th>Категорія</th>
                         <th class="money">Сума</th>
-                        <th>Документ</th>
-                        <th>Автор</th>
                         <th></th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:each="op : ${expenses}" th:classappend="${op.cancelled()} ? 'row-cancelled'">
-                        <td th:text="${#temporals.format(op.occurredAt, 'dd.MM.yyyy HH:mm')}"></td>
+                        <td th:text="${#temporals.format(op.occurredAt, 'dd.MM')}"
+                            th:title="${#temporals.format(op.occurredAt, 'dd.MM.yyyy HH:mm')} + ' · ' + ${op.createdByName}"></td>
+                        <td>
+                            <div class="acc-cell-main" th:text="${op.comment}"></div>
+                            <div class="acc-cell-sub keep-text" th:if="${op.counterparty != null or op.invoiceId != null or op.attachmentId != null}">
+                                <span th:if="${op.counterparty != null}" th:text="${op.counterparty}"></span>
+                                <a th:if="${op.invoiceId != null}" th:href="@{/invoices/{id}(id=${op.invoiceId})}" th:text="'· наряд № ' + ${op.invoiceNumber}"></a>
+                                <a th:if="${op.attachmentId != null}" th:href="@{/finance/attachments/{id}(id=${op.attachmentId})}" target="_blank">· документ</a>
+                            </div>
+                        </td>
                         <td th:text="${op.expenseCategory.label}"></td>
-                        <td>
-                            <span th:text="${op.comment}"></span>
-                            <div th:if="${op.invoiceId != null}"><a th:href="@{/invoices/{id}(id=${op.invoiceId})}" th:text="'Наряд № ' + ${op.invoiceNumber}"></a></div>
-                        </td>
-                        <td th:text="${op.counterparty}"></td>
-                        <td th:text="${op.accountName}"></td>
-                        <td class="money" th:text="${#numbers.formatDecimal(op.amount, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
-                        <td>
-                            <div th:if="${op.documentRef != null}" th:text="${op.documentRef}"></div>
-                            <a th:if="${op.attachmentId != null}" th:href="@{/finance/attachments/{id}(id=${op.attachmentId})}" target="_blank" th:text="${op.attachmentName}"></a>
-                        </td>
-                        <td th:text="${op.createdByName}"></td>
-                        <td class="keep-text">
+                        <td class="money" th:text="${@financeFormat.money(op.amount)}"></td>
+                        <td class="acc-row-action keep-text">
                             <a th:unless="${op.cancelled()}" class="link-btn link-btn-danger" th:href="@{/finance/operations/{id}/cancel(id=${op.id})}">Скасувати</a>
-                            <span th:if="${op.cancelled()}" class="muted" th:text="'Скасовано: ' + ${op.cancelReason}"></span>
+                            <span th:if="${op.cancelled()}" class="muted" th:title="${op.cancelReason}">Скасовано</span>
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(expenses)}">
-                        <td colspan="9">Витрат за цей період немає</td>
+                        <td colspan="5" class="acc-empty">Витрат за цей період немає</td>
                     </tr>
                     </tbody>
                 </table>
             </div>
-        </div>
+            <p class="acc-note">Внутрішній запис витрати не підтверджує її податкове врахування чи право на податковий кредит.</p>
+        </section>
+
+        <div th:replace="~{fragments/finance :: footer}"></div>
     </div>
+
+    <div th:replace="~{fragments/finance :: paymentDialog}"></div>
 </body>
 </html>
