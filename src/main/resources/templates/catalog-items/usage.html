@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Витрата товарів</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='catalog')}"></div>
+
+    <div class="container container-wide">
+        <div class="card">
+            <div class="toolbar">
+                <h1 th:text="${type.name() == 'MATERIAL'} ? 'Витрата товарів' : 'Надані послуги'"></h1>
+                <div class="actions-cell no-print">
+                    <button type="button" class="btn-outline" onclick="window.print()">Друк</button>
+                    <a class="btn-outline" th:href="@{/catalog-items}">До каталогу</a>
+                </div>
+            </div>
+
+            <div class="doc-tabs no-print" style="margin-top:0;">
+                <a class="doc-tab-btn" th:classappend="${type.name() == 'MATERIAL'} ? 'active'"
+                   th:href="@{/catalog-items/usage(type='MATERIAL', from=${from}, to=${to})}">Товари</a>
+                <a class="doc-tab-btn" th:classappend="${type.name() == 'SERVICE'} ? 'active'"
+                   th:href="@{/catalog-items/usage(type='SERVICE', from=${from}, to=${to})}">Послуги</a>
+            </div>
+
+            <form th:action="@{/catalog-items/usage}" method="get" class="filter-bar no-print">
+                <input type="hidden" name="type" th:value="${type}">
+                <div class="field">
+                    <label for="from">Від</label>
+                    <input type="date" id="from" name="from" th:value="${from}">
+                </div>
+                <div class="field">
+                    <label for="to">До</label>
+                    <input type="date" id="to" name="to" th:value="${to}">
+                </div>
+                <div class="field">
+                    <label for="q">Назва</label>
+                    <input type="text" id="q" name="q" th:value="${q}" placeholder="Пошук">
+                </div>
+                <div class="field filter-actions-field">
+                    <label>&nbsp;</label>
+                    <div class="filter-actions">
+                        <button type="submit" class="btn-outline">Показати</button>
+                        <a class="link-btn" th:href="@{/catalog-items/usage(type=${type}, from=${thisMonthFrom}, to=${thisMonthTo})}">Цей місяць</a>
+                        <a class="link-btn" th:href="@{/catalog-items/usage(type=${type}, from=${lastMonthFrom}, to=${lastMonthTo})}">Минулий місяць</a>
+                    </div>
+                </div>
+            </form>
+
+            <p class="muted" th:text="'Період: ' + ${#temporals.format(from, 'dd.MM.yyyy')} + ' – ' + ${#temporals.format(to, 'dd.MM.yyyy')} + '. Рахуються рядки наряд-заказів за датою наряду; видалені наряди не враховуються.'"></p>
+
+            <div class="table-scroll">
+                <table class="clean-table">
+                    <thead>
+                    <tr>
+                        <th th:text="${type.name() == 'MATERIAL'} ? 'Товар' : 'Послуга'"></th>
+                        <th class="money" th:text="${type.name() == 'MATERIAL'} ? 'Витрачено' : 'Надано'"></th>
+                        <th class="money">Нарядів</th>
+                        <th class="money">Сума, ₴</th>
+                        <th class="money" th:if="${type.name() == 'MATERIAL'}">Ревізія за період</th>
+                        <th class="money" th:if="${type.name() == 'MATERIAL'}">Залишок зараз</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${rows}" class="clickable-row"
+                        th:attr="data-href=@{/catalog-items/usage/{id}(id=${r.catalogItemId}, from=${from}, to=${to})}">
+                        <td>
+                            <a th:href="@{/catalog-items/usage/{id}(id=${r.catalogItemId}, from=${from}, to=${to})}" th:text="${r.name}"></a>
+                            <span th:if="${r.deleted}" class="muted"> (видалено з каталогу)</span>
+                        </td>
+                        <td class="money" th:text="${T(com.example.protaxo.catalog.dto.CatalogUsageRow).qty(r.usedQuantity)}"></td>
+                        <td class="money" th:text="${r.invoiceCount}"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(r.usedAmount, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td class="money" th:if="${type.name() == 'MATERIAL'}"
+                            th:classappend="${r.revisionAdjustment != null and r.revisionAdjustment.signum() < 0} ? 'money-out'"
+                            th:text="${r.revisionAdjustment == null} ? '' : (${r.revisionAdjustment.signum() > 0} ? '+' : '') + ${T(com.example.protaxo.catalog.dto.CatalogUsageRow).qty(r.revisionAdjustment)}"></td>
+                        <td class="money" th:if="${type.name() == 'MATERIAL'}"
+                            th:text="${T(com.example.protaxo.catalog.dto.CatalogUsageRow).qty(r.currentStock)}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(rows)}">
+                        <td colspan="6">За цей період нічого не витрачено</td>
+                    </tr>
+                    </tbody>
+                    <tfoot th:if="${!#lists.isEmpty(rows)}">
+                    <tr>
+                        <td colspan="3"><strong>Разом</strong></td>
+                        <td class="money"><strong th:text="${#numbers.formatDecimal(totalAmount, 1, 'WHITESPACE', 2, 'COMMA')}"></strong></td>
+                        <td th:if="${type.name() == 'MATERIAL'}" colspan="2"></td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.clickable-row').forEach(function (row) {
+            row.addEventListener('click', function (e) {
+                if (e.target.closest('a')) return;
+                window.location.href = row.dataset.href;
+            });
+        });
+    </script>
+</body>
+</html>

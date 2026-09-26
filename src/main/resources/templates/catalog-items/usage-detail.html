@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title th:text="'ProTaxo — Витрата: ' + ${itemName}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='catalog')}"></div>
+
+    <div class="container container-wide">
+        <div class="card">
+            <div class="toolbar">
+                <h1 th:text="${itemName}"></h1>
+                <div class="actions-cell no-print">
+                    <button type="button" class="btn-outline" onclick="window.print()">Друк</button>
+                    <a class="btn-outline" th:href="@{/catalog-items/usage(from=${from}, to=${to})}">До звіту</a>
+                </div>
+            </div>
+
+            <form th:action="@{/catalog-items/usage/{id}(id=${catalogItemId})}" method="get" class="filter-bar no-print">
+                <div class="field">
+                    <label for="from">Від</label>
+                    <input type="date" id="from" name="from" th:value="${from}">
+                </div>
+                <div class="field">
+                    <label for="to">До</label>
+                    <input type="date" id="to" name="to" th:value="${to}">
+                </div>
+                <div class="field filter-actions-field">
+                    <label>&nbsp;</label>
+                    <div class="filter-actions">
+                        <button type="submit" class="btn-outline">Показати</button>
+                        <a class="link-btn" th:href="@{/catalog-items/usage/{id}(id=${catalogItemId}, from=${thisMonthFrom}, to=${thisMonthTo})}">Цей місяць</a>
+                        <a class="link-btn" th:href="@{/catalog-items/usage/{id}(id=${catalogItemId}, from=${lastMonthFrom}, to=${lastMonthTo})}">Минулий місяць</a>
+                    </div>
+                </div>
+            </form>
+
+            <div class="kpi-grid" style="margin-bottom:1.25rem">
+                <div class="kpi">
+                    <div class="kpi-label">Витрачено за період</div>
+                    <div class="kpi-value" th:text="${T(com.example.protaxo.catalog.dto.CatalogUsageRow).qty(totalQuantity)}"></div>
+                    <div class="kpi-sub" th:text="${#temporals.format(from, 'dd.MM.yyyy')} + ' – ' + ${#temporals.format(to, 'dd.MM.yyyy')}"></div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-label">На суму</div>
+                    <div class="kpi-value" th:text="${#numbers.formatDecimal(totalAmount, 1, 'WHITESPACE', 2, 'COMMA')} + ' ₴'"></div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-label">Нарядів</div>
+                    <div class="kpi-value" th:text="${#lists.size(lines)}"></div>
+                </div>
+            </div>
+
+            <div class="table-scroll">
+                <table class="clean-table">
+                    <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Наряд</th>
+                        <th>Контрагент</th>
+                        <th>Автомобіль</th>
+                        <th class="money">Кількість</th>
+                        <th class="money">Ціна</th>
+                        <th class="money">Сума</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="l : ${lines}">
+                        <td th:text="${#temporals.format(l.documentDate, 'dd.MM.yyyy HH:mm')}"></td>
+                        <td><a th:href="@{/invoices/{id}(id=${l.invoiceId})}" th:text="'№ ' + ${l.invoiceNumber}"></a></td>
+                        <td th:text="${l.clientName}"></td>
+                        <td th:text="${l.vehicleName}"></td>
+                        <td class="money" th:text="${T(com.example.protaxo.catalog.dto.CatalogUsageRow).qty(l.quantity)}"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(l.price, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(l.amount, 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(lines)}">
+                        <td colspan="7">За цей період не витрачався</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -56,7 +56,7 @@ public class SecurityConfig {
                         // Усе інше для нього закрито переліком нижче через anyRequest.
                         .requestMatchers("/invoices/new").hasAnyRole("ADMIN", "MASTER")
                         .requestMatchers(HttpMethod.GET, "/invoices/*", "/invoices/*/bill-pdf", "/invoices/*/act-pdf").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/catalog-items", "/catalog-items/*", "/catalog-items/*/edit").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/catalog-items", "/catalog-items/*", "/catalog-items/*/edit", "/catalog-items/usage/*").authenticated()
                         .requestMatchers(HttpMethod.POST, "/catalog-items/*/edit").authenticated()
                         .requestMatchers("/profile", "/profile/**", "/", "/error", "/session/**").authenticated()
                         .anyRequest().hasAnyRole("ADMIN", "MASTER"))
