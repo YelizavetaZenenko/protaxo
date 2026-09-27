@@ -17,7 +17,6 @@ import com.example.protaxo.invoice.dto.InvoiceResponse;
 import com.example.protaxo.invoice.entity.InvoicePaymentType;
 import com.example.protaxo.invoice.service.InvoiceService;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -30,7 +29,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Знижка на рядок наряду, ПДВ після знижки та строк оплати за замовчуванням. Кожен тест відкочується. */
+/** Знижка на рядок наряду, ПДВ після знижки та фіксований строк оплати. Кожен тест відкочується. */
 @SpringBootTest
 @Transactional
 class InvoiceDiscountTest {
@@ -60,7 +59,7 @@ class InvoiceDiscountTest {
     @Test
     void discountReducesAmountAndVatIsTakenFromDiscountedAmount() {
         InvoiceResponse invoice = create(new InvoiceItemRequest(service.getId(), new BigDecimal("2"),
-                new BigDecimal("1200"), new BigDecimal("10")), null);
+                new BigDecimal("1200"), new BigDecimal("10")));
 
         InvoiceItemResponse item = invoice.items().get(0);
         assertThat(item.discountPercent()).isEqualByComparingTo("10");
@@ -72,7 +71,7 @@ class InvoiceDiscountTest {
 
     @Test
     void noDiscountByDefault() {
-        InvoiceResponse invoice = create(new InvoiceItemRequest(service.getId(), BigDecimal.ONE, new BigDecimal("1200")), null);
+        InvoiceResponse invoice = create(new InvoiceItemRequest(service.getId(), BigDecimal.ONE, new BigDecimal("1200")));
 
         assertThat(invoice.items().get(0).discountPercent()).isEqualByComparingTo("0");
         assertThat(invoice.totalAmount()).isEqualByComparingTo("1200.00");
@@ -81,27 +80,19 @@ class InvoiceDiscountTest {
     @Test
     void discountOver100IsRejected() {
         assertThatThrownBy(() -> create(new InvoiceItemRequest(service.getId(), BigDecimal.ONE,
-                new BigDecimal("1200"), new BigDecimal("150")), null))
+                new BigDecimal("1200"), new BigDecimal("150"))))
                 .isInstanceOf(BusinessRuleException.class);
     }
 
     @Test
-    void paymentDueDateDefaultsTo15DaysAfterDocumentDate() {
-        InvoiceResponse invoice = create(new InvoiceItemRequest(service.getId(), BigDecimal.ONE, new BigDecimal("1200")), null);
+    void paymentDueDateIsAlways15DaysAfterDocumentDate() {
+        InvoiceResponse invoice = create(new InvoiceItemRequest(service.getId(), BigDecimal.ONE, new BigDecimal("1200")));
 
         assertThat(invoice.paymentDueDate()).isEqualTo(invoice.documentDate().toLocalDate().plusDays(15));
     }
 
-    @Test
-    void explicitPaymentDueDateIsKept() {
-        LocalDate due = LocalDate.now().plusDays(3);
-        InvoiceResponse invoice = create(new InvoiceItemRequest(service.getId(), BigDecimal.ONE, new BigDecimal("1200")), due);
-
-        assertThat(invoice.paymentDueDate()).isEqualTo(due);
-    }
-
-    private InvoiceResponse create(InvoiceItemRequest item, LocalDate dueDate) {
+    private InvoiceResponse create(InvoiceItemRequest item) {
         return invoiceService.create(new InvoiceRequest(InvoicePaymentType.CASH, client.getId(), null, null, null, null,
-                List.of(item), dueDate));
+                List.of(item)));
     }
 }

@@ -49,9 +49,8 @@
                 </div>
 
                 <div class="field">
-                    <label for="paymentDueDate">Строк оплати</label>
-                    <input type="date" id="paymentDueDate" th:field="*{paymentDueDate}">
-                    <div class="muted">За замовчуванням — 15 днів від дати наряду. Після цієї дати неоплачений залишок вважається простроченим</div>
+                    <label>Строк оплати</label>
+                    <div>15 днів від дати наряду</div>
                 </div>
 
                 <div class="field combobox-field">
@@ -1211,7 +1210,6 @@
                     });
                     return {
                         paymentType: document.getElementById('paymentType').value,
-                        paymentDueDate: document.getElementById('paymentDueDate').value,
                         clientId: clientIdInput.value,
                         clientName: clientSearchInput.value,
                         vehicleName: vehicleNameInput.value,
@@ -1225,7 +1223,6 @@
                 function restoreSnapshot(snapshot) {
                     if (!snapshot) return;
                     document.getElementById('paymentType').value = snapshot.paymentType || '';
-                    document.getElementById('paymentDueDate').value = snapshot.paymentDueDate || '';
                     if (snapshot.clientId) {
                         selectClient(Number(snapshot.clientId), snapshot.clientName || '');
                     }

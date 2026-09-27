@@ -38,8 +38,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class InvoiceService {
 
-    /** Строк оплати за замовчуванням — стільки днів від дати документа. */
-    public static final int DEFAULT_PAYMENT_TERM_DAYS = 15;
+    /** Строк оплати — завжди стільки днів від дати документа, вручну не змінюється. */
+    public static final int PAYMENT_TERM_DAYS = 15;
 
     private static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
 
@@ -84,9 +84,6 @@ public class InvoiceService {
         invoice.setDocumentDate(LocalDateTime.now());
         invoice.setClient(getClientOrThrow(request.clientId()));
         applyNaryadFields(invoice, request);
-        if (invoice.getPaymentDueDate() == null) {
-            invoice.setPaymentDueDate(invoice.getDocumentDate().toLocalDate().plusDays(DEFAULT_PAYMENT_TERM_DAYS));
-        }
         applyItems(invoice, request.items());
         Invoice saved = invoiceRepository.save(invoice);
         auditLogService.record(AuditAction.CREATE, "Invoice", saved.getId());
@@ -101,7 +98,6 @@ public class InvoiceService {
                 .add("Водій", invoice.getDriverName(), request.driverName())
                 .add("Відповідальний за ремонт", invoice.getRepairResponsibleName(), request.repairResponsibleName())
                 .add("Керівник ремонту", invoice.getRepairSupervisorName(), request.repairSupervisorName())
-                .add("Строк оплати", invoice.getPaymentDueDate(), request.paymentDueDate())
                 .build();
         invoice.setPaymentType(request.paymentType());
         invoice.setClient(getClientOrThrow(request.clientId()));
@@ -120,7 +116,7 @@ public class InvoiceService {
         invoice.setDriverName(request.driverName());
         invoice.setRepairResponsibleName(request.repairResponsibleName());
         invoice.setRepairSupervisorName(request.repairSupervisorName());
-        invoice.setPaymentDueDate(request.paymentDueDate());
+        invoice.setPaymentDueDate(invoice.getDocumentDate().toLocalDate().plusDays(PAYMENT_TERM_DAYS));
 
         fieldSuggestionService.remember(FieldSuggestionCategory.VEHICLE, request.vehicleName());
     }

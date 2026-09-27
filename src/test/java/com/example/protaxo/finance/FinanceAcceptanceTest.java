@@ -232,7 +232,7 @@ class FinanceAcceptanceTest {
         financeService.recordPayment(payment(invoice.id(), "2450", PaymentMethod.CASH, cash, null));
         CatalogItem item = catalogItemRepository.findById(invoice.items().get(0).catalogItemId()).orElseThrow();
         InvoiceRequest cheaper = new InvoiceRequest(InvoicePaymentType.CASH, invoice.clientId(), null, null, null, null,
-                List.of(new InvoiceItemRequest(item.getId(), BigDecimal.ONE, new BigDecimal("2000"))), null);
+                List.of(new InvoiceItemRequest(item.getId(), BigDecimal.ONE, new BigDecimal("2000"))));
         assertThatThrownBy(() -> invoiceService.update(invoice.id(), cheaper)).isInstanceOf(BusinessRuleException.class);
     }
 
@@ -259,7 +259,7 @@ class FinanceAcceptanceTest {
                 .type(CatalogItemType.SERVICE).name("Тестова послуга " + UUID.randomUUID())
                 .basePrice(price).vatRate(vatRate).build());
         return invoiceService.create(new InvoiceRequest(InvoicePaymentType.CASH, client.getId(), null, null, null, null,
-                List.of(new InvoiceItemRequest(item.getId(), BigDecimal.ONE, price)), null));
+                List.of(new InvoiceItemRequest(item.getId(), BigDecimal.ONE, price))));
     }
 
     private FinanceForms.Payment payment(Long invoiceId, String amount, PaymentMethod method, FinanceAccount account,

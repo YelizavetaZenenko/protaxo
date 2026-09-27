@@ -168,9 +168,7 @@ public class InvoicePageController {
 
     @GetMapping("/new")
     public String createForm(Model model) {
-        InvoiceFormData form = new InvoiceFormData();
-        form.setPaymentDueDate(LocalDate.now().plusDays(InvoiceService.DEFAULT_PAYMENT_TERM_DAYS));
-        model.addAttribute("invoice", form);
+        model.addAttribute("invoice", new InvoiceFormData());
         model.addAttribute("materialRows", List.of());
         model.addAttribute("serviceRows", List.of());
         addReferenceData(model);
@@ -393,7 +391,7 @@ public class InvoicePageController {
                 .toList();
         return new InvoiceRequest(form.getPaymentType(), form.getClientId(),
                 form.getVehicleName(), form.getDriverName(), form.getRepairResponsibleName(),
-                form.getRepairSupervisorName(), items, form.getPaymentDueDate());
+                form.getRepairSupervisorName(), items);
     }
 
     private InvoiceFormData toFormData(InvoiceResponse response) {
@@ -404,7 +402,6 @@ public class InvoicePageController {
         form.setDriverName(response.driverName());
         form.setRepairResponsibleName(response.repairResponsibleName());
         form.setRepairSupervisorName(response.repairSupervisorName());
-        form.setPaymentDueDate(response.paymentDueDate());
         form.setItems(response.items().stream()
                 .map(i -> {
                     InvoiceItemFormData itemForm = new InvoiceItemFormData();

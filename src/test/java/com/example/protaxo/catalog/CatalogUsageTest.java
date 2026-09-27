@@ -107,7 +107,7 @@ class CatalogUsageTest {
 
     private InvoiceResponse invoice(String qty, String price) {
         return invoiceService.create(new InvoiceRequest(InvoicePaymentType.CASH, client.getId(), null, null, null, null,
-                List.of(new InvoiceItemRequest(oil.getId(), new BigDecimal(qty), new BigDecimal(price))), null));
+                List.of(new InvoiceItemRequest(oil.getId(), new BigDecimal(qty), new BigDecimal(price)))));
     }
 
     private CatalogUsageRow row() {

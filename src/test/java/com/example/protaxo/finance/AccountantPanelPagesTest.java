@@ -19,7 +19,9 @@ import com.example.protaxo.invoice.dto.InvoiceItemRequest;
 import com.example.protaxo.invoice.dto.InvoiceRequest;
 import com.example.protaxo.invoice.dto.InvoiceResponse;
 import com.example.protaxo.invoice.entity.ActStatus;
+import com.example.protaxo.invoice.entity.Invoice;
 import com.example.protaxo.invoice.entity.InvoicePaymentType;
+import com.example.protaxo.invoice.repository.InvoiceRepository;
 import com.example.protaxo.invoice.service.InvoiceService;
 import com.example.protaxo.finance.web.FinanceFormat;
 import java.math.BigDecimal;
@@ -50,6 +52,7 @@ class AccountantPanelPagesTest {
 
     @Autowired MockMvc mvc;
     @Autowired InvoiceService invoiceService;
+    @Autowired InvoiceRepository invoiceRepository;
     @Autowired FinanceSettingsService settingsService;
     @Autowired ClientRepository clientRepository;
     @Autowired CatalogItemRepository catalogItemRepository;
@@ -68,8 +71,11 @@ class AccountantPanelPagesTest {
                 .type(CatalogItemType.SERVICE).name("Послуга " + UUID.randomUUID())
                 .basePrice(new BigDecimal("2450")).vatRate(VatRate.VAT_20).build());
         invoice = invoiceService.create(new InvoiceRequest(InvoicePaymentType.CASH, client.getId(), null, null, null, null,
-                List.of(new InvoiceItemRequest(item.getId(), BigDecimal.ONE, new BigDecimal("2450"))),
-                LocalDate.now().minusDays(1)));
+                List.of(new InvoiceItemRequest(item.getId(), BigDecimal.ONE, new BigDecimal("2450")))));
+        // Строк оплати фіксований (+15 днів) — зсуваємо його в минуле, щоб наряд став простроченим.
+        Invoice entity = invoiceRepository.findById(invoice.id()).orElseThrow();
+        entity.setPaymentDueDate(LocalDate.now().minusDays(1));
+        invoiceRepository.saveAndFlush(entity);
     }
 
     @AfterEach
