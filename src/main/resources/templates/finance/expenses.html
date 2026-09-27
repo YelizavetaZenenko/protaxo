@@ -40,6 +40,7 @@
                             th:title="${#temporals.format(op.occurredAt, 'dd.MM.yyyy HH:mm')} + ' · ' + ${op.createdByName}"></td>
                         <td>
                             <div class="acc-cell-main" th:text="${op.comment}"></div>
+                            <div class="acc-cell-sub" th:if="${expenseGoods[op.id] != null}" th:text="'Товари: ' + ${expenseGoods[op.id]}"></div>
                             <div class="acc-cell-sub keep-text" th:if="${op.counterparty != null or op.invoiceId != null or op.attachmentId != null}">
                                 <span th:if="${op.counterparty != null}" th:text="${op.counterparty}"></span>
                                 <a th:if="${op.invoiceId != null}" th:href="@{/invoices/{id}(id=${op.invoiceId})}" th:text="'· наряд № ' + ${op.invoiceNumber}"></a>

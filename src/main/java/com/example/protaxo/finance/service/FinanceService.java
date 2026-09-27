@@ -2,12 +2,18 @@ package com.example.protaxo.finance.service;
 
 import com.example.protaxo.audit.entity.AuditAction;
 import com.example.protaxo.audit.service.AuditLogService;
+import com.example.protaxo.catalog.entity.CatalogItem;
+import com.example.protaxo.catalog.entity.CatalogItemType;
+import com.example.protaxo.catalog.repository.CatalogItemRepository;
 import com.example.protaxo.common.exception.BusinessRuleException;
+import com.example.protaxo.common.vat.VatRate;
 import com.example.protaxo.common.exception.NotFoundException;
 import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.finance.dto.FinanceForms;
 import com.example.protaxo.finance.dto.InvoiceSettlement;
 import com.example.protaxo.finance.entity.FinanceAccount;
+import com.example.protaxo.finance.entity.ExpenseCategory;
+import com.example.protaxo.finance.entity.ExpenseItem;
 import com.example.protaxo.finance.entity.FinanceAccountKind;
 import com.example.protaxo.finance.entity.FinanceAttachment;
 import com.example.protaxo.finance.entity.FinanceOperation;
@@ -17,6 +23,7 @@ import com.example.protaxo.finance.entity.Reconciliation;
 import com.example.protaxo.finance.entity.ReconciliationStatus;
 import com.example.protaxo.finance.repository.FinanceAccountRepository;
 import com.example.protaxo.finance.repository.FinanceAttachmentRepository;
+import com.example.protaxo.finance.repository.ExpenseItemRepository;
 import com.example.protaxo.finance.repository.FinanceOperationRepository;
 import com.example.protaxo.finance.repository.ReconciliationRepository;
 import com.example.protaxo.invoice.entity.Invoice;
@@ -66,6 +73,8 @@ public class FinanceService {
     private final FinanceAttachmentRepository attachmentRepository;
     private final InvoiceRepository invoiceRepository;
     private final AuditLogService auditLogService;
+    private final ExpenseItemRepository expenseItemRepository;
+    private final CatalogItemRepository catalogItemRepository;
 
     // ------------------------------------------------------------------ оплати
 
@@ -173,10 +182,16 @@ public class FinanceService {
         if (duplicate.isPresent()) {
             return duplicate.get();
         }
-        BigDecimal amount = requirePositive(form.getAmount(), "Сума витрати");
         if (form.getCategory() == null) {
             throw new BusinessRuleException("Оберіть категорію витрати");
         }
+        List<FinanceForms.ExpenseLine> lines = form.getCategory() == ExpenseCategory.PARTS && form.getItems() != null
+                ? form.getItems().stream().filter(l -> !l.isBlank()).toList()
+                : List.of();
+        // Якщо вказано товари — сума витрати дорівнює їхній сумі, введене вручну значення ігнорується.
+        BigDecimal amount = lines.isEmpty()
+                ? requirePositive(form.getAmount(), "Сума витрати")
+                : requirePositive(lines.stream().map(this::lineAmount).reduce(BigDecimal.ZERO, BigDecimal::add), "Сума витрати");
         String purpose = requireText(form.getPurpose(), "Вкажіть призначення витрати");
         FinanceAccount account = requireAccount(form.getAccountId());
         requireEnoughCash(account, amount);
@@ -199,8 +214,95 @@ public class FinanceService {
                 .invoice(invoice)
                 .build();
         FinanceOperation saved = save(expense, form.getRequestKey());
+        receiveGoods(saved.getId(), lines);
         storeAttachment(saved.getId(), attachment);
         return saved;
+    }
+
+    private BigDecimal lineAmount(FinanceForms.ExpenseLine line) {
+        BigDecimal quantity = requirePositive(line.getQuantity(), "Кількість товару");
+        if (line.getPurchasePrice() == null || line.getPurchasePrice().signum() < 0) {
+            throw new BusinessRuleException("Вкажіть ціну закупівлі для кожного товару");
+        }
+        return quantity.multiply(line.getPurchasePrice()).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Оприбуткування закупленого: залишок позиції збільшується на кількість, ціна закупівлі в
+     * каталозі стає ціною цієї закупівлі. Нові позиції створюються в каталозі як товари.
+     */
+    private void receiveGoods(Long operationId, List<FinanceForms.ExpenseLine> lines) {
+        int lineNumber = 1;
+        for (FinanceForms.ExpenseLine line : lines) {
+            BigDecimal quantity = line.getQuantity();
+            BigDecimal purchasePrice = line.getPurchasePrice().setScale(2, RoundingMode.HALF_UP);
+            boolean createdNew = line.getCatalogItemId() == null;
+            CatalogItem item = createdNew ? newCatalogItem(line) : existingMaterial(line.getCatalogItemId());
+
+            Map<String, String[]> changes = FieldDiff.builder()
+                    .add("Залишок", item.getStockQuantity(), stockAfter(item, quantity))
+                    .add("Ціна закупівлі", item.getPurchasePrice(), purchasePrice)
+                    .build();
+            item.setStockQuantity(stockAfter(item, quantity));
+            item.setPurchasePrice(purchasePrice);
+            CatalogItem savedItem = catalogItemRepository.save(item);
+            if (createdNew) {
+                auditLogService.record(AuditAction.CREATE, "CatalogItem", savedItem.getId());
+            } else {
+                auditLogService.record(AuditAction.UPDATE, "CatalogItem", savedItem.getId(), changes);
+            }
+
+            expenseItemRepository.save(ExpenseItem.builder()
+                    .operationId(operationId)
+                    .catalogItemId(savedItem.getId())
+                    .lineNumber(lineNumber++)
+                    .itemName(savedItem.getName())
+                    .quantity(quantity)
+                    .purchasePrice(purchasePrice)
+                    .amount(lineAmount(line))
+                    .createdNew(createdNew)
+                    .build());
+        }
+    }
+
+    private static BigDecimal stockAfter(CatalogItem item, BigDecimal received) {
+        return (item.getStockQuantity() == null ? BigDecimal.ZERO : item.getStockQuantity()).add(received);
+    }
+
+    private CatalogItem existingMaterial(Long catalogItemId) {
+        CatalogItem item = catalogItemRepository.findById(catalogItemId)
+                .orElseThrow(() -> new BusinessRuleException("Позицію каталогу не знайдено — можливо, її видалили"));
+        if (item.getType() != CatalogItemType.MATERIAL) {
+            throw new BusinessRuleException("«%s» — послуга, її не можна оприбуткувати на склад".formatted(item.getName()));
+        }
+        return item;
+    }
+
+    private CatalogItem newCatalogItem(FinanceForms.ExpenseLine line) {
+        String name = requireText(line.getNewItemName(), "Вкажіть назву нової позиції");
+        if (line.getNewItemSalePrice() == null || line.getNewItemSalePrice().signum() < 0) {
+            throw new BusinessRuleException("Вкажіть ціну продажу для нової позиції «%s»".formatted(name));
+        }
+        return CatalogItem.builder()
+                .type(CatalogItemType.MATERIAL)
+                .name(name)
+                .basePrice(line.getNewItemSalePrice().setScale(2, RoundingMode.HALF_UP))
+                .stockQuantity(BigDecimal.ZERO)
+                .vatRate(VatRate.VAT_20)
+                .build();
+    }
+
+    /** Скасування закупівлі списує оприбутковане назад — якщо товар ще є на складі. */
+    private void reverseGoodsReceipt(Long operationId) {
+        for (ExpenseItem line : expenseItemRepository.findByOperationIdOrderByLineNumber(operationId)) {
+            BigDecimal stock = catalogItemRepository.findStockQuantityIncludingDeleted(line.getCatalogItemId());
+            if (stock != null && stock.compareTo(line.getQuantity()) < 0) {
+                throw new BusinessRuleException(("Не можна скасувати: «%s» уже продано чи списано — на складі %s, "
+                        + "а закупівля була на %s").formatted(line.getItemName(),
+                        stock.stripTrailingZeros().toPlainString(), line.getQuantity().stripTrailingZeros().toPlainString()));
+            }
+            catalogItemRepository.restoreStockQuantity(line.getCatalogItemId(), line.getQuantity().negate());
+        }
     }
 
     private void storeAttachment(Long operationId, MultipartFile file) {
@@ -308,6 +410,9 @@ public class FinanceService {
         }
         if (operation.getTargetAccount() != null) {
             requireEnoughCash(operation.getTargetAccount(), operation.getAmount());
+        }
+        if (operation.getType() == FinanceOperationType.EXPENSE) {
+            reverseGoodsReceipt(operationId);
         }
         operation.setCancelledAt(Instant.now());
         operation.setCancelledBy(CurrentUserRoles.username());

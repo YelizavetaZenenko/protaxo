@@ -7,6 +7,8 @@ import com.example.protaxo.finance.entity.PaymentMethod;
 import com.example.protaxo.finance.entity.RefundKind;
 import com.example.protaxo.finance.entity.TaxSystem;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Data;
 
 /**
@@ -51,6 +53,26 @@ public final class FinanceForms {
         /** Номер наряду, якщо витрата належить конкретній роботі. */
         private String invoiceNumber;
         private String requestKey;
+        /** Лише для «Запчастини та матеріали»: закуплені товари — оприбутковуються на склад. */
+        private List<ExpenseLine> items = new ArrayList<>();
+    }
+
+    /**
+     * Рядок закупівлі: або наявна позиція каталогу ({@code catalogItemId}), або нова
+     * ({@code newItemName} + {@code newItemSalePrice}) — її буде створено в каталозі.
+     */
+    @Data
+    public static class ExpenseLine {
+        private Long catalogItemId;
+        private String newItemName;
+        private BigDecimal newItemSalePrice;
+        private BigDecimal quantity;
+        private BigDecimal purchasePrice;
+
+        public boolean isBlank() {
+            return catalogItemId == null && (newItemName == null || newItemName.isBlank())
+                    && quantity == null && purchasePrice == null;
+        }
     }
 
     @Data

@@ -825,13 +825,40 @@ td.actions-cell > * + * {
 /* Форма наряду займає всю ширину картки (звичайна .form-grid обмежена 640px — таблиці
    позицій там тісно). min-width: 0 — щоб елементи сітки могли стискатися, інакше таблиця
    розпирає сітку за межі картки. */
-.invoice-form {
+.invoice-form,
+.form-grid-wide {
     max-width: none;
 }
 
 .invoice-form > *,
-.invoice-form .doc-tab-panel > * {
+.invoice-form .doc-tab-panel > *,
+.form-grid-wide > * {
     min-width: 0;
+}
+
+/* Закупівля товарів у формі витрати: вибір позиції каталогу або нова позиція. */
+.items-table .goods-select {
+    width: 100%;
+    min-width: 12rem;
+}
+
+.goods-new {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+}
+
+.goods-new[hidden] {
+    display: none;
+}
+
+.goods-new .goods-new-name {
+    flex: 2;
+}
+
+.goods-new .goods-new-price {
+    flex: 1;
+    text-align: right;
 }
 
 .items-table .qty-input,

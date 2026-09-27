@@ -1,9 +1,13 @@
 package com.example.protaxo.finance.web;
 
 import com.example.protaxo.client.dto.ClientResponse;
+import com.example.protaxo.catalog.dto.CatalogItemResponse;
 import com.example.protaxo.catalog.dto.CatalogUsageRow;
 import com.example.protaxo.catalog.entity.CatalogItemType;
+import com.example.protaxo.catalog.service.CatalogItemService;
 import com.example.protaxo.catalog.service.CatalogUsageService;
+import com.example.protaxo.finance.entity.ExpenseItem;
+import com.example.protaxo.finance.repository.ExpenseItemRepository;
 import com.example.protaxo.client.service.ClientService;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.finance.dto.FinanceForms;
@@ -80,6 +84,8 @@ public class FinancePageController {
     private final ClientService clientService;
     private final FinanceSettingsService settingsService;
     private final CatalogUsageService catalogUsageService;
+    private final CatalogItemService catalogItemService;
+    private final ExpenseItemRepository expenseItemRepository;
 
     // ================================================================== Панель бухгалтера
 
@@ -458,8 +464,15 @@ public class FinancePageController {
         panel(from, to, "expenses", model);
         LocalDate periodFrom = (LocalDate) model.getAttribute("from");
         LocalDate periodTo = (LocalDate) model.getAttribute("to");
-        model.addAttribute("expenses", queryService.search(startOf(periodFrom), startOf(periodTo.plusDays(1)),
-                List.of(FinanceOperationType.EXPENSE), null, true));
+        List<OperationView> expenses = queryService.search(startOf(periodFrom), startOf(periodTo.plusDays(1)),
+                List.of(FinanceOperationType.EXPENSE), null, true);
+        model.addAttribute("expenses", expenses);
+        // Що саме закуплено витратою — «Олива 5W-30 × 4, Фільтр × 1».
+        model.addAttribute("expenseGoods", expenseItemRepository
+                .findByOperationIdInOrderByLineNumber(expenses.stream().map(OperationView::id).toList()).stream()
+                .collect(Collectors.groupingBy(ExpenseItem::getOperationId, Collectors.mapping(
+                        i -> i.getItemName() + " × " + i.getQuantity().stripTrailingZeros().toPlainString(),
+                        Collectors.joining(", ")))));
         // Витрачені матеріали — товари зі складу, що пішли в наряди за період (той самий розрахунок,
         // що й звіт «Витрата товарів»); позиції лише з коригуванням ревізією тут не показуються.
         List<CatalogUsageRow> materials = catalogUsageService.usage(periodFrom, periodTo, CatalogItemType.MATERIAL).stream()
@@ -482,6 +495,10 @@ public class FinancePageController {
         }
         model.addAttribute("categories", ExpenseCategory.values());
         model.addAttribute("accounts", queryService.activeAccounts());
+        model.addAttribute("materialItems", catalogItemService.findAll().stream()
+                .filter(ci -> ci.type() == CatalogItemType.MATERIAL)
+                .sorted(Comparator.comparing(CatalogItemResponse::name, String.CASE_INSENSITIVE_ORDER))
+                .toList());
         model.addAttribute("active", "expenses");
         return "finance/expense-form";
     }

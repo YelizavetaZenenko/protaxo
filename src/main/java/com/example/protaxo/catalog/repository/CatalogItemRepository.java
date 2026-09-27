@@ -26,4 +26,8 @@ public interface CatalogItemRepository extends JpaRepository<CatalogItem, Long> 
     @Query(value = "UPDATE catalog_items SET stock_quantity = stock_quantity + :delta "
             + "WHERE id = :id AND stock_quantity IS NOT NULL", nativeQuery = true)
     void restoreStockQuantity(@Param("id") Long id, @Param("delta") BigDecimal delta);
+
+    /** Залишок напряму з таблиці — позицію могли м'яко видалити після закупівлі. */
+    @Query(value = "SELECT stock_quantity FROM catalog_items WHERE id = :id", nativeQuery = true)
+    BigDecimal findStockQuantityIncludingDeleted(@Param("id") Long id);
 }
