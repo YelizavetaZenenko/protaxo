@@ -776,6 +776,26 @@ td.actions-cell > * + * {
     vertical-align: middle;
 }
 
+/* Числа в рядках наряду мають бути видно повністю (ціна з ПДВ, знижка), а назва позиції
+   забирає решту ширини. */
+.items-table .qty-input,
+.items-table .discount-input {
+    min-width: 5.5rem;
+}
+
+.items-table .price-input {
+    min-width: 8rem;
+}
+
+.items-table .catalog-select {
+    width: 100%;
+    min-width: 14rem;
+}
+
+.items-table .amount-cell {
+    white-space: nowrap;
+}
+
 .items-table .amount-cell {
     text-align: right;
     font-variant-numeric: tabular-nums;
