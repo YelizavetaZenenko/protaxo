@@ -51,6 +51,10 @@ public class InvoiceItem {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
+    /** Ціна закупівлі одиниці на момент продажу (знімок з каталогу); null — не була вказана. */
+    @Column(name = "purchase_price", precision = 12, scale = 2)
+    private BigDecimal purchasePrice;
+
     /** Знижка на рядок, % (0–100). */
     @Column(name = "discount_percent", nullable = false, precision = 5, scale = 2)
     private BigDecimal discountPercent;

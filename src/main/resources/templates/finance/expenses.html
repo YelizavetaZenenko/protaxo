@@ -76,8 +76,11 @@
                     <tr>
                         <th>Матеріал</th>
                         <th class="money">Кількість</th>
-                        <th class="money">Нарядів</th>
-                        <th class="money">Сума в нарядах</th>
+                        <th class="money">Закупівля за од.</th>
+                        <th class="money">Продаж за од.</th>
+                        <th class="money">Сума закупівлі</th>
+                        <th class="money">Сума продажу</th>
+                        <th class="money">Різниця</th>
                         <th class="money">Залишок</th>
                     </tr>
                     </thead>
@@ -87,25 +90,37 @@
                             <a class="acc-cell-main" th:href="@{/catalog-items/usage/{id}(id=${m.catalogItemId}, from=${from}, to=${to})}" th:text="${m.name}"></a>
                             <span class="muted" th:if="${m.deleted}"> (видалено з каталогу)</span>
                         </td>
-                        <td class="money" th:text="${T(com.example.protaxo.catalog.dto.CatalogUsageRow).qty(m.usedQuantity)}"></td>
-                        <td class="money" th:text="${m.invoiceCount}"></td>
+                        <td class="money" th:text="${T(com.example.protaxo.catalog.dto.CatalogUsageRow).qty(m.usedQuantity)}"
+                            th:title="${m.invoiceCount} + ' нарядів'"></td>
+                        <td class="money" th:text="${m.purchasePrice != null ? @financeFormat.money(m.purchasePrice) : '—'}"></td>
+                        <td class="money" th:text="${@financeFormat.money(m.averageSalePrice())}"></td>
+                        <td class="money">
+                            <span th:text="${m.purchaseAmount != null and m.purchaseAmount.signum() > 0 ? @financeFormat.money(m.purchaseAmount) : '—'}"></span>
+                            <span class="muted" th:if="${!m.purchaseComplete and m.purchaseAmount != null and m.purchaseAmount.signum() > 0}"
+                                  title="Не для всіх продажів відома ціна закупівлі">*</span>
+                        </td>
                         <td class="money" th:text="${@financeFormat.money(m.usedAmount)}"></td>
+                        <td class="money" th:text="${m.margin() != null ? @financeFormat.money(m.margin()) : '—'}"></td>
                         <td class="money" th:text="${T(com.example.protaxo.catalog.dto.CatalogUsageRow).qty(m.currentStock)}"></td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(materials)}">
-                        <td colspan="5" class="acc-empty">За цей період матеріали в наряди не списувались</td>
+                        <td colspan="8" class="acc-empty">За цей період матеріали в наряди не списувались</td>
                     </tr>
                     </tbody>
                     <tfoot th:unless="${#lists.isEmpty(materials)}">
                     <tr>
-                        <td colspan="3">Разом</td>
+                        <td colspan="4">Разом</td>
+                        <td class="money" th:text="${@financeFormat.money(materialsPurchaseTotal)} + (${materialsPurchaseComplete} ? '' : ' *')"></td>
                         <td class="money" th:text="${@financeFormat.money(materialsTotal)}"></td>
+                        <td class="money" th:text="${materialsPurchaseComplete} ? ${@financeFormat.money(materialsTotal.subtract(materialsPurchaseTotal))} : '—'"></td>
                         <td></td>
                     </tr>
                     </tfoot>
                 </table>
             </div>
-            <p class="acc-note">Кількість — скільки матеріалу пішло в наряди за період; сума — за цінами продажу в нарядах (з ПДВ), не собівартість.</p>
+            <p class="acc-note">Кількість — скільки матеріалу пішло в наряди за період. Закупівля — за ціною закупівлі з каталогу на момент продажу;
+                продаж — фактично в нарядах (з ПДВ, після знижок). «*» — ціна закупівлі вказана не для всіх продажів, різниця не рахується;
+                ціну закупівлі задають у картці товару в каталозі.</p>
         </section>
 
         <div th:replace="~{fragments/finance :: footer}"></div>

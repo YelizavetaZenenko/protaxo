@@ -189,6 +189,7 @@ public class InvoiceService {
             item.setItemName(catalogItem.getName());
             item.setQuantity(itemRequest.quantity());
             item.setPrice(itemRequest.price());
+            item.setPurchasePrice(catalogItem.getPurchasePrice());
             BigDecimal discountPercent = discountPercentOf(itemRequest);
             item.setDiscountPercent(discountPercent);
             BigDecimal amount = itemRequest.quantity().multiply(itemRequest.price())

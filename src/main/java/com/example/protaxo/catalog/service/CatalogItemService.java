@@ -58,12 +58,13 @@ public class CatalogItemService {
             // Бухгалтер змінює лише ціну, залишок і ПДВ — тип і назву бере з наявного запису,
             // навіть якщо форму підмінили.
             request = new CatalogItemRequest(catalogItem.getType(), catalogItem.getName(),
-                    request.basePrice(), request.stockQuantity(), request.vatRate());
+                    request.basePrice(), request.stockQuantity(), request.vatRate(), request.purchasePrice());
         }
         Map<String, String[]> changes = FieldDiff.builder()
                 .add("Тип", catalogItem.getType(), request.type())
                 .add("Назва", catalogItem.getName(), request.name())
                 .add("Базова ціна", catalogItem.getBasePrice(), request.basePrice())
+                .add("Ціна закупівлі", catalogItem.getPurchasePrice(), request.purchasePrice())
                 .add("Залишок", catalogItem.getStockQuantity(), request.stockQuantity())
                 .add("Ставка ПДВ", catalogItem.getVatRate() == null ? null : catalogItem.getVatRate().getLabel(),
                         request.vatRate() == null ? null : request.vatRate().getLabel())

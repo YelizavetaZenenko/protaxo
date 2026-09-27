@@ -101,15 +101,21 @@ class AccountantPanelPagesTest {
     }
 
     @Test
-    void expensesTabListsMaterialsUsedInInvoices() throws Exception {
+    void expensesTabShowsMaterialsWithPurchaseAndSalePrices() throws Exception {
         CatalogItem oil = catalogItemRepository.save(CatalogItem.builder()
                 .type(CatalogItemType.MATERIAL).name("Олива " + UUID.randomUUID())
-                .basePrice(new BigDecimal("300")).stockQuantity(new BigDecimal("10")).vatRate(VatRate.VAT_20).build());
+                .basePrice(new BigDecimal("300")).purchasePrice(new BigDecimal("200"))
+                .stockQuantity(new BigDecimal("10")).vatRate(VatRate.VAT_20).build());
         invoiceService.create(new InvoiceRequest(InvoicePaymentType.CASH, invoice.clientId(), null, null, null, null,
                 List.of(new InvoiceItemRequest(oil.getId(), new BigDecimal("2"), new BigDecimal("300")))));
 
-        assertThat(page("/finance/expenses")).contains("Витрачені матеріали", oil.getName(),
-                "/catalog-items/usage/" + oil.getId());
+        String html = page("/finance/expenses");
+        assertThat(html).contains("Витрачені матеріали", oil.getName(), "/catalog-items/usage/" + oil.getId(),
+                "Закупівля за од.", "Продаж за од.");
+        // 2 шт.: закупівля 2 × 200 = 400, продаж 2 × 300 = 600, різниця 200.
+        String row = html.substring(html.indexOf(oil.getName()));
+        row = row.substring(0, row.indexOf("</tr>"));
+        assertThat(row).contains("200 ₴", "300 ₴", "400 ₴", "600 ₴");
     }
 
     @Test

@@ -38,6 +38,15 @@
                     <div class="field-error" th:if="${#fields.hasErrors('basePrice')}" th:errors="*{basePrice}"></div>
                 </div>
 
+                <div class="field">
+                    <label for="purchasePrice">Ціна закупівлі</label>
+                    <input type="number" step="0.01" min="0" id="purchasePrice" th:field="*{purchasePrice}">
+                    <div class="field-error" th:if="${#fields.hasErrors('purchasePrice')}" th:errors="*{purchasePrice}"></div>
+                    <div class="muted">За скільки купуємо одиницю товару в постачальника</div>
+                </div>
+
+                <div class="field"></div>
+
                 <div class="field field-full">
                     <label for="name">Назва *</label>
                     <input type="text" id="name" th:field="*{name}"

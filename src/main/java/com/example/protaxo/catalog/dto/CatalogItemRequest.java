@@ -12,6 +12,7 @@ public record CatalogItemRequest(
         @NotBlank String name,
         @NotNull @DecimalMin("0.00") BigDecimal basePrice,
         @DecimalMin("0.000") BigDecimal stockQuantity,
-        @NotNull VatRate vatRate
+        @NotNull VatRate vatRate,
+        @DecimalMin("0.00") BigDecimal purchasePrice
 ) {
 }

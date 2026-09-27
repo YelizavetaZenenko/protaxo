@@ -467,6 +467,9 @@ public class FinancePageController {
                 .toList();
         model.addAttribute("materials", materials);
         model.addAttribute("materialsTotal", materials.stream().map(CatalogUsageRow::usedAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
+        model.addAttribute("materialsPurchaseTotal", materials.stream().map(CatalogUsageRow::purchaseAmount)
+                .filter(java.util.Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
+        model.addAttribute("materialsPurchaseComplete", materials.stream().allMatch(CatalogUsageRow::purchaseComplete));
         return "finance/expenses";
     }
 

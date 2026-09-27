@@ -106,7 +106,7 @@ public class CatalogItemPageController {
 
     private CatalogItemRequest toRequest(CatalogItemFormData form) {
         return new CatalogItemRequest(form.getType(), form.getName(), form.getBasePrice(), form.getStockQuantity(),
-                form.getVatRate());
+                form.getVatRate(), form.getPurchasePrice());
     }
 
     private CatalogItemFormData toFormData(CatalogItemResponse response) {
@@ -114,6 +114,7 @@ public class CatalogItemPageController {
         form.setType(response.type());
         form.setName(response.name());
         form.setBasePrice(response.basePrice());
+        form.setPurchasePrice(response.purchasePrice());
         form.setStockQuantity(response.stockQuantity());
         form.setVatRate(response.vatRate());
         return form;

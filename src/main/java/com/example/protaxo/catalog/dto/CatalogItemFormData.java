@@ -20,6 +20,9 @@ public class CatalogItemFormData {
     @NotNull(message = "Вкажіть базову ціну")
     private BigDecimal basePrice;
 
+    @DecimalMin(value = "0.00", message = "Ціна закупівлі має бути невід'ємною")
+    private BigDecimal purchasePrice;
+
     @DecimalMin(value = "0.000", message = "Залишок має бути невід'ємним числом")
     private BigDecimal stockQuantity;
 

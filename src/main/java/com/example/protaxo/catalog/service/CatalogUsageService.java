@@ -41,7 +41,10 @@ public class CatalogUsageService {
                                SUM(ii.amount),
                                COUNT(DISTINCT ii.invoice_id),
                                MAX(ci.stock_quantity),
-                               BOOL_OR(ci.deleted_at IS NOT NULL)
+                               BOOL_OR(ci.deleted_at IS NOT NULL),
+                               SUM(ROUND(ii.quantity * COALESCE(ii.purchase_price, ci.purchase_price), 2)),
+                               BOOL_AND(COALESCE(ii.purchase_price, ci.purchase_price) IS NOT NULL),
+                               MAX(ci.purchase_price)
                         FROM invoice_items ii
                         JOIN invoices i ON i.id = ii.invoice_id
                         LEFT JOIN catalog_items ci ON ci.id = ii.catalog_item_id
@@ -61,19 +64,21 @@ public class CatalogUsageService {
             Long id = ((Number) r[0]).longValue();
             CatalogItemType rowType = r[2] == null ? null : CatalogItemType.valueOf((String) r[2]);
             result.put(id, new CatalogUsageRow(id, (String) r[1], rowType, (BigDecimal) r[3], (BigDecimal) r[4],
+                    (BigDecimal) r[8], Boolean.TRUE.equals(r[9]), (BigDecimal) r[10],
                     ((Number) r[5]).longValue(), adjustments.get(id), (BigDecimal) r[6], Boolean.TRUE.equals(r[7])));
         }
         // Позиції, які за період не продавались, але їх коригували ревізією — теж показати.
         if (!adjustments.isEmpty()) {
             List<?> adjustedOnly = entityManager.createNativeQuery(
-                            "SELECT id, name, type, stock_quantity, deleted_at IS NOT NULL FROM catalog_items WHERE id IN (:ids)")
+                            "SELECT id, name, type, stock_quantity, deleted_at IS NOT NULL, purchase_price FROM catalog_items WHERE id IN (:ids)")
                     .setParameter("ids", adjustments.keySet())
                     .getResultList();
             for (Object row : adjustedOnly) {
                 Object[] r = (Object[]) row;
                 Long id = ((Number) r[0]).longValue();
                 result.putIfAbsent(id, new CatalogUsageRow(id, (String) r[1], CatalogItemType.valueOf((String) r[2]),
-                        BigDecimal.ZERO, BigDecimal.ZERO, 0, adjustments.get(id), (BigDecimal) r[3], Boolean.TRUE.equals(r[4])));
+                        BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, true, (BigDecimal) r[5],
+                        0, adjustments.get(id), (BigDecimal) r[3], Boolean.TRUE.equals(r[4])));
             }
         }
         List<CatalogUsageRow> list = new ArrayList<>(result.values());

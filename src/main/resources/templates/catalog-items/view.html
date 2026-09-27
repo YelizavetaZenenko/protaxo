@@ -29,7 +29,11 @@
                     <div th:text="${catalogItem.name}"></div>
                 </div>
                 <div class="field">
-                    <label>Базова ціна</label>
+                    <label>Ціна закупівлі</label>
+                    <div th:text="${catalogItem.purchasePrice != null ? #numbers.formatDecimal(catalogItem.purchasePrice, 1, 2) : '—'}"></div>
+                </div>
+                <div class="field">
+                    <label>Ціна продажу</label>
                     <div th:text="${#numbers.formatDecimal(catalogItem.basePrice, 1, 2)}"></div>
                 </div>
                 <div class="field">

@@ -36,6 +36,10 @@ public class CatalogItem extends BaseEntity {
     @Column(name = "base_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal basePrice;
 
+    /** Ціна закупівлі за одиницю (як сплачено постачальнику); необов'язкова. */
+    @Column(name = "purchase_price", precision = 12, scale = 2)
+    private BigDecimal purchasePrice;
+
     @Column(name = "stock_quantity", precision = 12, scale = 3)
     private BigDecimal stockQuantity;
 

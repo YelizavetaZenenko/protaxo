@@ -10,7 +10,8 @@ public record CatalogItemResponse(
         String name,
         BigDecimal basePrice,
         BigDecimal stockQuantity,
-        VatRate vatRate
+        VatRate vatRate,
+        BigDecimal purchasePrice
 ) {
 
     /** "5" instead of "5.000", "2.5" instead of "2.500" — same pattern as BillItemRow#quantityDisplay. */
