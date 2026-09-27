@@ -1,6 +1,9 @@
 package com.example.protaxo.finance.web;
 
 import com.example.protaxo.client.dto.ClientResponse;
+import com.example.protaxo.catalog.dto.CatalogUsageRow;
+import com.example.protaxo.catalog.entity.CatalogItemType;
+import com.example.protaxo.catalog.service.CatalogUsageService;
 import com.example.protaxo.client.service.ClientService;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.finance.dto.FinanceForms;
@@ -76,6 +79,7 @@ public class FinancePageController {
     private final InvoiceService invoiceService;
     private final ClientService clientService;
     private final FinanceSettingsService settingsService;
+    private final CatalogUsageService catalogUsageService;
 
     // ================================================================== Панель бухгалтера
 
@@ -456,6 +460,13 @@ public class FinancePageController {
         LocalDate periodTo = (LocalDate) model.getAttribute("to");
         model.addAttribute("expenses", queryService.search(startOf(periodFrom), startOf(periodTo.plusDays(1)),
                 List.of(FinanceOperationType.EXPENSE), null, true));
+        // Витрачені матеріали — товари зі складу, що пішли в наряди за період (той самий розрахунок,
+        // що й звіт «Витрата товарів»); позиції лише з коригуванням ревізією тут не показуються.
+        List<CatalogUsageRow> materials = catalogUsageService.usage(periodFrom, periodTo, CatalogItemType.MATERIAL).stream()
+                .filter(r -> r.usedQuantity().signum() > 0)
+                .toList();
+        model.addAttribute("materials", materials);
+        model.addAttribute("materialsTotal", materials.stream().map(CatalogUsageRow::usedAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
         return "finance/expenses";
     }
 

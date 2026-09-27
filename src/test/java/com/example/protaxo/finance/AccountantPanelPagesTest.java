@@ -101,6 +101,18 @@ class AccountantPanelPagesTest {
     }
 
     @Test
+    void expensesTabListsMaterialsUsedInInvoices() throws Exception {
+        CatalogItem oil = catalogItemRepository.save(CatalogItem.builder()
+                .type(CatalogItemType.MATERIAL).name("Олива " + UUID.randomUUID())
+                .basePrice(new BigDecimal("300")).stockQuantity(new BigDecimal("10")).vatRate(VatRate.VAT_20).build());
+        invoiceService.create(new InvoiceRequest(InvoicePaymentType.CASH, invoice.clientId(), null, null, null, null,
+                List.of(new InvoiceItemRequest(oil.getId(), new BigDecimal("2"), new BigDecimal("300")))));
+
+        assertThat(page("/finance/expenses")).contains("Витрачені матеріали", oil.getName(),
+                "/catalog-items/usage/" + oil.getId());
+    }
+
+    @Test
     void actStatusChangesFromDocumentsTab() throws Exception {
         mvc.perform(post("/finance/documents/" + invoice.id() + "/act-status").session(session).with(csrf())
                         .param("status", "SIGNED").param("returnTo", "/finance/documents?pendingOnly=true"))

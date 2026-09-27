@@ -62,6 +62,52 @@
             <p class="acc-note">Внутрішній запис витрати не підтверджує її податкове врахування чи право на податковий кредит.</p>
         </section>
 
+        <section class="acc-card">
+            <div class="acc-card-head">
+                <h2>Витрачені матеріали</h2>
+                <div class="acc-card-head-actions">
+                    <span class="acc-card-meta" th:text="${@financeFormat.period(from, to)}"></span>
+                    <a class="btn-outline btn-sm" th:href="@{/catalog-items/usage(from=${from}, to=${to}, type='MATERIAL')}">Повний звіт</a>
+                </div>
+            </div>
+            <div class="table-scroll">
+                <table class="acc-table">
+                    <thead>
+                    <tr>
+                        <th>Матеріал</th>
+                        <th class="money">Кількість</th>
+                        <th class="money">Нарядів</th>
+                        <th class="money">Сума в нарядах</th>
+                        <th class="money">Залишок</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="m : ${materials}">
+                        <td>
+                            <a class="acc-cell-main" th:href="@{/catalog-items/usage/{id}(id=${m.catalogItemId}, from=${from}, to=${to})}" th:text="${m.name}"></a>
+                            <span class="muted" th:if="${m.deleted}"> (видалено з каталогу)</span>
+                        </td>
+                        <td class="money" th:text="${T(com.example.protaxo.catalog.dto.CatalogUsageRow).qty(m.usedQuantity)}"></td>
+                        <td class="money" th:text="${m.invoiceCount}"></td>
+                        <td class="money" th:text="${@financeFormat.money(m.usedAmount)}"></td>
+                        <td class="money" th:text="${T(com.example.protaxo.catalog.dto.CatalogUsageRow).qty(m.currentStock)}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(materials)}">
+                        <td colspan="5" class="acc-empty">За цей період матеріали в наряди не списувались</td>
+                    </tr>
+                    </tbody>
+                    <tfoot th:unless="${#lists.isEmpty(materials)}">
+                    <tr>
+                        <td colspan="3">Разом</td>
+                        <td class="money" th:text="${@financeFormat.money(materialsTotal)}"></td>
+                        <td></td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <p class="acc-note">Кількість — скільки матеріалу пішло в наряди за період; сума — за цінами продажу в нарядах (з ПДВ), не собівартість.</p>
+        </section>
+
         <div th:replace="~{fragments/finance :: footer}"></div>
     </div>
 

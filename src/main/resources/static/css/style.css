@@ -1829,6 +1829,11 @@ a.acc-card-meta:hover {
     font-family: inherit;
 }
 
+.acc-table tfoot td {
+    font-weight: 600;
+    border-top: 1px solid var(--border);
+}
+
 .acc-empty {
     color: var(--muted);
     text-align: center;
