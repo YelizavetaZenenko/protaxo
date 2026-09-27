@@ -21,7 +21,7 @@
 
             <form th:object="${invoice}"
                   th:action="${editId} != null ? @{/invoices/{id}/edit(id=${editId})} : @{/invoices}"
-                  method="post" class="form-grid">
+                  method="post" class="form-grid invoice-form">
 
                 <div class="field">
                     <label>Номер</label>
@@ -50,7 +50,8 @@
 
                 <div class="field">
                     <label>Строк оплати</label>
-                    <div>15 днів від дати наряду</div>
+                    <div><strong th:text="${#temporals.format(paymentDueDate, 'dd.MM.yyyy')}"></strong>
+                        <span class="muted">(15 днів від дати наряду)</span></div>
                 </div>
 
                 <div class="field combobox-field">

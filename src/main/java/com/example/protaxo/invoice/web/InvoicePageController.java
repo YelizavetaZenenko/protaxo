@@ -338,11 +338,18 @@ public class InvoicePageController {
                 item.discountPercent(), item.amountWithoutVat(), item.vatRate().getLabel(), item.vatAmount(), item.amount());
     }
 
+    /** Строк оплати, який отримає наряд після збереження: дата наряду (для нового — сьогодні) + 15 днів. */
+    private LocalDate paymentDueDate(Long editId) {
+        LocalDate documentDay = editId == null ? LocalDate.now() : invoiceService.findById(editId).documentDate().toLocalDate();
+        return documentDay.plusDays(InvoiceService.PAYMENT_TERM_DAYS);
+    }
+
     private String resolveClientName(Long clientId) {
         return clientId == null ? null : clientService.findById(clientId).name();
     }
 
     private void addReferenceData(Model model) {
+        model.addAttribute("paymentDueDate", paymentDueDate((Long) model.getAttribute("editId")));
         List<CatalogItemResponse> catalogItems = catalogItemService.findAll();
         model.addAttribute("clients", clientService.findAll());
         model.addAttribute("paymentTypes", InvoicePaymentType.values());

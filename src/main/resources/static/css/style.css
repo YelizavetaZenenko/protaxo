@@ -777,19 +777,36 @@ td.actions-cell > * + * {
 }
 
 /* Числа в рядках наряду мають бути видно повністю (ціна з ПДВ, знижка), а назва позиції
-   забирає решту ширини. */
+   забирає решту ширини. Коли вікно звужують бокові панелі чернеток, таблиця прокручується
+   всередині картки, а не вилазить за її межі. */
+.items-section {
+    overflow-x: auto;
+}
+
+/* Форма наряду займає всю ширину картки (звичайна .form-grid обмежена 640px — таблиці
+   позицій там тісно). min-width: 0 — щоб елементи сітки могли стискатися, інакше таблиця
+   розпирає сітку за межі картки. */
+.invoice-form {
+    max-width: none;
+}
+
+.invoice-form > *,
+.invoice-form .doc-tab-panel > * {
+    min-width: 0;
+}
+
 .items-table .qty-input,
 .items-table .discount-input {
-    min-width: 5.5rem;
+    min-width: 4.5rem;
 }
 
 .items-table .price-input {
-    min-width: 8rem;
+    min-width: 7rem;
 }
 
 .items-table .catalog-select {
     width: 100%;
-    min-width: 14rem;
+    min-width: 12rem;
 }
 
 .items-table .amount-cell {
