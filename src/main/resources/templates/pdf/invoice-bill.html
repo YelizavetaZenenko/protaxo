@@ -134,6 +134,7 @@
             <th>Кіл-сть</th>
             <th>Од.</th>
             <th>Ціна</th>
+            <th th:if="${hasDiscount}">Знижка</th>
             <th>Сума без ПДВ</th>
             <th>Ставка ПДВ</th>
             <th>ПДВ</th>
@@ -147,6 +148,7 @@
             <td class="num" th:text="${row.quantityDisplay()}">1</td>
             <td class="center" th:text="${row.unit}">шт.</td>
             <td class="num" th:text="${#numbers.formatDecimal(row.price, 1, 2)}">0,00</td>
+            <td class="center" th:if="${hasDiscount}" th:text="${row.discountDisplay()}"></td>
             <td class="num" th:text="${#numbers.formatDecimal(row.amountWithoutVat, 1, 2)}">0,00</td>
             <td class="center" th:text="${row.vatRateLabel}">20%</td>
             <td class="num" th:text="${#numbers.formatDecimal(row.vatAmount, 1, 2)}">0,00</td>

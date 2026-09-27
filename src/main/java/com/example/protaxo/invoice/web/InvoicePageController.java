@@ -168,7 +168,9 @@ public class InvoicePageController {
 
     @GetMapping("/new")
     public String createForm(Model model) {
-        model.addAttribute("invoice", new InvoiceFormData());
+        InvoiceFormData form = new InvoiceFormData();
+        form.setPaymentDueDate(LocalDate.now().plusDays(InvoiceService.DEFAULT_PAYMENT_TERM_DAYS));
+        model.addAttribute("invoice", form);
         model.addAttribute("materialRows", List.of());
         model.addAttribute("serviceRows", List.of());
         addReferenceData(model);
@@ -281,6 +283,7 @@ public class InvoicePageController {
         context.setVariable("totalAmount", totalAmount);
         context.setVariable("totalVat", totalVat);
         context.setVariable("totalWithoutVat", totalWithoutVat);
+        context.setVariable("hasDiscount", rows.stream().anyMatch(r -> !r.discountDisplay().isEmpty()));
         context.setVariable("amountInWords", amountInWords);
         context.setVariable("contractNumber", contractNumber);
         byte[] pdf = pdfRenderService.render("invoice-bill", context);
@@ -312,6 +315,7 @@ public class InvoicePageController {
         context.setVariable("rows", rows);
         context.setVariable("totalAmount", totalAmount);
         context.setVariable("amountInWords", amountInWords);
+        context.setVariable("hasDiscount", rows.stream().anyMatch(r -> !r.discountDisplay().isEmpty()));
         byte[] pdf = pdfRenderService.render("act", context);
         invoiceService.markActPrinted(id);
 
@@ -324,7 +328,8 @@ public class InvoicePageController {
 
     private ActItemRow toActItemRow(InvoiceItemResponse item) {
         String unit = item.catalogItemType() == CatalogItemType.SERVICE ? "послуга" : "шт.";
-        return new ActItemRow(item.lineNumber(), item.itemName(), unit, item.quantity(), item.price(), item.amount());
+        return new ActItemRow(item.lineNumber(), item.itemName(), unit, item.quantity(), item.price(),
+                item.discountPercent(), item.amount());
     }
 
     private BillItemRow toBillItemRow(InvoiceItemResponse item) {
@@ -332,7 +337,7 @@ public class InvoicePageController {
         // ПДВ рахується й зберігається під час збереження наряду (InvoiceService.applyItems) —
         // PDF лише показує збережені суми, щоб документ збігався з обліком.
         return new BillItemRow(item.lineNumber(), item.itemName(), unit, item.quantity(), item.price(),
-                item.amountWithoutVat(), item.vatRate().getLabel(), item.vatAmount(), item.amount());
+                item.discountPercent(), item.amountWithoutVat(), item.vatRate().getLabel(), item.vatAmount(), item.amount());
     }
 
     private String resolveClientName(Long clientId) {
@@ -384,7 +389,7 @@ public class InvoicePageController {
 
     private InvoiceRequest toRequest(InvoiceFormData form) {
         List<InvoiceItemRequest> items = form.getItems() == null ? List.of() : form.getItems().stream()
-                .map(i -> new InvoiceItemRequest(i.getCatalogItemId(), i.getQuantity(), i.getPrice()))
+                .map(i -> new InvoiceItemRequest(i.getCatalogItemId(), i.getQuantity(), i.getPrice(), i.getDiscountPercent()))
                 .toList();
         return new InvoiceRequest(form.getPaymentType(), form.getClientId(),
                 form.getVehicleName(), form.getDriverName(), form.getRepairResponsibleName(),
@@ -406,6 +411,8 @@ public class InvoicePageController {
                     itemForm.setCatalogItemId(i.catalogItemId());
                     itemForm.setQuantity(i.quantity());
                     itemForm.setPrice(i.price());
+                    itemForm.setDiscountPercent(i.discountPercent() == null || i.discountPercent().signum() == 0
+                            ? null : i.discountPercent().stripTrailingZeros());
                     return itemForm;
                 })
                 .collect(Collectors.toCollection(ArrayList::new)));

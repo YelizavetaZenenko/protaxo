@@ -11,4 +11,7 @@ public class InvoiceItemFormData {
     private BigDecimal quantity;
 
     private BigDecimal price;
+
+    /** Знижка, % — порожнє поле означає без знижки. */
+    private BigDecimal discountPercent;
 }

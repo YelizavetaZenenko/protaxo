@@ -12,6 +12,7 @@ public record InvoiceItemResponse(
         String itemName,
         BigDecimal quantity,
         BigDecimal price,
+        BigDecimal discountPercent,
         BigDecimal amount,
         VatRate vatRate,
         BigDecimal vatAmount,

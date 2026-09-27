@@ -38,6 +38,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class InvoiceService {
 
+    /** Строк оплати за замовчуванням — стільки днів від дати документа. */
+    public static final int DEFAULT_PAYMENT_TERM_DAYS = 15;
+
+    private static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
+
     private final InvoiceRepository invoiceRepository;
     private final ClientRepository clientRepository;
     private final CatalogItemRepository catalogItemRepository;
@@ -79,6 +84,9 @@ public class InvoiceService {
         invoice.setDocumentDate(LocalDateTime.now());
         invoice.setClient(getClientOrThrow(request.clientId()));
         applyNaryadFields(invoice, request);
+        if (invoice.getPaymentDueDate() == null) {
+            invoice.setPaymentDueDate(invoice.getDocumentDate().toLocalDate().plusDays(DEFAULT_PAYMENT_TERM_DAYS));
+        }
         applyItems(invoice, request.items());
         Invoice saved = invoiceRepository.save(invoice);
         auditLogService.record(AuditAction.CREATE, "Invoice", saved.getId());
@@ -185,7 +193,11 @@ public class InvoiceService {
             item.setItemName(catalogItem.getName());
             item.setQuantity(itemRequest.quantity());
             item.setPrice(itemRequest.price());
-            BigDecimal amount = itemRequest.quantity().multiply(itemRequest.price()).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal discountPercent = discountPercentOf(itemRequest);
+            item.setDiscountPercent(discountPercent);
+            BigDecimal amount = itemRequest.quantity().multiply(itemRequest.price())
+                    .multiply(ONE_HUNDRED.subtract(discountPercent))
+                    .divide(ONE_HUNDRED, 2, RoundingMode.HALF_UP);
             VatRate vatRate = catalogItem.getVatRate() == null ? VatRate.VAT_20 : catalogItem.getVatRate();
             BigDecimal vatAmount = vatRate.vatFrom(amount);
             item.setAmount(amount);
@@ -196,6 +208,17 @@ public class InvoiceService {
 
             deductStock(catalogItem, itemRequest.quantity());
         }
+    }
+
+    private BigDecimal discountPercentOf(InvoiceItemRequest itemRequest) {
+        BigDecimal discount = itemRequest.discountPercent();
+        if (discount == null) {
+            return BigDecimal.ZERO.setScale(2);
+        }
+        if (discount.signum() < 0 || discount.compareTo(ONE_HUNDRED) > 0) {
+            throw new BusinessRuleException("Знижка має бути від 0 до 100%%, вказано %s%%".formatted(display(discount)));
+        }
+        return discount.setScale(2, RoundingMode.HALF_UP);
     }
 
     /** Selling a line item takes its quantity off stockQuantity - only for catalog items that

@@ -51,7 +51,11 @@ public class InvoiceItem {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
-    /** Сума рядка З ПДВ (ціна вводиться з ПДВ). */
+    /** Знижка на рядок, % (0–100). */
+    @Column(name = "discount_percent", nullable = false, precision = 5, scale = 2)
+    private BigDecimal discountPercent;
+
+    /** Сума рядка З ПДВ після знижки (ціна вводиться з ПДВ). */
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal amount;
 

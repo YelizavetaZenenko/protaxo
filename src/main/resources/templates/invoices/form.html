@@ -51,7 +51,7 @@
                 <div class="field">
                     <label for="paymentDueDate">Строк оплати</label>
                     <input type="date" id="paymentDueDate" th:field="*{paymentDueDate}">
-                    <div class="muted">Після цієї дати неоплачений залишок вважається простроченим</div>
+                    <div class="muted">За замовчуванням — 15 днів від дати наряду. Після цієї дати неоплачений залишок вважається простроченим</div>
                 </div>
 
                 <div class="field combobox-field">
@@ -133,9 +133,11 @@
                             <tr>
                                 <th style="width:3%">№</th>
                                 <th>Номенклатура товару</th>
-                                <th style="width:12%">Кількість</th>
-                                <th style="width:14%">Ціна</th>
-                                <th style="width:14%">Вартість</th>
+                                <th style="width:10%">Кількість</th>
+                                <th style="width:12%">Ціна з ПДВ</th>
+                                <th style="width:9%">Знижка, %</th>
+                                <th style="width:11%">ПДВ</th>
+                                <th style="width:12%">Вартість</th>
                                 <th style="width:3%"></th>
                             </tr>
                             </thead>
@@ -146,18 +148,21 @@
                                     <select th:field="*{items[__${idx}__].catalogItemId}" class="catalog-select">
                                         <option value="">— оберіть товар —</option>
                                         <option th:each="ci : ${materialCatalogItems}" th:value="${ci.id}"
-                                                th:attr="data-price=${ci.basePrice}" th:text="${ci.name}"></option>
+                                                th:attr="data-price=${ci.basePrice},data-vat=${ci.vatRate != null ? ci.vatRate.percent : 20}" th:text="${ci.name}"></option>
                                     </select>
                                 </td>
                                 <td><input type="number" step="0.001" min="0" th:field="*{items[__${idx}__].quantity}" class="qty-input"></td>
                                 <td><input type="number" step="0.01" min="0" th:field="*{items[__${idx}__].price}" class="price-input"></td>
+                                <td><input type="number" step="0.01" min="0" max="100" th:field="*{items[__${idx}__].discountPercent}" class="discount-input" placeholder="0"></td>
+                                <td class="amount-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
                                 <td class="amount-cell"><span class="amount-display">0.00</span></td>
                                 <td><button type="button" class="remove-row-btn" title="Видалити рядок">✕</button></td>
                             </tr>
                             </tbody>
                             <tfoot>
                             <tr>
-                                <td colspan="4">Разом за товари</td>
+                                <td colspan="5">Разом за товари</td>
+                                <td class="amount-cell" id="materialsVatSubtotal">0.00</td>
                                 <td class="amount-cell" id="materialsSubtotal">0.00</td>
                                 <td></td>
                             </tr>
@@ -174,9 +179,11 @@
                             <tr>
                                 <th style="width:3%">№</th>
                                 <th>Автопослуга</th>
-                                <th style="width:12%">Кількість</th>
-                                <th style="width:14%">Ціна</th>
-                                <th style="width:14%">Вартість</th>
+                                <th style="width:10%">Кількість</th>
+                                <th style="width:12%">Ціна з ПДВ</th>
+                                <th style="width:9%">Знижка, %</th>
+                                <th style="width:11%">ПДВ</th>
+                                <th style="width:12%">Вартість</th>
                                 <th style="width:3%"></th>
                             </tr>
                             </thead>
@@ -187,18 +194,21 @@
                                     <select th:field="*{items[__${idx}__].catalogItemId}" class="catalog-select">
                                         <option value="">— оберіть послугу —</option>
                                         <option th:each="ci : ${serviceCatalogItems}" th:value="${ci.id}"
-                                                th:attr="data-price=${ci.basePrice}" th:text="${ci.name}"></option>
+                                                th:attr="data-price=${ci.basePrice},data-vat=${ci.vatRate != null ? ci.vatRate.percent : 20}" th:text="${ci.name}"></option>
                                     </select>
                                 </td>
                                 <td><input type="number" step="0.001" min="0" th:field="*{items[__${idx}__].quantity}" class="qty-input"></td>
                                 <td><input type="number" step="0.01" min="0" th:field="*{items[__${idx}__].price}" class="price-input"></td>
+                                <td><input type="number" step="0.01" min="0" max="100" th:field="*{items[__${idx}__].discountPercent}" class="discount-input" placeholder="0"></td>
+                                <td class="amount-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
                                 <td class="amount-cell"><span class="amount-display">0.00</span></td>
                                 <td><button type="button" class="remove-row-btn" title="Видалити рядок">✕</button></td>
                             </tr>
                             </tbody>
                             <tfoot>
                             <tr>
-                                <td colspan="4">Разом за послуги</td>
+                                <td colspan="5">Разом за послуги</td>
+                                <td class="amount-cell" id="servicesVatSubtotal">0.00</td>
                                 <td class="amount-cell" id="servicesSubtotal">0.00</td>
                                 <td></td>
                             </tr>
@@ -208,7 +218,8 @@
                     </div>
                 </div>
 
-                <div class="field field-full grand-total-row">Загалом: <span id="grandTotal">0.00</span></div>
+                <div class="field field-full grand-total-row">Загалом: <span id="grandTotal">0.00</span>
+                    <span class="muted">(у т.ч. ПДВ <span id="grandVat">0.00</span>, без ПДВ <span id="grandWithoutVat">0.00</span>)</span></div>
 
                 <div class="form-actions">
                     <button type="submit" class="btn" id="saveInvoiceBtn">Зберегти</button>
@@ -396,11 +407,13 @@
                 <select name="items[__INDEX__].catalogItemId" class="catalog-select">
                     <option value="">— оберіть товар —</option>
                     <option th:each="ci : ${materialCatalogItems}" th:value="${ci.id}"
-                            th:attr="data-price=${ci.basePrice}" th:text="${ci.name}"></option>
+                            th:attr="data-price=${ci.basePrice},data-vat=${ci.vatRate != null ? ci.vatRate.percent : 20}" th:text="${ci.name}"></option>
                 </select>
             </td>
             <td><input type="number" step="0.001" min="0" name="items[__INDEX__].quantity" class="qty-input"></td>
             <td><input type="number" step="0.01" min="0" name="items[__INDEX__].price" class="price-input"></td>
+            <td><input type="number" step="0.01" min="0" max="100" name="items[__INDEX__].discountPercent" class="discount-input" placeholder="0"></td>
+            <td class="amount-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
             <td class="amount-cell"><span class="amount-display">0.00</span></td>
             <td><button type="button" class="remove-row-btn" title="Видалити рядок">✕</button></td>
         </tr>
@@ -413,11 +426,13 @@
                 <select name="items[__INDEX__].catalogItemId" class="catalog-select">
                     <option value="">— оберіть послугу —</option>
                     <option th:each="ci : ${serviceCatalogItems}" th:value="${ci.id}"
-                            th:attr="data-price=${ci.basePrice}" th:text="${ci.name}"></option>
+                            th:attr="data-price=${ci.basePrice},data-vat=${ci.vatRate != null ? ci.vatRate.percent : 20}" th:text="${ci.name}"></option>
                 </select>
             </td>
             <td><input type="number" step="0.001" min="0" name="items[__INDEX__].quantity" class="qty-input"></td>
             <td><input type="number" step="0.01" min="0" name="items[__INDEX__].price" class="price-input"></td>
+            <td><input type="number" step="0.01" min="0" max="100" name="items[__INDEX__].discountPercent" class="discount-input" placeholder="0"></td>
+            <td class="amount-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
             <td class="amount-cell"><span class="amount-display">0.00</span></td>
             <td><button type="button" class="remove-row-btn" title="Видалити рядок">✕</button></td>
         </tr>
@@ -443,24 +458,44 @@
                 return isNaN(n) ? 0 : n;
             }
 
-            function recalcTable(tbody, subtotalEl) {
+            function round2(n) {
+                return Math.round((n + Number.EPSILON) * 100) / 100;
+            }
+
+            // Ціна вводиться з ПДВ; сума рядка = к-сть × ціна × (1 − знижка%), ПДВ виділяється
+            // з неї за ставкою позиції каталогу — так само, як InvoiceService.applyItems.
+            function recalcTable(tbody, subtotalEl, vatSubtotalEl) {
                 var total = 0;
+                var totalVat = 0;
                 Array.prototype.forEach.call(tbody.querySelectorAll('.item-row'), function (row, idx) {
                     row.querySelector('.row-index').textContent = idx + 1;
                     var qty = toNumber(row.querySelector('.qty-input').value);
                     var price = toNumber(row.querySelector('.price-input').value);
-                    var amount = qty * price;
+                    var discount = Math.min(Math.max(toNumber(row.querySelector('.discount-input').value), 0), 100);
+                    var amount = round2(qty * price * (100 - discount) / 100);
+                    var option = row.querySelector('.catalog-select').selectedOptions[0];
+                    var hasItem = option && option.value;
+                    var vatPercent = hasItem && option.dataset.vat !== undefined ? toNumber(option.dataset.vat) : 20;
+                    var vat = round2(amount * vatPercent / (100 + vatPercent));
                     row.querySelector('.amount-display').textContent = amount.toFixed(2);
+                    row.querySelector('.vat-display').textContent = vat.toFixed(2);
+                    row.querySelector('.vat-rate-label').textContent = hasItem ? vatPercent + '%' : '';
                     total += amount;
+                    totalVat += vat;
                 });
                 subtotalEl.textContent = total.toFixed(2);
-                return total;
+                vatSubtotalEl.textContent = totalVat.toFixed(2);
+                return { total: total, vat: totalVat };
             }
 
             function recalcAll() {
-                var materialsTotal = recalcTable(materialsBody, materialsSubtotalEl);
-                var servicesTotal = recalcTable(servicesBody, servicesSubtotalEl);
-                grandTotalEl.textContent = (materialsTotal + servicesTotal).toFixed(2);
+                var materials = recalcTable(materialsBody, materialsSubtotalEl, document.getElementById('materialsVatSubtotal'));
+                var services = recalcTable(servicesBody, servicesSubtotalEl, document.getElementById('servicesVatSubtotal'));
+                var total = materials.total + services.total;
+                var vat = materials.vat + services.vat;
+                grandTotalEl.textContent = total.toFixed(2);
+                document.getElementById('grandVat').textContent = vat.toFixed(2);
+                document.getElementById('grandWithoutVat').textContent = (total - vat).toFixed(2);
             }
 
             function renumberNames() {
@@ -484,7 +519,8 @@
             }
 
             document.body.addEventListener('input', function (e) {
-                if (e.target.classList.contains('qty-input') || e.target.classList.contains('price-input')) {
+                if (e.target.classList.contains('qty-input') || e.target.classList.contains('price-input')
+                        || e.target.classList.contains('discount-input')) {
                     recalcAll();
                 }
             });
@@ -1169,7 +1205,8 @@
                         items.push({
                             catalogItemId: row.querySelector('.catalog-select').value,
                             quantity: row.querySelector('.qty-input').value,
-                            price: row.querySelector('.price-input').value
+                            price: row.querySelector('.price-input').value,
+                            discountPercent: row.querySelector('.discount-input').value
                         });
                     });
                     return {
@@ -1207,6 +1244,7 @@
                         row.querySelector('.catalog-select').value = item.catalogItemId;
                         row.querySelector('.qty-input').value = item.quantity || '';
                         row.querySelector('.price-input').value = item.price || '';
+                        row.querySelector('.discount-input').value = item.discountPercent || '';
                     });
                     recalcAll();
                 }
