@@ -786,6 +786,11 @@ td.actions-cell > * + * {
     text-align: right;
 }
 
+/* Заголовки числових колонок в один рядок («Знижка, %» не розривається). */
+.items-table th.num {
+    white-space: nowrap;
+}
+
 .items-table .qty-input,
 .items-table .price-input,
 .items-table .discount-input {
