@@ -162,16 +162,18 @@ a {
 }
 
 .container {
-    max-width: 960px;
+    --container-max: 960px;
+    max-width: var(--container-max);
     margin: 2rem auto;
     padding: 0 1.5rem;
+    transition: max-width 0.2s ease;
 }
 
 /* Wider variant for pages whose table has too many columns to fit the
    default 960px comfortably (e.g. vehicles: ID, contractor, VIN, chassis
    number, plate, make/model, year, actions). */
 .container-wide {
-    max-width: 1280px;
+    --container-max: 1280px;
 }
 
 .card {
@@ -1143,12 +1145,12 @@ a.doc-tab-btn {
     color: var(--danger);
 }
 
-body.has-invoice-drafts-sidebar .container {
-    margin-left: calc(220px + 2rem);
-}
-
+/* Поки відкрита хоч одна панель чернеток, вікно звужується симетрично (місце під панель
+   з кожного боку) і лишається по центру екрана. Раніше відступ давався лише з боку відкритої
+   панелі, і при відкритті/закритті панелей вікно стрибало ліворуч-праворуч. */
+body.has-invoice-drafts-sidebar .container,
 body.has-protocol-drafts-sidebar .container {
-    margin-right: calc(220px + 2rem);
+    max-width: min(var(--container-max), max(30rem, calc(100% - 2 * (220px + 1rem))));
 }
 
 .modal-wide {
@@ -1412,7 +1414,7 @@ th.money {
    без загальної картки: шапка на фоні, під нею картки-показники й білі блоки. */
 
 .acc-page {
-    max-width: 1080px;
+    --container-max: 1080px;
 }
 
 .acc-header {
