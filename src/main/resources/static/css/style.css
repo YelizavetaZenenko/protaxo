@@ -778,6 +778,38 @@ td.actions-cell > * + * {
     vertical-align: middle;
 }
 
+/* Числові колонки вирівняні праворуч — і заголовок, і значення (у тому числі в полях
+   введення), щоб підпис стояв точно над числом. */
+.items-table th.num,
+.items-table td.num,
+.items-table .amount-cell {
+    text-align: right;
+}
+
+.items-table .qty-input,
+.items-table .price-input,
+.items-table .discount-input {
+    text-align: right;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.items-table .qty-input::-webkit-inner-spin-button,
+.items-table .qty-input::-webkit-outer-spin-button,
+.items-table .price-input::-webkit-inner-spin-button,
+.items-table .price-input::-webkit-outer-spin-button,
+.items-table .discount-input::-webkit-inner-spin-button,
+.items-table .discount-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Над полем введення заголовок зсунутий на внутрішній відступ поля + рамку,
+   щоб його правий край збігався з правим краєм числа в полі. */
+.items-table th.num-input {
+    padding-right: calc(0.75rem + 0.5rem + 1px);
+}
+
 /* Числа в рядках наряду мають бути видно повністю (ціна з ПДВ, знижка), а назва позиції
    забирає решту ширини. Коли вікно звужують бокові панелі чернеток, таблиця прокручується
    всередині картки, а не вилазить за її межі. */

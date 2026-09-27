@@ -83,12 +83,12 @@
                     <th style="width:5%">№</th>
                     <th>Номенклатура</th>
                     <th style="width:14%">Тип</th>
-                    <th style="width:9%">Кількість</th>
-                    <th style="width:11%">Ціна з ПДВ</th>
-                    <th style="width:8%">Знижка</th>
-                    <th style="width:11%">Без ПДВ</th>
-                    <th style="width:11%">ПДВ</th>
-                    <th style="width:11%">Вартість</th>
+                    <th class="num" style="width:9%">Кількість</th>
+                    <th class="num" style="width:11%">Ціна з ПДВ</th>
+                    <th class="num" style="width:8%">Знижка</th>
+                    <th class="num" style="width:11%">Без ПДВ</th>
+                    <th class="num" style="width:11%">ПДВ</th>
+                    <th class="num" style="width:11%">Вартість</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -96,15 +96,15 @@
                     <td th:text="${item.lineNumber}"></td>
                     <td th:text="${item.itemName}"></td>
                     <td th:text="${item.catalogItemType == T(com.example.protaxo.catalog.entity.CatalogItemType).SERVICE ? 'Послуга' : 'Товар'}"></td>
-                    <td th:text="${#numbers.formatDecimal(item.quantity, 1, 3)}"></td>
-                    <td th:text="${#numbers.formatDecimal(item.price, 1, 2)}"></td>
-                    <td th:text="${item.discountPercent == null or item.discountPercent.signum() == 0 ? '—' : item.discountPercent.stripTrailingZeros().toPlainString() + '%'}"></td>
-                    <td th:text="${#numbers.formatDecimal(item.amountWithoutVat, 1, 2)}"></td>
-                    <td>
+                    <td class="num" th:text="${#numbers.formatDecimal(item.quantity, 1, 3)}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(item.price, 1, 2)}"></td>
+                    <td class="num" th:text="${item.discountPercent == null or item.discountPercent.signum() == 0 ? '—' : item.discountPercent.stripTrailingZeros().toPlainString() + '%'}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(item.amountWithoutVat, 1, 2)}"></td>
+                    <td class="num">
                         <span th:text="${#numbers.formatDecimal(item.vatAmount, 1, 2)}"></span>
                         <span class="muted" th:text="${item.vatRate.label}"></span>
                     </td>
-                    <td th:text="${#numbers.formatDecimal(item.amount, 1, 2)}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(item.amount, 1, 2)}"></td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(invoice.items)}">
                     <td colspan="9">Позицій ще немає</td>
@@ -113,9 +113,9 @@
                 <tfoot>
                 <tr>
                     <td colspan="6">Загалом</td>
-                    <td th:text="${#numbers.formatDecimal(invoice.totalWithoutVat, 1, 2)}"></td>
-                    <td th:text="${#numbers.formatDecimal(invoice.totalVat, 1, 2)}"></td>
-                    <td th:text="${#numbers.formatDecimal(invoice.totalAmount, 1, 2)}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(invoice.totalWithoutVat, 1, 2)}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(invoice.totalVat, 1, 2)}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(invoice.totalAmount, 1, 2)}"></td>
                 </tr>
                 </tfoot>
             </table>
