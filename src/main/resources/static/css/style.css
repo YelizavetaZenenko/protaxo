@@ -162,16 +162,15 @@ a {
 }
 
 .container {
-    --container-max: 960px;
+    --container-max: 1280px;
     max-width: var(--container-max);
     margin: 2rem auto;
     padding: 0 1.5rem;
     transition: max-width 0.2s ease;
 }
 
-/* Wider variant for pages whose table has too many columns to fit the
-   default 960px comfortably (e.g. vehicles: ID, contractor, VIN, chassis
-   number, plate, make/model, year, actions). */
+/* Every page uses the same wide white card as the contractors list;
+   kept as an explicit class for pages that must stay wide. */
 .container-wide {
     --container-max: 1280px;
 }
@@ -1478,7 +1477,7 @@ th.money {
    без загальної картки: шапка на фоні, під нею картки-показники й білі блоки. */
 
 .acc-page {
-    --container-max: 1080px;
+    --container-max: 1280px;
 }
 
 .acc-header {
