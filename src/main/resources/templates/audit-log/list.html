@@ -13,22 +13,79 @@
         <div class="card">
             <div class="toolbar">
                 <h1>Журнал дій</h1>
+                <span class="muted" th:text="'Записів: ' + ${totalElements}"></span>
             </div>
+
+            <div class="audit-history-banner" th:if="${historyOf != null}">
+                Історія змін:
+                <strong th:text="${@auditLogService.translateEntityType(filter.entityType)} + ' — ' + ${historyOf.label}"></strong>
+                <a th:if="${historyOf.url != null}" class="link-btn" th:href="@{${historyOf.url}}">Відкрити</a>
+                <a class="link-btn" th:href="@{/audit-log}">Увесь журнал</a>
+            </div>
+
+            <form th:action="@{/audit-log}" method="get" class="filter-bar filter-bar--wrap">
+                <input type="hidden" name="entityId" th:if="${filter.entityId != null}" th:value="${filter.entityId}">
+                <div class="field">
+                    <label for="filterUser">Користувач</label>
+                    <select id="filterUser" name="username">
+                        <option value="">Усі</option>
+                        <option th:each="u : ${usernames}" th:value="${u}"
+                                th:text="${userNames[u] != null} ? ${userNames[u]} + ' (' + ${u} + ')' : ${u}"
+                                th:selected="${u == filter.username}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="filterAction">Дія</label>
+                    <select id="filterAction" name="action">
+                        <option value="">Усі</option>
+                        <option th:each="a : ${actions}" th:value="${a}" th:text="${@auditLogService.translateAction(a)}"
+                                th:selected="${a == filter.action}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="filterType">Розділ</label>
+                    <select id="filterType" name="entityType">
+                        <option value="">Усі</option>
+                        <option th:each="t : ${entityTypes}" th:value="${t.key}" th:text="${t.value}"
+                                th:selected="${t.key == filter.entityType}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="filterFrom">З дати</label>
+                    <input type="date" id="filterFrom" name="from" th:value="${filter.from}">
+                </div>
+                <div class="field">
+                    <label for="filterTo">По дату</label>
+                    <input type="date" id="filterTo" name="to" th:value="${filter.to}">
+                </div>
+                <div class="field field-wide">
+                    <label for="filterQuery">Пошук у змінах</label>
+                    <input type="text" id="filterQuery" name="q" th:value="${filter.query}" placeholder="VIN, назва, сума, IP…">
+                </div>
+                <div class="field filter-actions-field">
+                    <label>&nbsp;</label>
+                    <div class="filter-actions">
+                        <button type="submit" class="btn-outline">Фільтрувати</button>
+                        <a class="link-btn" th:if="${filtered}" th:href="@{/audit-log}">Скинути фільтр</a>
+                    </div>
+                </div>
+            </form>
+
             <table class="clean-table clean-table--fixed">
                 <colgroup>
+                    <col style="width:10%">
+                    <col style="width:15%">
+                    <col style="width:9%">
                     <col style="width:11%">
-                    <col style="width:17.5%">
-                    <col style="width:8%">
-                    <col style="width:12%">
-                    <col style="width:12%">
-                    <col style="width:39.5%">
+                    <col style="width:13%">
+                    <col style="width:42%">
                 </colgroup>
                 <thead>
                 <tr>
                     <th>Дата й час</th>
                     <th>Користувач</th>
                     <th>Дія</th>
-                    <th>Сутність</th>
+                    <th>Розділ</th>
                     <th>Елемент</th>
                     <th>Зміни</th>
                 </tr>
@@ -36,35 +93,58 @@
                 <tbody>
                 <tr th:each="e : ${entries}"
                     th:with="changes=${@auditLogService.parseChanges(e.changes)},
-                              entityRef=${@auditEntityLabelResolver.resolve(e.entityType, e.entityId)}">
+                              entityRef=${@auditEntityLabelResolver.resolve(e.entityType, e.entityId)},
+                              act=${e.action.name()}">
                     <td th:text="${#temporals.format(e.occurredAt, 'dd.MM.yyyy HH:mm:ss')}"></td>
-                    <td class="nowrap-cell" th:text="${e.username}" th:title="${e.username}"></td>
-                    <td><span class="badge" th:text="${@auditLogService.translateAction(e.action)}"></span></td>
+                    <td>
+                        <div class="cell-value-truncate" th:text="${userNames[e.username] ?: e.username}" th:title="${e.username}"></div>
+                        <div class="audit-meta" th:if="${userNames[e.username] != null}" th:text="${e.username}"></div>
+                        <div class="audit-meta" th:if="${e.ipAddress != null}" th:text="'IP ' + ${e.ipAddress}"></div>
+                    </td>
+                    <td>
+                        <span class="badge" th:classappend="'audit-badge-' + ${#strings.toLowerCase(act)}"
+                              th:text="${@auditLogService.translateAction(e.action)}"></span>
+                    </td>
                     <td th:text="${@auditLogService.translateEntityType(e.entityType)}"></td>
                     <td>
                         <a th:if="${entityRef.url != null}" class="link-btn" th:href="@{${entityRef.url}}" th:text="${entityRef.label}"></a>
                         <span th:unless="${entityRef.url != null}" th:text="${entityRef.label}"></span>
+                        <div class="audit-meta" th:if="${e.entityId != null and historyOf == null}">
+                            <a th:href="@{/audit-log(entityType=${e.entityType}, entityId=${e.entityId})}">Історія</a>
+                        </div>
                     </td>
                     <td>
                         <div th:each="c : ${changes}" class="audit-change-row">
                             <strong th:text="${c.key}"></strong>:
-                            <span th:text="${#strings.isEmpty(c.value[0]) ? '—' : c.value[0]}"></span>
-                            <span>→</span>
-                            <span th:text="${#strings.isEmpty(c.value[1]) ? '—' : c.value[1]}"></span>
+                            <th:block th:if="${act == 'CREATE' or act == 'LOGIN_FAILED'}">
+                                <span th:text="${#strings.isEmpty(c.value[1]) ? '—' : c.value[1]}"></span>
+                            </th:block>
+                            <th:block th:if="${act == 'DELETE'}">
+                                <span th:text="${#strings.isEmpty(c.value[0]) ? '—' : c.value[0]}"></span>
+                            </th:block>
+                            <th:block th:unless="${act == 'CREATE' or act == 'DELETE' or act == 'LOGIN_FAILED'}">
+                                <span class="audit-old" th:text="${#strings.isEmpty(c.value[0]) ? '—' : c.value[0]}"></span>
+                                <span>→</span>
+                                <span class="audit-new" th:text="${#strings.isEmpty(c.value[1]) ? '—' : c.value[1]}"></span>
+                            </th:block>
                         </div>
                         <span th:if="${#maps.isEmpty(changes)}" class="muted">—</span>
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(entries)}">
-                    <td colspan="6">Записів ще немає</td>
+                    <td colspan="6" th:text="${filtered} ? 'За цими фільтрами записів немає' : 'Записів ще немає'"></td>
                 </tr>
                 </tbody>
             </table>
 
             <div class="toolbar" style="margin-top:1rem;" th:if="${totalPages} > 1">
-                <a th:if="${page} > 0" class="link-btn" th:href="@{/audit-log(page=${page - 1})}">« Новіші</a>
+                <a th:if="${page} > 0" class="link-btn"
+                   th:href="@{/audit-log(page=${page - 1}, username=${filter.username}, action=${filter.action}, entityType=${filter.entityType},
+                              entityId=${filter.entityId}, from=${filter.from}, to=${filter.to}, q=${filter.query})}">« Новіші</a>
                 <span class="muted" th:text="'Сторінка ' + (${page} + 1) + ' з ' + ${totalPages}"></span>
-                <a th:if="${page + 1} < ${totalPages}" class="link-btn" th:href="@{/audit-log(page=${page + 1})}">Старіші »</a>
+                <a th:if="${page + 1} < ${totalPages}" class="link-btn"
+                   th:href="@{/audit-log(page=${page + 1}, username=${filter.username}, action=${filter.action}, entityType=${filter.entityType},
+                              entityId=${filter.entityId}, from=${filter.from}, to=${filter.to}, q=${filter.query})}">Старіші »</a>
             </div>
         </div>
     </div>

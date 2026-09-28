@@ -1,6 +1,9 @@
 package com.example.protaxo.worker.service;
 
+import com.example.protaxo.audit.entity.AuditAction;
+import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.worker.dto.RepairWorkerResponse;
 import com.example.protaxo.worker.entity.RepairWorker;
 import com.example.protaxo.worker.repository.RepairWorkerRepository;
@@ -15,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RepairWorkerService {
 
     private final RepairWorkerRepository repairWorkerRepository;
+    private final AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public List<RepairWorkerResponse> findAll() {
@@ -28,15 +32,18 @@ public class RepairWorkerService {
                 .fullName(fullName.trim())
                 .position(position.trim())
                 .build());
+        auditLogService.record(AuditAction.CREATE, "RepairWorker", saved.getId(), FieldDiff.created(snapshot(saved)));
         return new RepairWorkerResponse(saved.getId(), saved.getFullName(), saved.getPosition());
     }
 
     public RepairWorkerResponse update(Long id, String fullName, String position) {
         RepairWorker worker = repairWorkerRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Робітника не знайдено: " + id));
+        FieldDiff.Snapshot before = snapshot(worker);
         worker.setFullName(fullName.trim());
         worker.setPosition(position.trim());
         RepairWorker saved = repairWorkerRepository.save(worker);
+        auditLogService.record(AuditAction.UPDATE, "RepairWorker", id, FieldDiff.between(before, snapshot(saved)));
         return new RepairWorkerResponse(saved.getId(), saved.getFullName(), saved.getPosition());
     }
 
@@ -49,9 +56,15 @@ public class RepairWorkerService {
      * already-saved document.
      */
     public void delete(Long id) {
-        if (!repairWorkerRepository.existsById(id)) {
-            throw new NotFoundException("Робітника не знайдено: " + id);
-        }
-        repairWorkerRepository.deleteById(id);
+        RepairWorker worker = repairWorkerRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Робітника не знайдено: " + id));
+        repairWorkerRepository.delete(worker);
+        auditLogService.record(AuditAction.DELETE, "RepairWorker", id, FieldDiff.deleted(snapshot(worker)));
+    }
+
+    private static FieldDiff.Snapshot snapshot(RepairWorker worker) {
+        return FieldDiff.snapshot()
+                .add("ПІБ", worker.getFullName())
+                .add("Посада", worker.getPosition());
     }
 }

@@ -51,21 +51,17 @@ public class DriverService {
         Driver driver = driverMapper.toEntity(request);
         driver.setClient(getClientOrThrow(request.clientId()));
         Driver saved = driverRepository.save(driver);
-        auditLogService.record(AuditAction.CREATE, "Driver", saved.getId());
+        auditLogService.record(AuditAction.CREATE, "Driver", saved.getId(), FieldDiff.created(snapshot(saved)));
         return driverMapper.toResponse(saved);
     }
 
     public DriverResponse update(Long id, DriverRequest request) {
         Driver driver = getOrThrow(id);
-        Map<String, String[]> changes = FieldDiff.builder()
-                .add("ПІБ", driver.getFullName(), request.fullName())
-                .add("Телефон", driver.getPhone(), request.phone())
-                .add("Посада", driver.getPosition(), request.position())
-                .build();
+        FieldDiff.Snapshot before = snapshot(driver);
         driverMapper.updateEntity(request, driver);
         driver.setClient(getClientOrThrow(request.clientId()));
         Driver saved = driverRepository.save(driver);
-        auditLogService.record(AuditAction.UPDATE, "Driver", saved.getId(), changes);
+        auditLogService.record(AuditAction.UPDATE, "Driver", saved.getId(), FieldDiff.between(before, snapshot(saved)));
         return driverMapper.toResponse(saved);
     }
 
@@ -73,7 +69,15 @@ public class DriverService {
         Driver driver = getOrThrow(id);
         driver.setDeletedAt(Instant.now());
         driverRepository.save(driver);
-        auditLogService.record(AuditAction.DELETE, "Driver", id);
+        auditLogService.record(AuditAction.DELETE, "Driver", id, FieldDiff.deleted(snapshot(driver)));
+    }
+
+    private static FieldDiff.Snapshot snapshot(Driver d) {
+        return FieldDiff.snapshot()
+                .add("Контрагент", d.getClient() == null ? null : d.getClient().getName())
+                .add("ПІБ", d.getFullName())
+                .add("Телефон", d.getPhone())
+                .add("Посада", d.getPosition());
     }
 
     private Driver getOrThrow(Long id) {

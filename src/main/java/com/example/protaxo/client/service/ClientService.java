@@ -44,33 +44,17 @@ public class ClientService {
         Client client = clientMapper.toEntity(request);
         client.setEmployerClient(resolveEmployer(request.employerClientId(), null));
         Client saved = saveOrThrowFriendly(client);
-        auditLogService.record(AuditAction.CREATE, "Client", saved.getId());
+        auditLogService.record(AuditAction.CREATE, "Client", saved.getId(), FieldDiff.created(snapshot(saved)));
         return clientMapper.toResponse(saved);
     }
 
     public ClientResponse update(Long id, ClientRequest request) {
         Client client = getOrThrow(id);
-        Map<String, String[]> changes = FieldDiff.builder()
-                .add("Назва", client.getName(), request.name())
-                .add("Повна назва", client.getFullName(), request.fullName())
-                .add("Код ЄДРПОУ", client.getEdrpou(), request.edrpou())
-                .add("Код", client.getCode(), request.code())
-                .add("Прізвище", client.getLastName(), request.lastName())
-                .add("Ім'я", client.getFirstName(), request.firstName())
-                .add("По батькові", client.getMiddleName(), request.middleName())
-                .add("Дата народження", client.getBirthDate(), request.birthDate())
-                .add("Стать", client.getGender(), request.gender())
-                .add("Посада", client.getPosition(), request.position())
-                .add("Ім'я контактної особи", client.getContactPersonName(), request.contactPersonName())
-                .add("Телефон контактної особи", client.getContactPersonPhone(), request.contactPersonPhone())
-                .add("Телефон", client.getPhone(), request.phone())
-                .add("Email", client.getEmail(), request.email())
-                .add("Платник ПДВ", client.isVatPayer() ? "так" : "ні", request.vatPayer() ? "так" : "ні")
-                .build();
+        FieldDiff.Snapshot before = snapshot(client);
         clientMapper.updateEntity(request, client);
         client.setEmployerClient(resolveEmployer(request.employerClientId(), id));
         Client saved = saveOrThrowFriendly(client);
-        auditLogService.record(AuditAction.UPDATE, "Client", saved.getId(), changes);
+        auditLogService.record(AuditAction.UPDATE, "Client", saved.getId(), FieldDiff.between(before, snapshot(saved)));
         return clientMapper.toResponse(saved);
     }
 
@@ -111,7 +95,27 @@ public class ClientService {
         Client client = getOrThrow(id);
         client.setDeletedAt(Instant.now());
         clientRepository.save(client);
-        auditLogService.record(AuditAction.DELETE, "Client", id);
+        auditLogService.record(AuditAction.DELETE, "Client", id, FieldDiff.deleted(snapshot(client)));
+    }
+
+    private static FieldDiff.Snapshot snapshot(Client c) {
+        return FieldDiff.snapshot()
+                .add("Назва", c.getName())
+                .add("Повна назва", c.getFullName())
+                .add("Код ЄДРПОУ", c.getEdrpou())
+                .add("Код", c.getCode())
+                .add("Прізвище", c.getLastName())
+                .add("Ім'я", c.getFirstName())
+                .add("По батькові", c.getMiddleName())
+                .add("Дата народження", c.getBirthDate())
+                .add("Стать", c.getGender() == null ? null : c.getGender().getLabel())
+                .add("Посада", c.getPosition())
+                .add("Місце роботи", c.getEmployerClient() == null ? null : c.getEmployerClient().getName())
+                .add("Ім'я контактної особи", c.getContactPersonName())
+                .add("Телефон контактної особи", c.getContactPersonPhone())
+                .add("Телефон", c.getPhone())
+                .add("Email", c.getEmail())
+                .add("Платник ПДВ", c.isVatPayer());
     }
 
     private Client getOrThrow(Long id) {

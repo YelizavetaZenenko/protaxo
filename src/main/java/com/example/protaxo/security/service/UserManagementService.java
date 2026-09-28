@@ -4,6 +4,7 @@ import com.example.protaxo.audit.entity.AuditAction;
 import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.security.dto.UserEditFormData;
 import com.example.protaxo.security.dto.UserInviteFormData;
 import com.example.protaxo.security.dto.UserSummary;
@@ -15,6 +16,7 @@ import com.example.protaxo.security.repository.UserRepository;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -76,7 +78,9 @@ public class UserManagementService {
         invitationTokenRepository.save(invitationToken);
 
         invitationMailService.sendInvitation(saved.getEmail(), saved.getFullName(), token);
-        auditLogService.record(AuditAction.CREATE, "User", saved.getId());
+        Map<String, String[]> changes = FieldDiff.created(snapshot(saved));
+        changes.put("Запрошення", new String[]{"", "надіслано на " + saved.getEmail()});
+        auditLogService.record(AuditAction.CREATE, "User", saved.getId(), changes);
     }
 
     @Transactional(readOnly = true)
@@ -103,7 +107,11 @@ public class UserManagementService {
         user.setActive(true);
         userRepository.save(user);
 
-        auditLogService.record(AuditAction.UPDATE, "User", user.getId());
+        auditLogService.recordAs(user.getEmail(), AuditAction.UPDATE, "User", user.getId(), FieldDiff.builder()
+                .add("Запрошення", "очікує", "прийнято")
+                .add("Активний", false, true)
+                .add("Пароль", null, "встановлено")
+                .build());
     }
 
     public void update(Long id, UserEditFormData form) {
@@ -122,11 +130,12 @@ public class UserManagementService {
             throw new BusinessRuleException("Не можна зняти роль адміністратора з останнього адміністратора");
         }
 
+        FieldDiff.Snapshot before = snapshot(target);
         target.setFullName(form.getFullName());
         target.setEmail(form.getEmail());
         target.setRole(form.getRole());
         saveOrThrowFriendly(target);
-        auditLogService.record(AuditAction.UPDATE, "User", id);
+        auditLogService.record(AuditAction.UPDATE, "User", id, FieldDiff.between(before, snapshot(target)));
     }
 
     /** email has a DB-level unique constraint — the pre-checks above already cover the common
@@ -154,7 +163,15 @@ public class UserManagementService {
 
         target.setDeletedAt(Instant.now());
         userRepository.save(target);
-        auditLogService.record(AuditAction.DELETE, "User", id);
+        auditLogService.record(AuditAction.DELETE, "User", id, FieldDiff.deleted(snapshot(target)));
+    }
+
+    private static FieldDiff.Snapshot snapshot(User user) {
+        return FieldDiff.snapshot()
+                .add("ПІБ", user.getFullName())
+                .add("Email", user.getEmail())
+                .add("Роль", user.getRole() == null ? null : user.getRole().getLabel())
+                .add("Активний", user.isActive());
     }
 
     /**

@@ -126,7 +126,7 @@ public class CalibrationProtocolService {
         } catch (DataIntegrityViolationException ex) {
             throw new BusinessRuleException("Для цього наряд-заказу протокол уже створено");
         }
-        auditLogService.record(AuditAction.CREATE, "CalibrationProtocol", saved.getId());
+        auditLogService.record(AuditAction.CREATE, "CalibrationProtocol", saved.getId(), FieldDiff.created(snapshot(saved)));
         return calibrationProtocolMapper.toResponse(saved);
     }
 
@@ -135,58 +135,58 @@ public class CalibrationProtocolService {
         // client/vehicle/internal number are locked read-only in the UI once saved, and the
         // invoice link is permanent — `invoice` is deliberately never touched again here.
         Tachograph tachograph = request.tachographId() != null ? getTachographOrThrow(request.tachographId()) : null;
-        Map<String, String[]> changes = buildChanges(protocol, request, tachograph);
+        FieldDiff.Snapshot before = snapshot(protocol);
         applyFields(protocol, request, protocol.getInvoice(), tachograph);
         CalibrationProtocol saved = calibrationProtocolRepository.save(protocol);
-        auditLogService.record(AuditAction.UPDATE, "CalibrationProtocol", saved.getId(), changes);
+        auditLogService.record(AuditAction.UPDATE, "CalibrationProtocol", saved.getId(), FieldDiff.between(before, snapshot(saved)));
         return calibrationProtocolMapper.toResponse(saved);
     }
 
-    private Map<String, String[]> buildChanges(CalibrationProtocol p, CalibrationProtocolRequest r, Tachograph newTachograph) {
-        return FieldDiff.builder()
-                .add("Автомобіль", p.getVehicleName(), r.vehicleName())
-                .add("Номер картки", p.getCardNumber(), r.cardNumber())
-                .add("Представник", p.getRepresentativeName(), r.representativeName())
-                .add("Тахограф", p.getTachograph() != null ? p.getTachograph().getSerialNumber() : null,
-                        newTachograph != null ? newTachograph.getSerialNumber() : null)
-                .add("Марка тахографа", p.getTachographBrand(), r.tachographBrand())
-                .add("Модель тахографа", p.getTachographModel(), effectiveTachographModel(r, newTachograph))
-                .add("Тип тахографа", p.getTachographType(), r.tachographType())
-                .add("Виробник тахографа", p.getTachographManufacturer(), effectiveTachographManufacturer(r, newTachograph))
-                .add("Дата попередньої перевірки", p.getPreviousInspectionDate(), r.previousInspectionDate())
-                .add("Держномер ТЗ", p.getVehicleVrn(), r.vehicleVrn())
-                .add("VIN ТЗ", p.getVehicleVin(), r.vehicleVin())
-                .add("Заводський номер тахографа", p.getTachographSerialNumber(), effectiveTachographSerialNumber(r, newTachograph))
-                .add("Рік випуску тахографа", p.getTachographManufactureYear(), effectiveTachographManufactureYear(r, newTachograph))
-                .add("Причина перевірки", p.getInspectionReason(), r.inspectionReason())
-                .add("Пробіг до", p.getMileageBefore(), r.mileageBefore())
-                .add("Пробіг після", p.getMileageAfter(), r.mileageAfter())
-                .add("Розмір шини", p.getTireSize(), r.tireSize())
-                .add("Тиск у шинах", p.getTirePressure(), r.tirePressure())
-                .add("Довжина кола шини L", p.getTireCircumferenceL(), r.tireCircumferenceL())
-                .add("Коефіцієнт W", p.getCoefficientW(), r.coefficientW())
-                .add("Константа K", p.getConstantK(), r.constantK())
-                .add("Відхилення шляху після встановлення", p.getPathDeviationAfterInstall(), r.pathDeviationAfterInstall())
-                .add("Відхилення шляху в експлуатації", p.getPathDeviationInService(), r.pathDeviationInService())
-                .add("Відхилення швидкості після встановлення", p.getSpeedDeviationAfterInstall(), r.speedDeviationAfterInstall())
-                .add("Відхилення швидкості в експлуатації", p.getSpeedDeviationInService(), r.speedDeviationInService())
-                .add("Відхилення часу після встановлення", p.getTimeDeviationAfterInstall(), r.timeDeviationAfterInstall())
-                .add("Відхилення часу в експлуатації", p.getTimeDeviationInService(), r.timeDeviationInService())
-                .add("Значення обмежувача швидкості", p.getSpeedLimiterValue(), r.speedLimiterValue())
-                .add("Зафіксовано відкриття кришки", p.getCoverOpeningRegistered(), r.coverOpeningRegistered())
-                .add("Зафіксовано відключення живлення", p.getPowerCutoffRegistered(), r.powerCutoffRegistered())
-                .add("Зафіксовано переривання імпульсного датчика", p.getPulseSensorInterruptionRegistered(), r.pulseSensorInterruptionRegistered())
-                .add("Посада виконавця", p.getExecutorPosition(), r.executorPosition())
-                .add("ПІБ виконавця", p.getExecutorName(), r.executorName())
-                .add("Номери пломб", p.getSealNumbers(), r.sealNumbers())
-                .build();
+    private static FieldDiff.Snapshot snapshot(CalibrationProtocol p) {
+        return FieldDiff.snapshot()
+                .add("Внутрішній номер", p.getInternalNumber())
+                .add("Контрагент", p.getClient() == null ? null : p.getClient().getName())
+                .add("Автомобіль", p.getVehicleName())
+                .add("Номер картки", p.getCardNumber())
+                .add("Представник", p.getRepresentativeName())
+                .add("Тахограф", p.getTachograph() != null ? p.getTachograph().getSerialNumber() : null)
+                .add("Марка тахографа", p.getTachographBrand())
+                .add("Модель тахографа", p.getTachographModel())
+                .add("Тип тахографа", p.getTachographType())
+                .add("Виробник тахографа", p.getTachographManufacturer())
+                .add("Дата попередньої перевірки", p.getPreviousInspectionDate())
+                .add("Держномер ТЗ", p.getVehicleVrn())
+                .add("VIN ТЗ", p.getVehicleVin())
+                .add("Заводський номер тахографа", p.getTachographSerialNumber())
+                .add("Рік випуску тахографа", p.getTachographManufactureYear())
+                .add("Причина перевірки", p.getInspectionReason())
+                .add("Пробіг до", p.getMileageBefore())
+                .add("Пробіг після", p.getMileageAfter())
+                .add("Розмір шини", p.getTireSize())
+                .add("Тиск у шинах", p.getTirePressure())
+                .add("Довжина кола шини L", p.getTireCircumferenceL())
+                .add("Коефіцієнт W", p.getCoefficientW())
+                .add("Константа K", p.getConstantK())
+                .add("Відхилення шляху після встановлення", p.getPathDeviationAfterInstall())
+                .add("Відхилення шляху в експлуатації", p.getPathDeviationInService())
+                .add("Відхилення швидкості після встановлення", p.getSpeedDeviationAfterInstall())
+                .add("Відхилення швидкості в експлуатації", p.getSpeedDeviationInService())
+                .add("Відхилення часу після встановлення", p.getTimeDeviationAfterInstall())
+                .add("Відхилення часу в експлуатації", p.getTimeDeviationInService())
+                .add("Значення обмежувача швидкості", p.getSpeedLimiterValue())
+                .add("Зафіксовано відкриття кришки", p.getCoverOpeningRegistered())
+                .add("Зафіксовано відключення живлення", p.getPowerCutoffRegistered())
+                .add("Зафіксовано переривання імпульсного датчика", p.getPulseSensorInterruptionRegistered())
+                .add("Посада виконавця", p.getExecutorPosition())
+                .add("ПІБ виконавця", p.getExecutorName())
+                .add("Номери пломб", p.getSealNumbers());
     }
 
     public void softDelete(Long id) {
         CalibrationProtocol protocol = getOrThrow(id);
         protocol.setDeletedAt(Instant.now());
         calibrationProtocolRepository.save(protocol);
-        auditLogService.record(AuditAction.DELETE, "CalibrationProtocol", id);
+        auditLogService.record(AuditAction.DELETE, "CalibrationProtocol", id, FieldDiff.deleted(snapshot(protocol)));
     }
 
     /**

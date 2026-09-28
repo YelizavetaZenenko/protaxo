@@ -5,6 +5,7 @@ import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.catalog.entity.CatalogItem;
 import com.example.protaxo.catalog.entity.CatalogItemType;
 import com.example.protaxo.catalog.repository.CatalogItemRepository;
+import com.example.protaxo.catalog.service.CatalogItemService;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.vat.VatRate;
 import com.example.protaxo.common.exception.NotFoundException;
@@ -239,18 +240,13 @@ public class FinanceService {
             boolean createdNew = line.getCatalogItemId() == null;
             CatalogItem item = createdNew ? newCatalogItem(line) : existingMaterial(line.getCatalogItemId());
 
-            Map<String, String[]> changes = FieldDiff.builder()
-                    .add("Залишок", item.getStockQuantity(), stockAfter(item, quantity))
-                    .add("Ціна закупівлі", item.getPurchasePrice(), purchasePrice)
-                    .build();
+            FieldDiff.Snapshot before = createdNew ? FieldDiff.snapshot() : CatalogItemService.snapshot(item);
             item.setStockQuantity(stockAfter(item, quantity));
             item.setPurchasePrice(purchasePrice);
             CatalogItem savedItem = catalogItemRepository.save(item);
-            if (createdNew) {
-                auditLogService.record(AuditAction.CREATE, "CatalogItem", savedItem.getId());
-            } else {
-                auditLogService.record(AuditAction.UPDATE, "CatalogItem", savedItem.getId(), changes);
-            }
+            Map<String, String[]> changes = FieldDiff.between(before, CatalogItemService.snapshot(savedItem));
+            changes.put("Підстава", new String[]{"", "Оприбуткування за витратою #" + operationId});
+            auditLogService.record(createdNew ? AuditAction.CREATE : AuditAction.UPDATE, "CatalogItem", savedItem.getId(), changes);
 
             expenseItemRepository.save(ExpenseItem.builder()
                     .operationId(operationId)
@@ -302,6 +298,13 @@ public class FinanceService {
                         stock.stripTrailingZeros().toPlainString(), line.getQuantity().stripTrailingZeros().toPlainString()));
             }
             catalogItemRepository.restoreStockQuantity(line.getCatalogItemId(), line.getQuantity().negate());
+            if (stock != null) {
+                Map<String, String[]> changes = FieldDiff.builder()
+                        .add("Залишок", stock, stock.subtract(line.getQuantity()))
+                        .add("Підстава", null, "Скасування витрати #" + operationId)
+                        .build();
+                auditLogService.record(AuditAction.UPDATE, "CatalogItem", line.getCatalogItemId(), changes);
+            }
         }
     }
 
@@ -320,6 +323,9 @@ public class FinanceService {
                     .sizeBytes(file.getSize())
                     .data(file.getBytes())
                     .createdAt(Instant.now())
+                    .build());
+            auditLogService.record(AuditAction.UPDATE, "FinanceOperation", operationId, FieldDiff.builder()
+                    .add("Вкладення", null, file.getOriginalFilename() + " (" + (file.getSize() / 1024) + " КБ)")
                     .build());
         } catch (IOException e) {
             throw new BusinessRuleException("Не вдалося прочитати файл: " + e.getMessage());
@@ -418,8 +424,11 @@ public class FinanceService {
         operation.setCancelledBy(CurrentUserRoles.username());
         operation.setCancelReason(cancelReason);
         operationRepository.save(operation);
-        auditLogService.record(AuditAction.UPDATE, "FinanceOperation", operationId,
-                Map.of("Скасовано", new String[]{"", cancelReason}));
+        auditLogService.record(AuditAction.UPDATE, "FinanceOperation", operationId, FieldDiff.builder()
+                .add("Статус", "Проведено", "Скасовано")
+                .add("Причина скасування", null, cancelReason)
+                .add("Операція", null, operation.getType().getLabel() + " на " + operation.getAmount().toPlainString() + " грн")
+                .build());
     }
 
     // ------------------------------------------------------------------ звірки
@@ -448,7 +457,13 @@ public class FinanceService {
                 .createdBy(CurrentUserRoles.username())
                 .build();
         Reconciliation saved = reconciliationRepository.save(reconciliation);
-        auditLogService.record(AuditAction.CREATE, "Reconciliation", saved.getId());
+        auditLogService.record(AuditAction.CREATE, "Reconciliation", saved.getId(), FieldDiff.created(FieldDiff.snapshot()
+                .add("Каса / рахунок", account.getName())
+                .add("За програмою", expected)
+                .add("Фактично", actual)
+                .add("Розбіжність", difference)
+                .add("Статус", saved.getStatus().getLabel())
+                .add("Коментар", saved.getComment())));
         return saved;
     }
 
@@ -459,6 +474,7 @@ public class FinanceService {
             throw new BusinessRuleException("Ця звірка вже не має відкритої розбіжності");
         }
         String comment = requireText(form.getResolutionComment(), "Опишіть, як розглянуто розбіжність");
+        ReconciliationStatus statusBefore = reconciliation.getStatus();
         if (form.isCreateAdjustment()) {
             BigDecimal difference = reconciliation.getDifference();
             FinanceOperation adjustment = FinanceOperation.builder()
@@ -475,7 +491,12 @@ public class FinanceService {
         reconciliation.setResolvedBy(CurrentUserRoles.username());
         reconciliation.setResolutionComment(comment);
         reconciliationRepository.save(reconciliation);
-        auditLogService.record(AuditAction.UPDATE, "Reconciliation", reconciliationId);
+        auditLogService.record(AuditAction.UPDATE, "Reconciliation", reconciliationId, FieldDiff.builder()
+                .add("Статус", statusBefore.getLabel(), reconciliation.getStatus().getLabel())
+                .add("Як розглянуто", null, comment)
+                .add("Коригування залишку", null, form.isCreateAdjustment()
+                        ? reconciliation.getDifference().toPlainString() + " грн" : "без коригування")
+                .build());
     }
 
     // ------------------------------------------------------------------ каси й рахунки
@@ -491,7 +512,11 @@ public class FinanceService {
             throw new BusinessRuleException("Початковий залишок не може бути від'ємним");
         }
         FinanceAccount saved = accountRepository.save(account);
-        auditLogService.record(AuditAction.CREATE, "FinanceAccount", saved.getId());
+        auditLogService.record(AuditAction.CREATE, "FinanceAccount", saved.getId(), FieldDiff.created(FieldDiff.snapshot()
+                .add("Назва", saved.getName())
+                .add("Вид", saved.getKind().getLabel())
+                .add("Початковий залишок", saved.getOpeningBalance())
+                .add("Активний", saved.isActive())));
         return saved;
     }
 
@@ -515,6 +540,7 @@ public class FinanceService {
         }
         Map<String, String[]> changes = FieldDiff.builder()
                 .add("Назва", account.getName(), name)
+                .add("Вид", account.getKind().getLabel(), kind.getLabel())
                 .add("Активний", account.isActive(), form.isActive())
                 .add("Початковий залишок", account.getOpeningBalance(), opening)
                 .build();
@@ -564,8 +590,27 @@ public class FinanceService {
         operation.setOccurredAt(Instant.now());
         operation.setCreatedBy(CurrentUserRoles.username());
         FinanceOperation saved = operationRepository.save(operation);
-        auditLogService.record(AuditAction.CREATE, "FinanceOperation", saved.getId());
+        auditLogService.record(AuditAction.CREATE, "FinanceOperation", saved.getId(), FieldDiff.created(snapshot(saved)));
         return saved;
+    }
+
+    private static FieldDiff.Snapshot snapshot(FinanceOperation o) {
+        return FieldDiff.snapshot()
+                .add("Тип", o.getType().getLabel())
+                .add("Сума, грн", o.getAmount())
+                .add("Каса / рахунок", o.getAccount() == null ? null : o.getAccount().getName())
+                .add("На рахунок", o.getTargetAccount() == null ? null : o.getTargetAccount().getName())
+                .add("Спосіб оплати", o.getPaymentMethod() == null ? null : o.getPaymentMethod().getLabel())
+                .add("Наряд", o.getInvoice() == null ? null : o.getInvoice().getNumber())
+                .add("Отримано від клієнта", o.getReceivedAmount())
+                .add("Решта", o.getChangeAmount())
+                .add("Вид повернення", o.getRefundKind() == null ? null : o.getRefundKind().getLabel())
+                .add("Повернення з операції", o.getOriginalOperation() == null ? null : "#" + o.getOriginalOperation().getId())
+                .add("Категорія витрати", o.getExpenseCategory() == null ? null : o.getExpenseCategory().getLabel())
+                .add("Контрагент", o.getCounterparty())
+                .add("Документ", o.getDocumentRef())
+                .add("Звірка", o.getReconciliation() == null ? null : "#" + o.getReconciliation().getId())
+                .add("Коментар", o.getComment());
     }
 
     /**

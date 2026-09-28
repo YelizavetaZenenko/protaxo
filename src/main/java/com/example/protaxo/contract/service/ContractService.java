@@ -53,20 +53,18 @@ public class ContractService {
         contract.setContractNumber("%06d".formatted(contractRepository.nextNumberValue()));
         contract.setClient(getClientOrThrow(request.clientId()));
         Contract saved = contractRepository.save(contract);
-        auditLogService.record(AuditAction.CREATE, "Contract", saved.getId());
+        auditLogService.record(AuditAction.CREATE, "Contract", saved.getId(), FieldDiff.created(snapshot(saved)));
         return contractMapper.toResponse(saved);
     }
 
     public ContractResponse update(Long id, ContractRequest request) {
         Contract contract = getOrThrow(id);
         Client newClient = getClientOrThrow(request.clientId());
-        Map<String, String[]> changes = FieldDiff.builder()
-                .add("Контрагент", contract.getClient().getName(), newClient.getName())
-                .build();
+        FieldDiff.Snapshot before = snapshot(contract);
         contractMapper.updateEntity(request, contract);
         contract.setClient(newClient);
         Contract saved = contractRepository.save(contract);
-        auditLogService.record(AuditAction.UPDATE, "Contract", saved.getId(), changes);
+        auditLogService.record(AuditAction.UPDATE, "Contract", saved.getId(), FieldDiff.between(before, snapshot(saved)));
         return contractMapper.toResponse(saved);
     }
 
@@ -74,7 +72,13 @@ public class ContractService {
         Contract contract = getOrThrow(id);
         contract.setDeletedAt(Instant.now());
         contractRepository.save(contract);
-        auditLogService.record(AuditAction.DELETE, "Contract", id);
+        auditLogService.record(AuditAction.DELETE, "Contract", id, FieldDiff.deleted(snapshot(contract)));
+    }
+
+    private static FieldDiff.Snapshot snapshot(Contract c) {
+        return FieldDiff.snapshot()
+                .add("Номер договору", c.getContractNumber())
+                .add("Контрагент", c.getClient() == null ? null : c.getClient().getName());
     }
 
     private Contract getOrThrow(Long id) {

@@ -86,19 +86,13 @@ public class InvoiceService {
         applyNaryadFields(invoice, request);
         applyItems(invoice, request.items());
         Invoice saved = invoiceRepository.save(invoice);
-        auditLogService.record(AuditAction.CREATE, "Invoice", saved.getId());
+        auditLogService.record(AuditAction.CREATE, "Invoice", saved.getId(), FieldDiff.created(snapshot(saved)));
         return invoiceMapper.toResponse(saved);
     }
 
     public InvoiceResponse update(Long id, InvoiceRequest request) {
         Invoice invoice = getOrThrow(id);
-        Map<String, String[]> changes = FieldDiff.builder()
-                .add("Тип оплати", invoice.getPaymentType(), request.paymentType())
-                .add("Автомобіль", invoice.getVehicleName(), request.vehicleName())
-                .add("Водій", invoice.getDriverName(), request.driverName())
-                .add("Відповідальний за ремонт", invoice.getRepairResponsibleName(), request.repairResponsibleName())
-                .add("Керівник ремонту", invoice.getRepairSupervisorName(), request.repairSupervisorName())
-                .build();
+        FieldDiff.Snapshot before = snapshot(invoice);
         invoice.setPaymentType(request.paymentType());
         invoice.setClient(getClientOrThrow(request.clientId()));
         applyNaryadFields(invoice, request);
@@ -107,7 +101,7 @@ public class InvoiceService {
         applyItems(invoice, request.items());
         requireTotalCoversPayments(invoice);
         Invoice saved = invoiceRepository.save(invoice);
-        auditLogService.record(AuditAction.UPDATE, "Invoice", saved.getId(), changes);
+        auditLogService.record(AuditAction.UPDATE, "Invoice", saved.getId(), FieldDiff.between(before, snapshot(saved)));
         return invoiceMapper.toResponse(saved);
     }
 
@@ -167,7 +161,35 @@ public class InvoiceService {
         restoreStock(invoice.getItems());
         invoice.setDeletedAt(Instant.now());
         invoiceRepository.save(invoice);
-        auditLogService.record(AuditAction.DELETE, "Invoice", id);
+        auditLogService.record(AuditAction.DELETE, "Invoice", id, FieldDiff.deleted(snapshot(invoice)));
+    }
+
+    /** Кожен рядок позицій — окреме поле журналу, щоб було видно, що саме додали/прибрали/змінили. */
+    private static FieldDiff.Snapshot snapshot(Invoice invoice) {
+        FieldDiff.Snapshot snapshot = FieldDiff.snapshot()
+                .add("Номер", invoice.getNumber())
+                .add("Контрагент", invoice.getClient() == null ? null : invoice.getClient().getName())
+                .add("Тип оплати", invoice.getPaymentType() == null ? null : invoice.getPaymentType().getLabel())
+                .add("Автомобіль", invoice.getVehicleName())
+                .add("Водій", invoice.getDriverName())
+                .add("Відповідальний за ремонт", invoice.getRepairResponsibleName())
+                .add("Керівник ремонту", invoice.getRepairSupervisorName())
+                .add("Оплатити до", invoice.getPaymentDueDate());
+        BigDecimal total = BigDecimal.ZERO;
+        for (InvoiceItem item : invoice.getItems()) {
+            snapshot.add("Позиція " + item.getLineNumber(), describe(item));
+            total = total.add(item.getAmount());
+        }
+        return snapshot.add("Сума, грн", total);
+    }
+
+    private static String describe(InvoiceItem item) {
+        String discount = item.getDiscountPercent() == null || item.getDiscountPercent().signum() == 0
+                ? "" : ", знижка " + item.getDiscountPercent().stripTrailingZeros().toPlainString() + "%";
+        return "%s × %s по %s%s = %s грн".formatted(item.getItemName(),
+                item.getQuantity().stripTrailingZeros().toPlainString(),
+                item.getPrice().stripTrailingZeros().toPlainString(), discount,
+                item.getAmount().toPlainString());
     }
 
     private void applyItems(Invoice invoice, List<InvoiceItemRequest> itemRequests) {

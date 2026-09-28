@@ -61,22 +61,17 @@ public class TachographService {
         Tachograph tachograph = tachographMapper.toEntity(request);
         tachograph.setVehicle(getVehicleOrThrow(request.vehicleId()));
         Tachograph saved = saveOrThrowFriendly(tachograph);
-        auditLogService.record(AuditAction.CREATE, "Tachograph", saved.getId());
+        auditLogService.record(AuditAction.CREATE, "Tachograph", saved.getId(), FieldDiff.created(snapshot(saved)));
         return tachographMapper.toResponse(saved);
     }
 
     public TachographResponse update(Long id, TachographRequest request) {
         Tachograph tachograph = getOrThrow(id);
-        Map<String, String[]> changes = FieldDiff.builder()
-                .add("Виробник", tachograph.getManufacturer(), request.manufacturer())
-                .add("Модель", tachograph.getModel(), request.model())
-                .add("Заводський номер", tachograph.getSerialNumber(), request.serialNumber())
-                .add("Дата випуску", tachograph.getProductionDate(), request.productionDate())
-                .build();
+        FieldDiff.Snapshot before = snapshot(tachograph);
         tachographMapper.updateEntity(request, tachograph);
         tachograph.setVehicle(getVehicleOrThrow(request.vehicleId()));
         Tachograph saved = saveOrThrowFriendly(tachograph);
-        auditLogService.record(AuditAction.UPDATE, "Tachograph", saved.getId(), changes);
+        auditLogService.record(AuditAction.UPDATE, "Tachograph", saved.getId(), FieldDiff.between(before, snapshot(saved)));
         return tachographMapper.toResponse(saved);
     }
 
@@ -97,7 +92,17 @@ public class TachographService {
         Tachograph tachograph = getOrThrow(id);
         tachograph.setDeletedAt(Instant.now());
         tachographRepository.save(tachograph);
-        auditLogService.record(AuditAction.DELETE, "Tachograph", id);
+        auditLogService.record(AuditAction.DELETE, "Tachograph", id, FieldDiff.deleted(snapshot(tachograph)));
+    }
+
+    /** Labels double as the keys of the "changed" badges in vehicles/list.html — keep them in sync. */
+    private static FieldDiff.Snapshot snapshot(Tachograph t) {
+        return FieldDiff.snapshot()
+                .add("Автомобіль", t.getVehicle() == null ? null : t.getVehicle().getRegistrationNumber())
+                .add("Виробник", t.getManufacturer())
+                .add("Модель", t.getModel())
+                .add("Заводський номер", t.getSerialNumber())
+                .add("Дата випуску", t.getProductionDate());
     }
 
     private Tachograph getOrThrow(Long id) {

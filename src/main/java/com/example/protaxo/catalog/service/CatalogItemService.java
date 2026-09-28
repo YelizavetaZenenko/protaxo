@@ -48,7 +48,7 @@ public class CatalogItemService {
         CatalogItem catalogItem = catalogItemMapper.toEntity(request);
         clearStockForServices(catalogItem);
         CatalogItem saved = catalogItemRepository.save(catalogItem);
-        auditLogService.record(AuditAction.CREATE, "CatalogItem", saved.getId());
+        auditLogService.record(AuditAction.CREATE, "CatalogItem", saved.getId(), FieldDiff.created(snapshot(saved)));
         return catalogItemMapper.toResponse(saved);
     }
 
@@ -60,19 +60,11 @@ public class CatalogItemService {
             request = new CatalogItemRequest(catalogItem.getType(), catalogItem.getName(),
                     request.basePrice(), request.stockQuantity(), request.vatRate(), request.purchasePrice());
         }
-        Map<String, String[]> changes = FieldDiff.builder()
-                .add("Тип", catalogItem.getType(), request.type())
-                .add("Назва", catalogItem.getName(), request.name())
-                .add("Базова ціна", catalogItem.getBasePrice(), request.basePrice())
-                .add("Ціна закупівлі", catalogItem.getPurchasePrice(), request.purchasePrice())
-                .add("Залишок", catalogItem.getStockQuantity(), request.stockQuantity())
-                .add("Ставка ПДВ", catalogItem.getVatRate() == null ? null : catalogItem.getVatRate().getLabel(),
-                        request.vatRate() == null ? null : request.vatRate().getLabel())
-                .build();
+        FieldDiff.Snapshot before = snapshot(catalogItem);
         catalogItemMapper.updateEntity(request, catalogItem);
         clearStockForServices(catalogItem);
         CatalogItem saved = catalogItemRepository.save(catalogItem);
-        auditLogService.record(AuditAction.UPDATE, "CatalogItem", saved.getId(), changes);
+        auditLogService.record(AuditAction.UPDATE, "CatalogItem", saved.getId(), FieldDiff.between(before, snapshot(saved)));
         return catalogItemMapper.toResponse(saved);
     }
 
@@ -87,7 +79,18 @@ public class CatalogItemService {
         CatalogItem catalogItem = getOrThrow(id);
         catalogItem.setDeletedAt(Instant.now());
         catalogItemRepository.save(catalogItem);
-        auditLogService.record(AuditAction.DELETE, "CatalogItem", id);
+        auditLogService.record(AuditAction.DELETE, "CatalogItem", id, FieldDiff.deleted(snapshot(catalogItem)));
+    }
+
+    /** Public: the same fields are logged when an item is created/received from an expense (FinanceService). */
+    public static FieldDiff.Snapshot snapshot(CatalogItem c) {
+        return FieldDiff.snapshot()
+                .add("Тип", c.getType() == null ? null : c.getType() == CatalogItemType.SERVICE ? "Послуга" : "Товар")
+                .add("Назва", c.getName())
+                .add("Базова ціна", c.getBasePrice())
+                .add("Ціна закупівлі", c.getPurchasePrice())
+                .add("Залишок", c.getStockQuantity())
+                .add("Ставка ПДВ", c.getVatRate() == null ? null : c.getVatRate().getLabel());
     }
 
     private CatalogItem getOrThrow(Long id) {

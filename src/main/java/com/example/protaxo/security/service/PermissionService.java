@@ -2,12 +2,14 @@ package com.example.protaxo.security.service;
 
 import com.example.protaxo.audit.entity.AuditAction;
 import com.example.protaxo.audit.service.AuditLogService;
+import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.security.entity.PermissionKey;
 import com.example.protaxo.security.entity.Role;
 import com.example.protaxo.security.entity.RolePermissions;
 import com.example.protaxo.security.entity.User;
 import com.example.protaxo.security.repository.RolePermissionsRepository;
 import com.example.protaxo.security.repository.UserRepository;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -58,9 +60,13 @@ public class PermissionService {
     public void updateMasterPermissions(boolean canViewAuditLog, boolean canManageUsers) {
         RolePermissions rp = rolePermissionsRepository.findByRole(Role.MASTER)
                 .orElseThrow(() -> new IllegalStateException("RolePermissions не знайдено для ролі MASTER"));
+        Map<String, String[]> changes = FieldDiff.builder()
+                .add("Майстер бачить журнал дій", rp.isGranted(PermissionKey.CAN_VIEW_AUDIT_LOG), canViewAuditLog)
+                .add("Майстер керує користувачами", rp.isGranted(PermissionKey.CAN_MANAGE_USERS), canManageUsers)
+                .build();
         rp.setGranted(PermissionKey.CAN_VIEW_AUDIT_LOG, canViewAuditLog);
         rp.setGranted(PermissionKey.CAN_MANAGE_USERS, canManageUsers);
         rolePermissionsRepository.save(rp);
-        auditLogService.record(AuditAction.UPDATE, "RolePermissions", rp.getId());
+        auditLogService.record(AuditAction.UPDATE, "RolePermissions", rp.getId(), changes);
     }
 }

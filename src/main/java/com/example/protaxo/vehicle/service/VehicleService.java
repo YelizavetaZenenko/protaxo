@@ -54,24 +54,17 @@ public class VehicleService {
         Vehicle vehicle = vehicleMapper.toEntity(request);
         vehicle.setClient(getClientOrThrow(request.clientId()));
         Vehicle saved = saveOrThrowFriendly(vehicle);
-        auditLogService.record(AuditAction.CREATE, "Vehicle", saved.getId());
+        auditLogService.record(AuditAction.CREATE, "Vehicle", saved.getId(), FieldDiff.created(snapshot(saved)));
         return vehicleMapper.toResponse(saved);
     }
 
     public VehicleResponse update(Long id, VehicleRequest request) {
         Vehicle vehicle = getOrThrow(id);
-        Map<String, String[]> changes = FieldDiff.builder()
-                .add("VIN", vehicle.getVin(), request.vin())
-                .add("Номер кузова", vehicle.getChassisNumber(), request.chassisNumber())
-                .add("Держномер", vehicle.getRegistrationNumber(), request.registrationNumber())
-                .add("Марка", vehicle.getMake(), request.make())
-                .add("Модель", vehicle.getModel(), request.model())
-                .add("Рік випуску", vehicle.getYear(), request.year())
-                .build();
+        FieldDiff.Snapshot before = snapshot(vehicle);
         vehicleMapper.updateEntity(request, vehicle);
         vehicle.setClient(getClientOrThrow(request.clientId()));
         Vehicle saved = saveOrThrowFriendly(vehicle);
-        auditLogService.record(AuditAction.UPDATE, "Vehicle", saved.getId(), changes);
+        auditLogService.record(AuditAction.UPDATE, "Vehicle", saved.getId(), FieldDiff.between(before, snapshot(saved)));
         return vehicleMapper.toResponse(saved);
     }
 
@@ -92,7 +85,19 @@ public class VehicleService {
         Vehicle vehicle = getOrThrow(id);
         vehicle.setDeletedAt(Instant.now());
         vehicleRepository.save(vehicle);
-        auditLogService.record(AuditAction.DELETE, "Vehicle", id);
+        auditLogService.record(AuditAction.DELETE, "Vehicle", id, FieldDiff.deleted(snapshot(vehicle)));
+    }
+
+    /** Labels double as the keys of the "changed" badges in vehicles/list.html — keep them in sync. */
+    private static FieldDiff.Snapshot snapshot(Vehicle v) {
+        return FieldDiff.snapshot()
+                .add("Контрагент", v.getClient() == null ? null : v.getClient().getName())
+                .add("VIN", v.getVin())
+                .add("Номер кузова", v.getChassisNumber())
+                .add("Держномер", v.getRegistrationNumber())
+                .add("Марка", v.getMake())
+                .add("Модель", v.getModel())
+                .add("Рік випуску", v.getYear());
     }
 
     private Vehicle getOrThrow(Long id) {

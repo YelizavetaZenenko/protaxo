@@ -86,15 +86,25 @@ public class StockRevisionService {
             throw new BusinessRuleException("У каталозі немає товарів із залишком на складі — нічого перераховувати");
         }
         StockRevision saved = revisionRepository.save(revision);
-        auditLogService.record(AuditAction.CREATE, "StockRevision", saved.getId());
+        auditLogService.record(AuditAction.CREATE, "StockRevision", saved.getId(), FieldDiff.builder()
+                .add("Позицій до перерахунку", null, saved.getItems().size())
+                .build());
         return saved.getId();
     }
 
     /** Зберігає введені фактичні кількості й коментарі; залишки в каталозі не змінює. */
     public void saveDraft(Long id, StockRevisionForm form) {
         StockRevision revision = requireDraft(id);
+        long countedBefore = countedLines(revision);
         applyForm(revision, form);
         revisionRepository.save(revision);
+        auditLogService.record(AuditAction.UPDATE, "StockRevision", id, FieldDiff.builder()
+                .add("Перераховано позицій", countedBefore, countedLines(revision))
+                .build());
+    }
+
+    private static long countedLines(StockRevision revision) {
+        return revision.getItems().stream().filter(i -> i.getActualQuantity() != null).count();
     }
 
     /**
@@ -109,6 +119,7 @@ public class StockRevisionService {
             throw new BusinessRuleException("Не введено жодної фактичної кількості — нічого проводити");
         }
         String auditLabel = "Залишок (ревізія № %d)".formatted(id);
+        int stockChanged = 0;
         for (StockRevisionItem line : revision.getItems()) {
             if (line.getActualQuantity() == null) {
                 continue;
@@ -130,14 +141,18 @@ public class StockRevisionService {
                 item.setStockQuantity(line.getActualQuantity());
                 catalogItemRepository.save(item);
                 auditLogService.record(AuditAction.UPDATE, "CatalogItem", item.getId(), changes);
+                stockChanged++;
             }
         }
         revision.setStatus(StockRevisionStatus.COMPLETED);
         revision.setCompletedAt(Instant.now());
         revision.setCompletedBy(CurrentUserRoles.username());
         revisionRepository.save(revision);
-        auditLogService.record(AuditAction.UPDATE, "StockRevision", id, Map.of("Статус",
-                new String[]{StockRevisionStatus.DRAFT.getLabel(), StockRevisionStatus.COMPLETED.getLabel()}));
+        auditLogService.record(AuditAction.UPDATE, "StockRevision", id, FieldDiff.builder()
+                .add("Статус", StockRevisionStatus.DRAFT.getLabel(), StockRevisionStatus.COMPLETED.getLabel())
+                .add("Перераховано позицій", null, countedLines(revision))
+                .add("Змінено залишків", null, stockChanged)
+                .build());
     }
 
     public void deleteDraft(Long id) {

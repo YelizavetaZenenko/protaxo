@@ -45,4 +45,8 @@ public class AuditLog {
     /** JSON map of {@code {"fieldName": ["old value", "new value"]}} — null when nothing tracked (CREATE/DELETE, or an UPDATE with no field-level diff captured). */
     @Column(columnDefinition = "TEXT")
     private String changes;
+
+    /** Клієнтська IP-адреса запиту (з X-Forwarded-For за Caddy), null для дій поза HTTP-запитом. */
+    @Column(name = "ip_address", length = 64)
+    private String ipAddress;
 }

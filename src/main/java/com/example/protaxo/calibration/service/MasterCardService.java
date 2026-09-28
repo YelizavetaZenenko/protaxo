@@ -1,9 +1,12 @@
 package com.example.protaxo.calibration.service;
 
+import com.example.protaxo.audit.entity.AuditAction;
+import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.calibration.dto.MasterCardResponse;
 import com.example.protaxo.calibration.entity.MasterCard;
 import com.example.protaxo.calibration.repository.MasterCardRepository;
 import com.example.protaxo.common.exception.BusinessRuleException;
+import com.example.protaxo.common.util.FieldDiff;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -16,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MasterCardService {
 
     private final MasterCardRepository masterCardRepository;
+    private final AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public List<MasterCardResponse> findAll() {
@@ -38,6 +42,9 @@ public class MasterCardService {
                     .cardNumber(trimmed)
                     .holderName(holderName.trim())
                     .build());
+            auditLogService.record(AuditAction.CREATE, "MasterCard", saved.getId(), FieldDiff.created(FieldDiff.snapshot()
+                    .add("Номер картки", saved.getCardNumber())
+                    .add("Власник", saved.getHolderName())));
             return new MasterCardResponse(saved.getId(), saved.getCardNumber(), saved.getHolderName());
         } catch (DataIntegrityViolationException ex) {
             throw new BusinessRuleException("Ця картка вже є у довіднику");

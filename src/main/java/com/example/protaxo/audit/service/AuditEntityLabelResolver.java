@@ -5,10 +5,15 @@ import com.example.protaxo.catalog.repository.CatalogItemRepository;
 import com.example.protaxo.client.repository.ClientRepository;
 import com.example.protaxo.contract.repository.ContractRepository;
 import com.example.protaxo.driver.repository.DriverRepository;
+import com.example.protaxo.finance.entity.FinanceAccount;
+import com.example.protaxo.finance.repository.FinanceAccountRepository;
 import com.example.protaxo.invoice.repository.InvoiceRepository;
 import com.example.protaxo.security.repository.UserRepository;
+import com.example.protaxo.stockrevision.repository.StockRevisionRepository;
 import com.example.protaxo.tachograph.repository.TachographRepository;
 import com.example.protaxo.vehicle.repository.VehicleRepository;
+import com.example.protaxo.worker.entity.RepairWorker;
+import com.example.protaxo.worker.repository.RepairWorkerRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -38,6 +43,9 @@ public class AuditEntityLabelResolver {
     private final CalibrationProtocolRepository calibrationProtocolRepository;
     private final DriverRepository driverRepository;
     private final UserRepository userRepository;
+    private final FinanceAccountRepository financeAccountRepository;
+    private final StockRevisionRepository stockRevisionRepository;
+    private final RepairWorkerRepository repairWorkerRepository;
 
     public AuditEntityRef resolve(String entityType, Long entityId) {
         if (entityId == null) {
@@ -62,6 +70,15 @@ public class AuditEntityLabelResolver {
             // under their client, users are list + invite/delete only - so never link either.
             case "Driver" -> build(driverRepository.findFullNameByIdIncludingDeleted(entityId), entityId, false, null);
             case "User" -> build(userRepository.findFullNameByIdIncludingDeleted(entityId), entityId, false, null);
+            case "FinanceAccount" -> build(financeAccountRepository.findById(entityId).map(FinanceAccount::getName),
+                    entityId, false, null);
+            case "FinanceOperation" -> new AuditEntityRef("Операція № " + entityId, null);
+            case "Reconciliation" -> new AuditEntityRef("Звірка № " + entityId, null);
+            case "StockRevision" -> new AuditEntityRef("Ревізія № " + entityId,
+                    stockRevisionRepository.existsById(entityId) ? "/stock-revisions/" + entityId : null);
+            // Hard-deleted reference table — a removed worker's name survives only in the DELETE entry's changes.
+            case "RepairWorker" -> build(repairWorkerRepository.findById(entityId).map(RepairWorker::getFullName),
+                    entityId, false, null);
             default -> fallback(entityId);
         };
     }

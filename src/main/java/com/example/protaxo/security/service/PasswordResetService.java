@@ -3,6 +3,7 @@ package com.example.protaxo.security.service;
 import com.example.protaxo.audit.entity.AuditAction;
 import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.common.exception.BusinessRuleException;
+import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.security.entity.PasswordResetToken;
 import com.example.protaxo.security.entity.User;
 import com.example.protaxo.security.repository.PasswordResetTokenRepository;
@@ -71,6 +72,9 @@ public class PasswordResetService {
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
         userRepository.save(user);
 
-        auditLogService.record(AuditAction.UPDATE, "User", user.getId());
+        // Never log password values — just that it was reset via the emailed link.
+        auditLogService.recordAs(user.getEmail(), AuditAction.UPDATE, "User", user.getId(), FieldDiff.builder()
+                .add("Пароль", null, "скинуто за посиланням з пошти")
+                .build());
     }
 }

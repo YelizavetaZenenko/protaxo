@@ -1,6 +1,7 @@
 package com.example.protaxo.security.config;
 
 import com.example.protaxo.security.entity.PermissionKey;
+import com.example.protaxo.security.listener.AuthAuditRecorder;
 import com.example.protaxo.security.service.PermissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +23,7 @@ import org.springframework.security.web.access.intercept.RequestAuthorizationCon
 public class SecurityConfig {
 
     private final PermissionService permissionService;
+    private final AuthAuditRecorder authAuditRecorder;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -65,6 +67,7 @@ public class SecurityConfig {
                         .successHandler(roleLandingHandler())
                         .permitAll())
                 .logout(logout -> logout
+                        .addLogoutHandler((request, response, authentication) -> authAuditRecorder.loggedOut(authentication))
                         .logoutSuccessUrl("/login?logout")
                         .permitAll())
                 .httpBasic(httpBasic -> {});
@@ -75,6 +78,7 @@ public class SecurityConfig {
     /** Після входу: бухгалтер — одразу в панель фінансів, решта — у наряд-закази, як і раніше. */
     private AuthenticationSuccessHandler roleLandingHandler() {
         return (request, response, authentication) -> {
+            authAuditRecorder.loginSucceeded(authentication);
             boolean accountant = authentication.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ACCOUNTANT"));
             response.sendRedirect(request.getContextPath() + (accountant ? "/finance" : "/invoices"));

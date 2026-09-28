@@ -1,7 +1,10 @@
 package com.example.protaxo.vehicle.service;
 
+import com.example.protaxo.audit.entity.AuditAction;
+import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.vehicle.dto.VehicleMakeResponse;
 import com.example.protaxo.vehicle.dto.VehicleModelResponse;
 import com.example.protaxo.vehicle.entity.VehicleMake;
@@ -26,6 +29,7 @@ public class VehicleCatalogService {
 
     private final VehicleMakeRepository makeRepository;
     private final VehicleModelRepository modelRepository;
+    private final AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public List<VehicleMakeResponse> findAllMakes() {
@@ -40,6 +44,8 @@ public class VehicleCatalogService {
             throw new BusinessRuleException("Ця марка вже є у довіднику");
         }
         VehicleMake saved = makeRepository.save(VehicleMake.builder().name(trimmed).build());
+        auditLogService.record(AuditAction.CREATE, "VehicleMake", saved.getId(),
+                FieldDiff.created(FieldDiff.snapshot().add("Марка", saved.getName())));
         return new VehicleMakeResponse(saved.getId(), saved.getName());
     }
 
@@ -58,6 +64,8 @@ public class VehicleCatalogService {
             throw new BusinessRuleException("Ця модель вже є у довіднику для цієї марки");
         }
         VehicleModel saved = modelRepository.save(VehicleModel.builder().make(make).name(trimmed).build());
+        auditLogService.record(AuditAction.CREATE, "VehicleModel", saved.getId(),
+                FieldDiff.created(FieldDiff.snapshot().add("Марка", make.getName()).add("Модель", saved.getName())));
         return new VehicleModelResponse(saved.getId(), saved.getName());
     }
 }
