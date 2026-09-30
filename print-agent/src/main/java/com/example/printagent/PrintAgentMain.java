@@ -7,7 +7,7 @@ import java.util.concurrent.CountDownLatch;
 import javax.print.PrintException;
 
 /**
- * Entry point. Connects to the backend over WebSocket, prints whatever TSPL job arrives, and
+ * Entry point. Connects to the backend over WebSocket, prints whatever label job arrives, and
  * reconnects with a fixed delay whenever the connection drops (backend restart, network blip,
  * printer offline) — meant to run unattended as a background process on the shop's computer, so
  * it never gives up after a single failure. See docs/Print Agent.md for setup.
@@ -47,7 +47,7 @@ public final class PrintAgentMain {
     private static void handleJob(PrinterClient printerClient, byte[] tspl) {
         try {
             printerClient.print(tspl);
-            System.out.println("[print-agent] Наклейку надіслано на друк (" + tspl.length + " байт TSPL)");
+            System.out.println("[print-agent] Наклейку надіслано на друк (" + tspl.length + " байт)");
         } catch (PrintException e) {
             System.err.println("[print-agent] Помилка друку: " + e.getMessage());
         }

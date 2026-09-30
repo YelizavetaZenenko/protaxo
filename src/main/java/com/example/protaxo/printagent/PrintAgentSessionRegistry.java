@@ -60,9 +60,8 @@ public class PrintAgentSessionRegistry {
      * @return true if the job was handed to at least one connected agent — the caller uses this to
      * tell the user whether printing was actually queued or nothing is listening right now.
      *
-     * <p>Sent as a binary frame, not text — the payload embeds a raw TSPL {@code BITMAP} (the
-     * label logo), arbitrary pixel bytes that a text frame's UTF-8 encoding would corrupt. See
-     * {@link TsplLabelBuilder}.
+     * <p>Sent as a binary frame, not text — the payload is a PNG image of the label (see
+     * {@link LabelImageRenderer}), bytes that a text frame's UTF-8 encoding would corrupt.
      */
     public boolean broadcast(byte[] payload) {
         boolean sentToAny = false;

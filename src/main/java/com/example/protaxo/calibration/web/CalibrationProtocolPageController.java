@@ -10,8 +10,7 @@ import com.example.protaxo.invoice.dto.InvoiceResponse;
 import com.example.protaxo.invoice.service.InvoiceService;
 import com.example.protaxo.pdf.service.PdfRenderService;
 import com.example.protaxo.printagent.PrintAgentSessionRegistry;
-import com.example.protaxo.printagent.QrCodeImageGenerator;
-import com.example.protaxo.printagent.TsplLabelBuilder;
+import com.example.protaxo.printagent.LabelImageRenderer;
 import com.example.protaxo.suggestion.entity.FieldSuggestionCategory;
 import com.example.protaxo.suggestion.service.FieldSuggestionService;
 import com.example.protaxo.vehicle.dto.VehicleResponse;
@@ -50,8 +49,7 @@ public class CalibrationProtocolPageController {
     private final FieldSuggestionService fieldSuggestionService;
     private final PdfRenderService pdfRenderService;
     private final PrintAgentSessionRegistry printAgentSessionRegistry;
-    private final TsplLabelBuilder tsplLabelBuilder;
-    private final QrCodeImageGenerator qrCodeImageGenerator;
+    private final LabelImageRenderer labelImageRenderer;
 
     @GetMapping
     public String list(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate filterDate,
@@ -143,7 +141,7 @@ public class CalibrationProtocolPageController {
     }
 
     /**
-     * Formats the protocol's seal numbers/QR hash as a TSPL label and broadcasts it to whatever
+     * Renders the label as a PNG ({@link LabelImageRenderer}) and broadcasts it to whatever
      * [[Print Agent]] processes are currently connected over WebSocket — fire-and-forget, no job
      * queue: if nothing is connected right now, the user is told so and can retry once the agent
      * (re)starts, rather than the job silently getting lost or stuck.
@@ -152,8 +150,8 @@ public class CalibrationProtocolPageController {
     public String printLabel(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         CalibrationProtocolResponse protocol = calibrationProtocolService.ensureQrHash(id);
         ClientResponse client = clientService.findById(protocol.clientId());
-        byte[] tspl = tsplLabelBuilder.build(protocol, client.edrpou());
-        boolean sent = printAgentSessionRegistry.broadcast(tspl);
+        byte[] label = labelImageRenderer.renderPng(protocol, client.edrpou());
+        boolean sent = printAgentSessionRegistry.broadcast(label);
         if (sent) {
             redirectAttributes.addFlashAttribute("printSuccess", "Завдання на друк наклейки відправлено");
         } else {
@@ -163,24 +161,17 @@ public class CalibrationProtocolPageController {
     }
 
     /**
-     * Shows what the label will look like WITHOUT a physical printer — an HTML/CSS approximation
-     * of TsplLabelBuilder's layout (same builder call, so the text content is always the exact
-     * source of truth) plus a real QR image rendered via ZXing, and the raw TSPL text underneath
-     * for anyone who wants to check it exactly. Positions on the actual label are TSPL
-     * dot-coordinates (8 dots/mm @ 203dpi) — this preview approximates the same layout with CSS,
-     * it does not literally replay the TSPL drawing commands.
+     * Shows the label WITHOUT a physical printer — the very PNG the Print Agent would receive, not
+     * an approximation.
      */
     @GetMapping("/{id}/label-preview")
     public String labelPreview(@PathVariable Long id, Model model) {
         CalibrationProtocolResponse protocol = calibrationProtocolService.ensureQrHash(id);
         ClientResponse client = clientService.findById(protocol.clientId());
-        String verifyUrl = tsplLabelBuilder.verifyUrl(protocol);
         model.addAttribute("protocol", protocol);
         model.addAttribute("clientName", client.name());
-        model.addAttribute("clientEdrpou", client.edrpou());
-        model.addAttribute("verifyUrl", verifyUrl);
-        model.addAttribute("tspl", tsplLabelBuilder.buildPreviewText(protocol, client.edrpou()));
-        model.addAttribute("qrDataUri", qrCodeImageGenerator.toPngDataUri(verifyUrl, 300));
+        model.addAttribute("verifyUrl", labelImageRenderer.verifyUrl(protocol));
+        model.addAttribute("labelDataUri", labelImageRenderer.renderPngDataUri(protocol, client.edrpou()));
         return "calibration-protocols/label-preview";
     }
 
