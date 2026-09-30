@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Builds the raw TSPL2 command block for a calibration protocol seal/QR label. Label size
- * (50x80mm, portrait — confirmed with the user 2026-09-21) and text positions are a starting point
+ * (47.5x81.5mm, portrait — confirmed with the user 2026-09-30, was 50x80mm) and text positions are a starting point
  * picked without the actual printer in hand — see [[Print Agent]] for why these will very likely
  * need adjusting once tested against real hardware (font and especially Cyrillic codepage are
  * printer/firmware-specific).
@@ -32,11 +32,19 @@ public class TsplLabelBuilder {
 
     private static final Charset LABEL_CHARSET = Charset.forName("windows-1251");
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-    /** 50x80mm portrait label, 8 dots/mm @ 203dpi (see class javadoc) — 400x640 dots. */
+    /** 47.5x81.5mm portrait label, 8 dots/mm @ 203dpi (see class javadoc) — 380x652 dots. */
     private static final int LOGO_WIDTH_DOTS = 240;
-    private static final int LOGO_X = 80;
+    /** (380 - 240) / 2 — logo centered on the label width. */
+    private static final int LOGO_X = 70;
+    /** Horizontal midpoint of the 380-dot label — anchor for centered TEXT (alignment 2). */
+    private static final int CENTER_X = 190;
     private static final String FOP_NAME = "ФОП Вишивата Діана Олександрівна";
-    private static final String SHORT_COMPANY_ADDRESS = "Волинська обл., с. Крупа вул. Широка 31";
+    /**
+     * Two lines: the full address (~64 chars) is far wider than the label — font "1" is 8 dots per
+     * character, so one line fits ~47 characters in 380 dots.
+     */
+    private static final String COMPANY_ADDRESS_LINE_1 = "45604, Волинська обл., Луцький р-н,";
+    private static final String COMPANY_ADDRESS_LINE_2 = "с. Крупа, вул. Дубнівська, 10";
     private static final String SHORT_COMPANY_PHONE = "+38(067)-223-22-63";
 
     /**
@@ -86,19 +94,19 @@ public class TsplLabelBuilder {
                 + footer(protocol);
     }
 
-    /** 50x80mm, portrait (see LOGO_WIDTH_DOTS comment) — was 50x30mm landscape. */
+    /** 47.5x81.5mm, portrait (see LOGO_WIDTH_DOTS comment) — was 50x80mm, before that 50x30mm landscape. */
     private String header() {
-        return "SIZE 50 mm, 80 mm\r\nGAP 2 mm, 0 mm\r\nDIRECTION 1\r\nCODEPAGE 1251\r\nCLS\r\n";
+        return "SIZE 47.5 mm, 81.5 mm\r\nGAP 2 mm, 0 mm\r\nDIRECTION 1\r\nCODEPAGE 1251\r\nCLS\r\n";
     }
 
     /**
-     * X=125 centers an ECC-H QR at cell size 3 for a URL this long (~version 8-9, ~150 dots wide)
-     * within the 400-dot label width — unlike TEXT, TSPL's QRCODE command has no alignment
+     * X=116 centers an ECC-H QR at cell size 3 for a URL this long (~version 8, 49 modules = ~147
+     * dots wide) within the 380-dot label width, and Y=480 ends it at ~627 of 652 dots — unlike TEXT, TSPL's QRCODE command has no alignment
      * parameter, so centering has to be a hand-estimated X rather than computed from an actual
      * rendered width. Same "unverified until the real printer" caveat as the rest of this class.
      */
     private String footer(CalibrationProtocolResponse protocol) {
-        return "QRCODE 125,510,H,3,A,0,\"" + verifyUrl(protocol) + "\"\r\nPRINT 1,1\r\n";
+        return "QRCODE 116,480,H,3,A,0,\"" + verifyUrl(protocol) + "\"\r\nPRINT 1,1\r\n";
     }
 
     /**
@@ -113,7 +121,7 @@ public class TsplLabelBuilder {
      * on the label too but removed by request (2026-09-21) — the field itself is untouched.
      *
      * <p>Address/phone/company-name centering uses TSPL2's optional 7th {@code TEXT} parameter
-     * (alignment: 2 = center), with X set to the label's horizontal midpoint (400 dots / 2) rather
+     * (alignment: 2 = center), with X set to the label's horizontal midpoint (380 dots / 2) rather
      * than a left margin — like the rest of this class, unverified against the real printer (see
      * class javadoc); some TSPL firmwares ignore this parameter or center relative to a different
      * anchor.
@@ -121,18 +129,25 @@ public class TsplLabelBuilder {
     private String textCommands(CalibrationProtocolResponse protocol, String clientEdrpou) {
         String date = protocol.protocolDate() == null ? null : DATE_FORMAT.format(protocol.protocolDate());
         StringBuilder sb = new StringBuilder();
-        sb.append("TEXT 200,185,\"1\",0,1,1,2,\"").append(escape(FOP_NAME)).append("\"\r\n");
-        sb.append("TEXT 200,210,\"1\",0,1,1,2,\"").append(escape(SHORT_COMPANY_ADDRESS)).append("\"\r\n");
-        sb.append("TEXT 200,235,\"1\",0,1,1,2,\"").append(escape(field("Tel", SHORT_COMPANY_PHONE))).append("\"\r\n");
-        sb.append("TEXT 10,265,\"3\",0,1,1,\"").append(escape(orDash(protocol.stampNumber()))).append("\"\r\n");
-        appendBold(sb, 10, 325, field("Date", date));
-        appendBold(sb, 10, 350, field("VIN", truncate(protocol.vehicleVin(), 22)));
-        appendBold(sb, 10, 375, field("S/N", clientEdrpou));
-        appendBold(sb, 10, 400, field("Wheels", truncate(protocol.tireSize(), 16)));
-        appendBold(sb, 10, 425, "L=" + orDash(protocol.tireCircumferenceL()));
-        appendBold(sb, 10, 450, "W=" + orDash(protocol.coefficientW()));
-        appendBold(sb, 10, 475, "k=" + orDash(protocol.constantK()));
+        appendCentered(sb, 183, FOP_NAME);
+        appendCentered(sb, 205, COMPANY_ADDRESS_LINE_1);
+        appendCentered(sb, 227, COMPANY_ADDRESS_LINE_2);
+        appendCentered(sb, 249, field("Tel", SHORT_COMPANY_PHONE));
+        sb.append("TEXT 10,272,\"3\",0,1,1,\"").append(escape(orDash(protocol.stampNumber()))).append("\"\r\n");
+        // 22-dot line pitch (was 25): the second address line plus the QR below wouldn't fit the
+        // 652-dot height otherwise.
+        appendBold(sb, 10, 312, field("Date", date));
+        appendBold(sb, 10, 334, field("VIN", truncate(protocol.vehicleVin(), 22)));
+        appendBold(sb, 10, 356, field("S/N", clientEdrpou));
+        appendBold(sb, 10, 378, field("Wheels", truncate(protocol.tireSize(), 16)));
+        appendBold(sb, 10, 400, "L=" + orDash(protocol.tireCircumferenceL()));
+        appendBold(sb, 10, 422, "W=" + orDash(protocol.coefficientW()));
+        appendBold(sb, 10, 444, "k=" + orDash(protocol.constantK()));
         return sb.toString();
+    }
+
+    private void appendCentered(StringBuilder sb, int y, String content) {
+        sb.append("TEXT ").append(CENTER_X).append(',').append(y).append(",\"1\",0,1,1,2,\"").append(escape(content)).append("\"\r\n");
     }
 
     /**
