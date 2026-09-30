@@ -15,8 +15,6 @@ import javax.print.PrintException;
 public final class PrintAgentMain {
 
     private static final long RECONNECT_DELAY_MS = 5000;
-    /** Shown on start and reported to the server — tells at a glance which build the shop actually runs. */
-    static final String VERSION = "2026-09-30 ZPL/EPL";
 
     public static void main(String[] args) throws Exception {
         // Windows' console codepage is rarely UTF-8 by default — force it so Cyrillic log lines
@@ -26,22 +24,16 @@ public final class PrintAgentMain {
 
         Path configPath = Path.of(args.length > 0 ? args[0] : "printagent.properties");
         PrintAgentConfig config = PrintAgentConfig.load(configPath);
-        PrinterClient printerClient = new PrinterClient(
-                config.printerName(), config.labelRotation(), config.printerLanguage(), config.labelInvert());
+        PrinterClient printerClient = new PrinterClient(config.printerName(), config.labelRotation());
 
-        String settings = "принтер=" + (config.printerName().isBlank() ? "(за замовчуванням)" : config.printerName())
-                + ", мова=" + config.printerLanguage()
-                + ", поворот наклейки=" + config.labelRotation() + "°"
-                + (config.labelInvert() ? ", інверсія" : "");
-        System.out.println("[print-agent] Стартую (версія " + VERSION + "), backend=" + config.backendWsUrl() + ", " + settings);
+        System.out.println("[print-agent] Стартую, backend=" + config.backendWsUrl()
+                + ", принтер=" + (config.printerName().isBlank() ? "(за замовчуванням)" : config.printerName())
+                + ", поворот наклейки=" + config.labelRotation() + "°");
 
         while (true) {
             CountDownLatch closedLatch = new CountDownLatch(1);
-            BackendWebSocketClient[] holder = new BackendWebSocketClient[1];
             BackendWebSocketClient client = new BackendWebSocketClient(
-                    config.backendWsUrl(), config.token(), job -> handleJob(printerClient, holder[0], job), closedLatch);
-            holder[0] = client;
-            client.onConnected(() -> client.sendStatus("підключено, версія " + VERSION + ", " + settings));
+                    config.backendWsUrl(), config.token(), tspl -> handleJob(printerClient, tspl), closedLatch);
             try {
                 client.connect();
                 closedLatch.await();
@@ -53,15 +45,12 @@ public final class PrintAgentMain {
         }
     }
 
-    /** Every outcome also goes to the server log, so a print problem can be diagnosed without the shop's screen. */
-    private static void handleJob(PrinterClient printerClient, BackendWebSocketClient client, byte[] job) {
+    private static void handleJob(PrinterClient printerClient, byte[] tspl) {
         try {
-            String sent = printerClient.print(job);
-            System.out.println("[print-agent] Наклейку надіслано на друк: " + sent);
-            client.sendStatus("надруковано: " + sent);
-        } catch (PrintException | RuntimeException e) {
+            printerClient.print(tspl);
+            System.out.println("[print-agent] Наклейку надіслано на друк (" + tspl.length + " байт)");
+        } catch (PrintException e) {
             System.err.println("[print-agent] Помилка друку: " + e.getMessage());
-            client.sendStatus("помилка друку: " + e.getMessage());
         }
     }
 }

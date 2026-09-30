@@ -16,17 +16,12 @@ public final class PrintAgentConfig {
     private final String token;
     private final String printerName;
     private final int labelRotation;
-    private final String printerLanguage;
-    private final boolean labelInvert;
 
-    private PrintAgentConfig(String backendWsUrl, String token, String printerName, int labelRotation,
-                             String printerLanguage, boolean labelInvert) {
+    private PrintAgentConfig(String backendWsUrl, String token, String printerName, int labelRotation) {
         this.backendWsUrl = backendWsUrl;
         this.token = token;
         this.printerName = printerName;
         this.labelRotation = labelRotation;
-        this.printerLanguage = printerLanguage;
-        this.labelInvert = labelInvert;
     }
 
     public static PrintAgentConfig load(Path propertiesPath) throws IOException {
@@ -38,16 +33,11 @@ public final class PrintAgentConfig {
         String token = props.getProperty("token", "");
         String printerName = props.getProperty("printer.name", "");
         int labelRotation = parseRotation(props.getProperty("label.rotation", "0"));
-        String printerLanguage = props.getProperty("printer.language", "zpl").trim().toLowerCase();
-        if (!printerLanguage.equals("zpl") && !printerLanguage.equals("epl") && !printerLanguage.equals("driver")) {
-            throw new IllegalStateException("printagent.properties: 'printer.language' має бути zpl, epl або driver, а не '" + printerLanguage + "'");
-        }
-        boolean labelInvert = Boolean.parseBoolean(props.getProperty("label.invert", "false").trim());
         if (token.isBlank()) {
             throw new IllegalStateException(
                     "printagent.properties: 'token' не задано — має збігатись із print-agent.token бекенду");
         }
-        return new PrintAgentConfig(backendWsUrl, token, printerName, labelRotation, printerLanguage, labelInvert);
+        return new PrintAgentConfig(backendWsUrl, token, printerName, labelRotation);
     }
 
     public String backendWsUrl() {
@@ -66,19 +56,6 @@ public final class PrintAgentConfig {
     /** Clockwise degrees (0/90/180/270) to turn the label picture before printing — for a roll whose labels sit sideways. */
     public int labelRotation() {
         return labelRotation;
-    }
-
-    /**
-     * zpl (default) / epl — the label goes to the printer as raw commands carrying its own size,
-     * bypassing the Windows driver's page settings; driver — the old path through the driver.
-     */
-    public String printerLanguage() {
-        return printerLanguage;
-    }
-
-    /** Swaps black and white — only for a printer whose graphic polarity turns out reversed. */
-    public boolean labelInvert() {
-        return labelInvert;
     }
 
     private static int parseRotation(String raw) {
