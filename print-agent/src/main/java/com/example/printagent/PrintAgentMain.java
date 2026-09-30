@@ -24,10 +24,11 @@ public final class PrintAgentMain {
 
         Path configPath = Path.of(args.length > 0 ? args[0] : "printagent.properties");
         PrintAgentConfig config = PrintAgentConfig.load(configPath);
-        PrinterClient printerClient = new PrinterClient(config.printerName());
+        PrinterClient printerClient = new PrinterClient(config.printerName(), config.labelRotation());
 
         System.out.println("[print-agent] Стартую, backend=" + config.backendWsUrl()
-                + ", принтер=" + (config.printerName().isBlank() ? "(за замовчуванням)" : config.printerName()));
+                + ", принтер=" + (config.printerName().isBlank() ? "(за замовчуванням)" : config.printerName())
+                + ", поворот наклейки=" + config.labelRotation() + "°");
 
         while (true) {
             CountDownLatch closedLatch = new CountDownLatch(1);

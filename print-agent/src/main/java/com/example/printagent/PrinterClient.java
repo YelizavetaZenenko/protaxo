@@ -38,9 +38,11 @@ public final class PrinterClient {
     private static final byte[] PNG_SIGNATURE = {(byte) 0x89, 'P', 'N', 'G'};
 
     private final String printerName;
+    private final int rotationDegrees;
 
-    public PrinterClient(String printerName) {
+    public PrinterClient(String printerName, int rotationDegrees) {
         this.printerName = printerName;
+        this.rotationDegrees = rotationDegrees;
     }
 
     public void print(byte[] payload) throws PrintException {
@@ -57,12 +59,13 @@ public final class PrinterClient {
     }
 
     private void printImage(PrintService service, byte[] png) throws PrintException {
-        BufferedImage image;
+        BufferedImage decoded;
         try {
-            image = ImageIO.read(new ByteArrayInputStream(png));
+            decoded = ImageIO.read(new ByteArrayInputStream(png));
         } catch (IOException e) {
             throw new PrintException("Не вдалось прочитати зображення наклейки: " + e.getMessage());
         }
+        BufferedImage image = rotate(decoded, rotationDegrees);
         double widthPt = image.getWidth() / IMAGE_DOTS_PER_MM * POINTS_PER_MM;
         double heightPt = image.getHeight() / IMAGE_DOTS_PER_MM * POINTS_PER_MM;
 
@@ -91,6 +94,31 @@ public final class PrinterClient {
         } catch (PrinterException e) {
             throw new PrintException("Помилка друку через драйвер: " + e.getMessage());
         }
+    }
+
+    /**
+     * Clockwise turn in whole quarter-turns, pixel for pixel (no resampling) — for a roll where the
+     * labels sit sideways relative to the feed, so the driver's page is the label turned 90°.
+     */
+    static BufferedImage rotate(BufferedImage src, int degrees) {
+        if (degrees == 0) {
+            return src;
+        }
+        int w = src.getWidth();
+        int h = src.getHeight();
+        boolean quarter = degrees == 90 || degrees == 270;
+        BufferedImage out = new BufferedImage(quarter ? h : w, quarter ? w : h, BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int rgb = src.getRGB(x, y);
+                switch (degrees) {
+                    case 90 -> out.setRGB(h - 1 - y, x, rgb);
+                    case 180 -> out.setRGB(w - 1 - x, h - 1 - y, rgb);
+                    default -> out.setRGB(y, w - 1 - x, rgb);
+                }
+            }
+        }
+        return out;
     }
 
     private static void warnIfPageSizeDiffers(PageFormat page, double widthPt, double heightPt) {
