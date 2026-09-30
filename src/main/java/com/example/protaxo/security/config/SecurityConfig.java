@@ -69,8 +69,11 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .addLogoutHandler((request, response, authentication) -> authAuditRecorder.loggedOut(authentication))
                         .logoutSuccessUrl("/login?logout")
-                        .permitAll())
-                .httpBasic(httpBasic -> {});
+                        .permitAll());
+        // Без httpBasic: інакше фонові fetch-запити сторінки після завершення сесії отримують
+        // 401 + WWW-Authenticate: Basic, і браузер показує власне вікно "Sign in" кожні 15 с
+        // (пульс /session/ping). Тепер усім неавтентифікованим — 302 на /login, а topbar.html
+        // сам переводить вкладку туди. Див. docs/Безпека і ролі.md.
 
         return http.build();
     }

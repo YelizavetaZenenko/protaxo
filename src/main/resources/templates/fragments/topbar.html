@@ -122,6 +122,13 @@
                 }
                 function ping() {
                     fetch(pingUrl + '?start=' + pageStart, { credentials: 'same-origin', redirect: 'manual', cache: 'no-store' })
+                        .then(function (res) {
+                            // Сесія вже завершилась (сон ПК, обрив мережі) — сервер шле 302 на /login,
+                            // а не 204. Переводимо вкладку на вхід, щоб вона не висіла "наче залогінена".
+                            if (res.type === 'opaqueredirect' || res.status === 401 || res.status === 403) {
+                                location.href = location.origin + '/login?expired';
+                            }
+                        })
                         .catch(function () { /* мережа — наступний пульс спробує знову */ });
                 }
                 function pulse() { touch(); ping(); }
