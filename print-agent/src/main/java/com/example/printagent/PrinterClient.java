@@ -39,33 +39,48 @@ public final class PrinterClient {
 
     private final String printerName;
     private final int rotationDegrees;
+    private final String language;
+    private final boolean invert;
 
-    public PrinterClient(String printerName, int rotationDegrees) {
+    public PrinterClient(String printerName, int rotationDegrees, String language, boolean invert) {
         this.printerName = printerName;
         this.rotationDegrees = rotationDegrees;
+        this.language = language;
+        this.invert = invert;
     }
 
-    public void print(byte[] payload) throws PrintException {
+    /** @return a one-line description of what was sent, for the console and the server log. */
+    public String print(byte[] payload) throws PrintException {
         PrintService service = resolvePrintService();
         if (service == null) {
             throw new PrintException("Не знайдено принтер" +
                     (printerName != null && !printerName.isBlank() ? " з іменем '" + printerName + "'" : ""));
         }
-        if (isPng(payload)) {
-            printImage(service, payload);
-        } else {
+        if (!isPng(payload)) {
             printRaw(service, payload);
+            return "сирі байти (" + payload.length + " байт) на '" + service.getName() + "'";
         }
+        if (language.equals("driver")) {
+            return printImage(service, payload);
+        }
+        BufferedImage image = rotate(decode(payload), rotationDegrees);
+        byte[] job = language.equals("epl") ? LabelEncoder.epl(image, invert) : LabelEncoder.zpl(image, invert);
+        printRaw(service, job);
+        return String.format("%s, наклейка %.1f×%.1f мм (поперек×вздовж стрічки), поворот %d°, %d байт на '%s'",
+                language.toUpperCase(), image.getWidth() / IMAGE_DOTS_PER_MM, image.getHeight() / IMAGE_DOTS_PER_MM,
+                rotationDegrees, job.length, service.getName());
     }
 
-    private void printImage(PrintService service, byte[] png) throws PrintException {
-        BufferedImage decoded;
+    private static BufferedImage decode(byte[] png) throws PrintException {
         try {
-            decoded = ImageIO.read(new ByteArrayInputStream(png));
+            return ImageIO.read(new ByteArrayInputStream(png));
         } catch (IOException e) {
             throw new PrintException("Не вдалось прочитати зображення наклейки: " + e.getMessage());
         }
-        BufferedImage image = rotate(decoded, rotationDegrees);
+    }
+
+    private String printImage(PrintService service, byte[] png) throws PrintException {
+        BufferedImage image = rotate(decode(png), rotationDegrees);
         double widthPt = image.getWidth() / IMAGE_DOTS_PER_MM * POINTS_PER_MM;
         double heightPt = image.getHeight() / IMAGE_DOTS_PER_MM * POINTS_PER_MM;
 
@@ -77,6 +92,8 @@ public final class PrinterClient {
             // nearest *standard* size on Windows, which for a label roll is worse than wrong.
             PageFormat page = job.defaultPage();
             page.setOrientation(PageFormat.PORTRAIT);
+            String pageInfo = String.format("драйвер, сторінка в Java %.1f×%.1f мм, поворот %d°",
+                    page.getWidth() / POINTS_PER_MM, page.getHeight() / POINTS_PER_MM, rotationDegrees);
             warnIfPageSizeDiffers(page, widthPt, heightPt);
 
             job.setJobName("ProTaxo — наклейка");
@@ -91,6 +108,7 @@ public final class PrinterClient {
                 return Printable.PAGE_EXISTS;
             }, page);
             job.print();
+            return pageInfo;
         } catch (PrinterException e) {
             throw new PrintException("Помилка друку через драйвер: " + e.getMessage());
         }
