@@ -34,6 +34,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<String> findFullNameByIdIncludingDeleted(@Param("id") Long id);
 
     /**
+     * Також бачить soft-deleted рядки: unique-обмеження users_email_key діє на всі рядки, тож
+     * email видаленого користувача все одно зайнятий (AdminUserSeeder інакше падає на старті).
+     */
+    @Query(value = "SELECT EXISTS (SELECT 1 FROM users WHERE email = :email)", nativeQuery = true)
+    boolean existsByEmailIncludingDeleted(@Param("email") String email);
+
+    /**
      * Bulk update instead of load-modify-save — a login shouldn't bump the entity's
      * {@code @Version}/{@code updatedAt} (via {@code AuditingEntityListener}), which would make
      * every login look like a data edit in the audit trail's "updated" timestamp.

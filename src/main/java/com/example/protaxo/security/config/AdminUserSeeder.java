@@ -25,7 +25,9 @@ public class AdminUserSeeder implements ApplicationRunner {
     }
 
     private void seedIfMissing(String email, String fullName, String rawPassword, Role role) {
-        if (userRepository.findByEmail(email).isPresent()) {
+        // Не findByEmail: той не бачить видалених через /users, і сідер намагався б створити
+        // акаунт заново — дублікат email валив увесь старт застосунку (інцидент 2026-09-30).
+        if (userRepository.existsByEmailIncludingDeleted(email)) {
             return;
         }
         User user = User.builder()
