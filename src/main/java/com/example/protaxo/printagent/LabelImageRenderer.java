@@ -115,15 +115,15 @@ public class LabelImageRenderer {
             g.drawImage(logo, (WIDTH - LOGO_WIDTH) / 2, y, LOGO_WIDTH, logoHeight, null);
             y += logoHeight + 6;
 
-            y = centered(g, regular.deriveFont(14f), FOP_NAME, y);
-            y = centered(g, regular.deriveFont(14f), COMPANY_ADDRESS_LINE_1, y);
-            y = centered(g, regular.deriveFont(14f), COMPANY_ADDRESS_LINE_2, y);
-            y = centered(g, regular.deriveFont(14f), "Tel: " + COMPANY_PHONE, y);
+            y = centered(g, regular.deriveFont(17f), FOP_NAME, y);
+            y = centered(g, regular.deriveFont(17f), COMPANY_ADDRESS_LINE_1, y);
+            y = centered(g, regular.deriveFont(17f), COMPANY_ADDRESS_LINE_2, y);
+            y = centered(g, regular.deriveFont(17f), "Tel: " + COMPANY_PHONE, y);
             y += 4;
-            y = centered(g, bold.deriveFont(30f), orDash(protocol.stampNumber()), y);
+            y = centered(g, bold.deriveFont(38f), orDash(protocol.stampNumber()), y);
             y += 4;
 
-            Font details = bold.deriveFont(16f);
+            Font details = bold.deriveFont(21f);
             String date = protocol.protocolDate() == null ? null : DATE_FORMAT.format(protocol.protocolDate());
             y = left(g, details, "Date: " + orDash(date), y);
             y = left(g, details, "VIN: " + orDash(protocol.vehicleVin()), y);
