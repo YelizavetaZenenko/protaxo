@@ -3,13 +3,17 @@ package com.example.printagent;
 import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 import javax.print.PrintException;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 /**
@@ -26,6 +30,7 @@ public final class PrintAgentMain {
 
     private static final long RECONNECT_DELAY_MS = 5000;
     private static final String LAST_LABEL_FILE = "last-label.png";
+    private static final String LOCK_FILE = "printagent.lock";
 
     private static volatile PrintAgentConfig config;
     private static volatile BackendWebSocketClient currentClient;
@@ -33,6 +38,8 @@ public final class PrintAgentMain {
     private static volatile Runnable labelReceivedListener = () -> { };
     private static volatile Consumer<byte[]> confirmHandler;
     private static Path configPath;
+    /** Held for the whole run — released by the OS when the process exits, even on a crash. */
+    private static FileLock instanceLock;
 
     public static void main(String[] args) throws Exception {
         // Windows' console codepage is rarely UTF-8 by default — force it so Cyrillic log lines
@@ -43,6 +50,14 @@ public final class PrintAgentMain {
         boolean noGui = Arrays.asList(args).contains("--nogui") || GraphicsEnvironment.isHeadless();
         String pathArg = Arrays.stream(args).filter(a -> !a.startsWith("--")).findFirst().orElse("printagent.properties");
         configPath = Path.of(pathArg).toAbsolutePath();
+        if (!lockSingleInstance()) {
+            String message = "Програма друку наклейок вже запущена — друге вікно не потрібне.";
+            System.err.println("[print-agent] " + message);
+            if (!noGui) {
+                JOptionPane.showMessageDialog(null, message, "ProTaxo — друк наклейок", JOptionPane.INFORMATION_MESSAGE);
+            }
+            System.exit(1);
+        }
         config = PrintAgentConfig.load(configPath);
         if (noGui) {
             config.requireToken();
@@ -76,6 +91,21 @@ public final class PrintAgentMain {
             }
             Thread.sleep(RECONNECT_DELAY_MS);
         }
+    }
+
+    /**
+     * One agent per folder: the server sends each label to every connected agent, so a second copy
+     * (autostart plus a manual launch) would print every label twice.
+     */
+    private static boolean lockSingleInstance() throws IOException {
+        FileChannel channel = FileChannel.open(configPath.resolveSibling(LOCK_FILE),
+                StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        instanceLock = channel.tryLock();
+        if (instanceLock == null) {
+            channel.close();
+            return false;
+        }
+        return true;
     }
 
     static PrintAgentConfig config() {
