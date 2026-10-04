@@ -4,11 +4,13 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
+import java.awt.print.Paper;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import javax.imageio.ImageIO;
 import javax.print.Doc;
 import javax.print.DocFlavor;
@@ -20,64 +22,88 @@ import javax.print.SimpleDoc;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 
 /**
- * Prints a job on a Windows printer. Two payload kinds:
- *
- * <ul>
- *   <li><b>PNG</b> (what the backend sends since 2026-09-30, see {@code LabelImageRenderer}) — a
- *       finished picture of the label, printed through the printer's own Windows driver like any
- *       image, at its physical size (the image is 8 px/mm, i.e. one pixel per dot on a 203dpi
- *       printer). Works with the Godex G500 driver as installed; no printer command language.</li>
- *   <li>anything else — raw bytes passed straight to the spool queue (the old TSPL path; needs a
- *       "Generic / Text Only" queue, see docs/Print Agent.md).</li>
- * </ul>
+ * Prints a job on a Windows printer. A PNG payload (what the backend sends, see
+ * {@code LabelImageRenderer}) is laid out by {@link LabelLayout#compose} and then, per
+ * {@link PrintAgentConfig.PrintMode}, either encoded as EZPL/ZPL/EPL and sent raw to the queue, or drawn
+ * through the printer's Windows driver. Anything that isn't a PNG goes to the queue as raw bytes.
  */
 public final class PrinterClient {
 
-    private static final double IMAGE_DOTS_PER_MM = 8.0;
     private static final double POINTS_PER_MM = 72.0 / 25.4;
     private static final byte[] PNG_SIGNATURE = {(byte) 0x89, 'P', 'N', 'G'};
 
-    private final String printerName;
-    private final int rotationDegrees;
-
-    public PrinterClient(String printerName, int rotationDegrees) {
-        this.printerName = printerName;
-        this.rotationDegrees = rotationDegrees;
+    private PrinterClient() {
     }
 
-    public void print(byte[] payload) throws PrintException {
-        PrintService service = resolvePrintService();
-        if (service == null) {
-            throw new PrintException("Не знайдено принтер" +
-                    (printerName != null && !printerName.isBlank() ? " з іменем '" + printerName + "'" : ""));
-        }
+    public static void print(byte[] payload, PrintAgentConfig config) throws PrintException {
         if (isPng(payload)) {
-            printImage(service, payload);
+            printLabel(decode(payload), config);
         } else {
-            printRaw(service, payload);
+            printRaw(requireService(config.printerName()), payload);
         }
     }
 
-    private void printImage(PrintService service, byte[] png) throws PrintException {
-        BufferedImage decoded;
+    public static void printLabel(BufferedImage label, PrintAgentConfig config) throws PrintException {
+        PrintService service = requireService(config.printerName());
+        BufferedImage canvas = LabelLayout.compose(label, config);
+        switch (config.mode()) {
+            case EZPL -> printRaw(service, LabelEncoder.ezpl(canvas, config));
+            case ZPL -> printRaw(service, LabelEncoder.zpl(canvas, config));
+            case EPL -> printRaw(service, LabelEncoder.epl(canvas, config));
+            case DRIVER -> printThroughDriver(service, canvas, config);
+        }
+    }
+
+    public static BufferedImage decode(byte[] png) throws PrintException {
         try {
-            decoded = ImageIO.read(new ByteArrayInputStream(png));
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(png));
+            if (image == null) {
+                throw new PrintException("Не вдалось прочитати зображення наклейки");
+            }
+            return image;
         } catch (IOException e) {
             throw new PrintException("Не вдалось прочитати зображення наклейки: " + e.getMessage());
         }
-        BufferedImage image = rotate(decoded, rotationDegrees);
-        double widthPt = image.getWidth() / IMAGE_DOTS_PER_MM * POINTS_PER_MM;
-        double heightPt = image.getHeight() / IMAGE_DOTS_PER_MM * POINTS_PER_MM;
+    }
 
+    public static boolean isPng(byte[] payload) {
+        return payload.length >= PNG_SIGNATURE.length
+                && Arrays.equals(Arrays.copyOf(payload, PNG_SIGNATURE.length), PNG_SIGNATURE);
+    }
+
+    /** Names of the installed printers, for the settings window's drop-down. */
+    public static String[] printerNames() {
+        return Arrays.stream(PrintServiceLookup.lookupPrintServices(null, null))
+                .map(PrintService::getName)
+                .toArray(String[]::new);
+    }
+
+    /**
+     * Asks for a page exactly the label's size with no margins. Java on Windows still snaps it to
+     * one of the driver's papers and keeps it portrait, which is why the raw modes exist — this
+     * one is kept for a driver that has the label set up as its own paper.
+     */
+    private static void printThroughDriver(PrintService service, BufferedImage canvas, PrintAgentConfig config)
+            throws PrintException {
+        double widthPt = config.labelWidthMm() * POINTS_PER_MM;
+        double heightPt = config.labelLengthMm() * POINTS_PER_MM;
         try {
             PrinterJob job = PrinterJob.getPrinterJob();
             job.setPrintService(service);
-            // The page size comes from the driver's own settings ("Настройки друку" → розмір
-            // етикетки) rather than being forced from here — Java maps a custom Paper to the
-            // nearest *standard* size on Windows, which for a label roll is worse than wrong.
-            PageFormat page = job.defaultPage();
-            page.setOrientation(PageFormat.PORTRAIT);
-            warnIfPageSizeDiffers(page, widthPt, heightPt);
+            PageFormat requested = job.defaultPage();
+            Paper paper = new Paper();
+            paper.setSize(widthPt, heightPt);
+            paper.setImageableArea(0, 0, widthPt, heightPt);
+            requested.setPaper(paper);
+            requested.setOrientation(PageFormat.PORTRAIT);
+            PageFormat page = job.validatePage(requested);
+            double pageWmm = page.getWidth() / POINTS_PER_MM;
+            double pageHmm = page.getHeight() / POINTS_PER_MM;
+            if (Math.abs(pageWmm - config.labelWidthMm()) > 2 || Math.abs(pageHmm - config.labelLengthMm()) > 2) {
+                System.out.printf("[print-agent] Увага: драйвер дав сторінку %.1f×%.1f мм замість %.1f×%.1f мм —"
+                                + " наклейка може обрізатись. Спробуйте спосіб друку EZPL.%n",
+                        pageWmm, pageHmm, config.labelWidthMm(), config.labelLengthMm());
+            }
 
             job.setJobName("ProTaxo — наклейка");
             job.setPrintable((graphics, pageFormat, pageIndex) -> {
@@ -85,9 +111,9 @@ public final class PrinterClient {
                     return Printable.NO_SUCH_PAGE;
                 }
                 Graphics2D g = (Graphics2D) graphics;
-                // Nearest-neighbour: each image pixel is meant to be exactly one printer dot.
+                // Nearest-neighbour: each canvas pixel is meant to be exactly one printer dot.
                 g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-                g.drawImage(image, 0, 0, (int) Math.round(widthPt), (int) Math.round(heightPt), null);
+                g.drawImage(canvas, 0, 0, (int) Math.round(widthPt), (int) Math.round(heightPt), null);
                 return Printable.PAGE_EXISTS;
             }, page);
             job.print();
@@ -96,58 +122,20 @@ public final class PrinterClient {
         }
     }
 
-    /**
-     * Clockwise turn in whole quarter-turns, pixel for pixel (no resampling) — for a roll where the
-     * labels sit sideways relative to the feed, so the driver's page is the label turned 90°.
-     */
-    static BufferedImage rotate(BufferedImage src, int degrees) {
-        if (degrees == 0) {
-            return src;
-        }
-        int w = src.getWidth();
-        int h = src.getHeight();
-        boolean quarter = degrees == 90 || degrees == 270;
-        BufferedImage out = new BufferedImage(quarter ? h : w, quarter ? w : h, BufferedImage.TYPE_INT_RGB);
-        for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
-                int rgb = src.getRGB(x, y);
-                switch (degrees) {
-                    case 90 -> out.setRGB(h - 1 - y, x, rgb);
-                    case 180 -> out.setRGB(w - 1 - x, h - 1 - y, rgb);
-                    default -> out.setRGB(y, w - 1 - x, rgb);
-                }
-            }
-        }
-        return out;
-    }
-
-    private static void warnIfPageSizeDiffers(PageFormat page, double widthPt, double heightPt) {
-        double pageWmm = page.getWidth() / POINTS_PER_MM;
-        double pageHmm = page.getHeight() / POINTS_PER_MM;
-        double labelWmm = widthPt / POINTS_PER_MM;
-        double labelHmm = heightPt / POINTS_PER_MM;
-        if (Math.abs(pageWmm - labelWmm) > 2 || Math.abs(pageHmm - labelHmm) > 2) {
-            System.out.printf("[print-agent] Увага: у драйвері принтера розмір сторінки %.1f×%.1f мм, а наклейка %.1f×%.1f мм."
-                    + " Задайте розмір етикетки в «Настройках друку» принтера.%n", pageWmm, pageHmm, labelWmm, labelHmm);
-        }
-    }
-
+    /** The spooler hands octet-stream jobs to the port as RAW, past the driver's rendering. */
     private static void printRaw(PrintService service, byte[] bytes) throws PrintException {
         Doc doc = new SimpleDoc(bytes, DocFlavor.BYTE_ARRAY.AUTOSENSE, null);
         DocPrintJob job = service.createPrintJob();
         job.print(doc, new HashPrintRequestAttributeSet());
     }
 
-    private static boolean isPng(byte[] payload) {
-        if (payload.length < PNG_SIGNATURE.length) {
-            return false;
+    private static PrintService requireService(String printerName) throws PrintException {
+        PrintService service = resolvePrintService(printerName);
+        if (service == null) {
+            throw new PrintException("Не знайдено принтер" +
+                    (printerName != null && !printerName.isBlank() ? " з іменем '" + printerName + "'" : ""));
         }
-        for (int i = 0; i < PNG_SIGNATURE.length; i++) {
-            if (payload[i] != PNG_SIGNATURE[i]) {
-                return false;
-            }
-        }
-        return true;
+        return service;
     }
 
     /**
@@ -155,7 +143,7 @@ public final class PrinterClient {
      * (a duplicate Windows makes when the same printer is plugged in again), which a plain
      * substring match could hit first.
      */
-    private PrintService resolvePrintService() {
+    private static PrintService resolvePrintService(String printerName) {
         PrintService[] services = PrintServiceLookup.lookupPrintServices(null, null);
         if (services.length == 0) {
             return null;

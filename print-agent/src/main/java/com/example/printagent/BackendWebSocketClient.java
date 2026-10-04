@@ -11,9 +11,8 @@ import java.util.concurrent.CountDownLatch;
 /**
  * Thin wrapper around {@code java.net.http.WebSocket} (built into the JDK — no library needed)
  * that connects to the backend's /ws/print-agent endpoint and hands each complete binary message
- * (a TSPL command block, see TsplLabelBuilder on the backend) to a job handler. Binary, not text —
- * the label embeds a raw TSPL {@code BITMAP} (the logo), and arbitrary pixel bytes wouldn't survive
- * a text frame's UTF-8 encoding round-trip.
+ * (the label PNG, see LabelImageRenderer on the backend) to a job handler. Binary, not text —
+ * arbitrary image bytes wouldn't survive a text frame's UTF-8 encoding round-trip.
  */
 public final class BackendWebSocketClient {
 
@@ -22,13 +21,16 @@ public final class BackendWebSocketClient {
     private final String wsUrl;
     private final String token;
     private final JobHandler jobHandler;
+    private final StatusListener statusListener;
     private final ByteArrayOutputStream messageBuffer = new ByteArrayOutputStream();
     private WebSocket webSocket;
 
-    public BackendWebSocketClient(String wsUrl, String token, JobHandler jobHandler, CountDownLatch closedLatch) {
+    public BackendWebSocketClient(String wsUrl, String token, JobHandler jobHandler,
+                                  StatusListener statusListener, CountDownLatch closedLatch) {
         this.wsUrl = wsUrl;
         this.token = token;
         this.jobHandler = jobHandler;
+        this.statusListener = statusListener;
         this.closedLatch = closedLatch;
     }
 
@@ -40,8 +42,21 @@ public final class BackendWebSocketClient {
                 .join();
     }
 
+    /** Drops the connection (e.g. after the server address or token changed); the main loop reconnects. */
+    public void close() {
+        WebSocket ws = webSocket;
+        if (ws != null) {
+            ws.abort();
+        }
+        closedLatch.countDown();
+    }
+
     public interface JobHandler {
-        void onJob(byte[] tsplPayload);
+        void onJob(byte[] payload);
+    }
+
+    public interface StatusListener {
+        void onStatus(boolean connected);
     }
 
     private class Listener implements WebSocket.Listener {
@@ -50,6 +65,7 @@ public final class BackendWebSocketClient {
         public void onOpen(WebSocket webSocket) {
             BackendWebSocketClient.this.webSocket = webSocket;
             System.out.println("[print-agent] Підключено до " + wsUrl);
+            statusListener.onStatus(true);
             WebSocket.Listener.super.onOpen(webSocket);
         }
 
@@ -70,6 +86,7 @@ public final class BackendWebSocketClient {
         @Override
         public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
             System.out.println("[print-agent] З'єднання закрито: " + statusCode + " " + reason);
+            statusListener.onStatus(false);
             closedLatch.countDown();
             return null;
         }
@@ -77,6 +94,7 @@ public final class BackendWebSocketClient {
         @Override
         public void onError(WebSocket webSocket, Throwable error) {
             System.err.println("[print-agent] Помилка з'єднання: " + error.getMessage());
+            statusListener.onStatus(false);
             closedLatch.countDown();
         }
     }
