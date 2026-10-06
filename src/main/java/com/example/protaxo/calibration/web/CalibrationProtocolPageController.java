@@ -1,11 +1,13 @@
 package com.example.protaxo.calibration.web;
 
+import com.example.protaxo.calibration.dto.CalibrationLabelType;
 import com.example.protaxo.calibration.dto.CalibrationProtocolFormData;
 import com.example.protaxo.calibration.dto.CalibrationProtocolRequest;
 import com.example.protaxo.calibration.dto.CalibrationProtocolResponse;
 import com.example.protaxo.calibration.service.CalibrationProtocolService;
 import com.example.protaxo.client.dto.ClientResponse;
 import com.example.protaxo.client.service.ClientService;
+import com.example.protaxo.invoice.dto.InvoiceItemResponse;
 import com.example.protaxo.invoice.dto.InvoiceResponse;
 import com.example.protaxo.invoice.service.InvoiceService;
 import com.example.protaxo.pdf.service.PdfRenderService;
@@ -88,9 +90,17 @@ public class CalibrationProtocolPageController {
             // перевізника" on the official protocol form.
             form.setRepresentativeName(invoice.driverName());
             applyVehicleDetails(form, invoice.clientId(), invoice.vehicleName());
+            CalibrationLabelType labelType = labelTypeOf(invoice);
+            if (labelType.isSmart()) {
+                // The usual answers on a smart-tachograph sticker — still editable on the form.
+                form.setExtGnss("Not available");
+                if (labelType == CalibrationLabelType.SMART_2) {
+                    form.setLoadType("Goods");
+                }
+            }
         }
         model.addAttribute("protocol", form);
-        addReferenceData(model);
+        addReferenceData(model, form.getInvoiceId());
         return "calibration-protocols/form";
     }
 
@@ -124,7 +134,7 @@ public class CalibrationProtocolPageController {
     @PostMapping
     public String create(@Valid @ModelAttribute("protocol") CalibrationProtocolFormData form, BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
-            addReferenceData(model);
+            addReferenceData(model, form.getInvoiceId());
             return "calibration-protocols/form";
         }
         CalibrationProtocolResponse created = calibrationProtocolService.create(toRequest(form));
@@ -170,7 +180,7 @@ public class CalibrationProtocolPageController {
         ClientResponse client = clientService.findById(protocol.clientId());
         model.addAttribute("protocol", protocol);
         model.addAttribute("clientName", client.name());
-        model.addAttribute("verifyUrl", labelImageRenderer.verifyUrl(protocol));
+        model.addAttribute("verifyUrl", protocol.labelType().isSmart() ? null : labelImageRenderer.verifyUrl(protocol));
         model.addAttribute("labelDataUri", labelImageRenderer.renderPngDataUri(protocol, client.edrpou()));
         return "calibration-protocols/label-preview";
     }
@@ -183,7 +193,7 @@ public class CalibrationProtocolPageController {
         model.addAttribute("protocolNumber", response.protocolNumber());
         model.addAttribute("protocolDate", response.protocolDate());
         model.addAttribute("orderLabel", response.orderLabel());
-        addReferenceData(model);
+        addReferenceData(model, response.invoiceId());
         return "calibration-protocols/form";
     }
 
@@ -192,7 +202,7 @@ public class CalibrationProtocolPageController {
                           BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("editId", id);
-            addReferenceData(model);
+            addReferenceData(model, form.getInvoiceId());
             return "calibration-protocols/form";
         }
         calibrationProtocolService.update(id, toRequest(form));
@@ -223,10 +233,20 @@ public class CalibrationProtocolPageController {
         response.getOutputStream().flush();
     }
 
-    private void addReferenceData(Model model) {
+    /**
+     * {@code labelType} decides whether the form shows the smart-tachograph sticker fields — taken
+     * from the наряд-заказ's calibration service, the same rule the label itself follows.
+     */
+    private void addReferenceData(Model model, Long invoiceId) {
+        model.addAttribute("labelType", invoiceId == null ? CalibrationLabelType.STANDARD
+                : labelTypeOf(invoiceService.findById(invoiceId)));
         model.addAttribute("clients", clientService.findAll());
         model.addAttribute("vehicleSuggestions", fieldSuggestionService.findValues(FieldSuggestionCategory.VEHICLE));
         model.addAttribute("representativeSuggestions", fieldSuggestionService.findValues(FieldSuggestionCategory.REPRESENTATIVE));
+    }
+
+    private static CalibrationLabelType labelTypeOf(InvoiceResponse invoice) {
+        return CalibrationLabelType.fromServiceNames(invoice.items().stream().map(InvoiceItemResponse::itemName).toList());
     }
 
     private CalibrationProtocolRequest toRequest(CalibrationProtocolFormData form) {
@@ -242,7 +262,8 @@ public class CalibrationProtocolPageController {
                 form.getTimeDeviationAfterInstall(), form.getTimeDeviationInService(), form.getSpeedLimiterValue(),
                 form.getCoverOpeningRegistered(), form.getPowerCutoffRegistered(),
                 form.getPulseSensorInterruptionRegistered(), form.getExecutorPosition(), form.getExecutorName(),
-                form.getInvoiceId(), form.getSealNumbers());
+                form.getInvoiceId(), form.getSealNumbers(), form.getLoadType(), form.getExtGnss(),
+                form.getGnssSerialNumber(), form.getDsrcSerialNumber());
     }
 
     private CalibrationProtocolFormData toFormData(CalibrationProtocolResponse response) {
@@ -286,6 +307,10 @@ public class CalibrationProtocolPageController {
         form.setExecutorName(response.executorName());
         form.setInvoiceId(response.invoiceId());
         form.setSealNumbers(response.sealNumbers());
+        form.setLoadType(response.loadType());
+        form.setExtGnss(response.extGnss());
+        form.setGnssSerialNumber(response.gnssSerialNumber());
+        form.setDsrcSerialNumber(response.dsrcSerialNumber());
         return form;
     }
 }

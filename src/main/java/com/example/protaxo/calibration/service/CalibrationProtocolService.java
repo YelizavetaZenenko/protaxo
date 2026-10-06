@@ -179,7 +179,11 @@ public class CalibrationProtocolService {
                 .add("Зафіксовано переривання імпульсного датчика", p.getPulseSensorInterruptionRegistered())
                 .add("Посада виконавця", p.getExecutorPosition())
                 .add("ПІБ виконавця", p.getExecutorName())
-                .add("Номери пломб", p.getSealNumbers());
+                .add("Номери пломб", p.getSealNumbers())
+                .add("Тип вантажу (Load type)", p.getLoadType())
+                .add("Зовнішній GNSS", p.getExtGnss())
+                .add("GNSS S/N", p.getGnssSerialNumber())
+                .add("DSRC S/N", p.getDsrcSerialNumber());
     }
 
     public void softDelete(Long id) {
@@ -237,6 +241,10 @@ public class CalibrationProtocolService {
         protocol.setExecutorPosition(request.executorPosition());
         protocol.setExecutorName(request.executorName());
         protocol.setSealNumbers(request.sealNumbers());
+        protocol.setLoadType(request.loadType());
+        protocol.setExtGnss(request.extGnss());
+        protocol.setGnssSerialNumber(request.gnssSerialNumber());
+        protocol.setDsrcSerialNumber(request.dsrcSerialNumber());
 
         fieldSuggestionService.remember(FieldSuggestionCategory.VEHICLE, request.vehicleName());
         fieldSuggestionService.remember(FieldSuggestionCategory.REPRESENTATIVE, request.representativeName());

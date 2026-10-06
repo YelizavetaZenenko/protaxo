@@ -100,7 +100,27 @@
                     <label>Номери пломб</label>
                     <div th:text="${protocol.sealNumbers}"></div>
                 </div>
-                <div class="field" th:if="${not #strings.isEmpty(protocol.qrHash)}">
+                <div class="field" th:if="${protocol.labelType.smart}">
+                    <label>Тип наклейки</label>
+                    <div th:text="${protocol.labelType.name() == 'SMART_2'} ? 'Smart 2' : 'Smart 1'"></div>
+                </div>
+                <div class="field" th:if="${protocol.labelType.name() == 'SMART_2' and not #strings.isEmpty(protocol.loadType)}">
+                    <label>Load type</label>
+                    <div th:text="${protocol.loadType}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(protocol.extGnss)}">
+                    <label>Ext. GNSS</label>
+                    <div th:text="${protocol.extGnss}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(protocol.gnssSerialNumber)}">
+                    <label>GNSS S/N</label>
+                    <div th:text="${protocol.gnssSerialNumber}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(protocol.dsrcSerialNumber)}">
+                    <label>DSRC S/N</label>
+                    <div th:text="${protocol.dsrcSerialNumber}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(protocol.qrHash) and not protocol.labelType.smart}">
                     <label>QR-хеш наклейки</label>
                     <div th:text="${protocol.qrHash}" style="font-family:monospace;font-size:0.85rem;"></div>
                 </div>

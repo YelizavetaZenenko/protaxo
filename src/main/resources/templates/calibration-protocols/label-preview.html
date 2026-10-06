@@ -40,7 +40,7 @@
             </p>
 
             <img class="label-image" th:src="${labelDataUri}" alt="Наклейка">
-            <div class="label-verify-url" th:text="'QR-код веде на: ' + ${verifyUrl}"></div>
+            <div class="label-verify-url" th:if="${verifyUrl}" th:text="'QR-код веде на: ' + ${verifyUrl}"></div>
         </div>
     </div>
 </body>

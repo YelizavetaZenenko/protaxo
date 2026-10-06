@@ -1,8 +1,10 @@
 package com.example.protaxo.calibration.mapper;
 
+import com.example.protaxo.calibration.dto.CalibrationLabelType;
 import com.example.protaxo.calibration.dto.CalibrationProtocolResponse;
 import com.example.protaxo.calibration.entity.CalibrationProtocol;
 import com.example.protaxo.invoice.entity.Invoice;
+import com.example.protaxo.invoice.entity.InvoiceItem;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import org.mapstruct.Mapper;
@@ -25,6 +27,7 @@ public interface CalibrationProtocolMapper {
     @Mapping(source = "tachograph.id", target = "tachographId")
     @Mapping(target = "orderLabel", expression = "java(buildOrderLabel(protocol))")
     @Mapping(target = "nextInspectionDate", expression = "java(buildNextInspectionDate(protocol))")
+    @Mapping(target = "labelType", expression = "java(buildLabelType(protocol))")
     CalibrationProtocolResponse toResponse(CalibrationProtocol protocol);
 
     default String buildProtocolNumber(CalibrationProtocol protocol) {
@@ -43,6 +46,15 @@ public interface CalibrationProtocolMapper {
     default LocalDate buildNextInspectionDate(CalibrationProtocol protocol) {
         return protocol.getProtocolDate() == null ? null
                 : protocol.getProtocolDate().toLocalDate().plusYears(CALIBRATION_VALIDITY_YEARS);
+    }
+
+    /** Which sticker to print — follows the calibration service on the linked наряд-заказ. */
+    default CalibrationLabelType buildLabelType(CalibrationProtocol protocol) {
+        Invoice invoice = protocol.getInvoice();
+        if (invoice == null) {
+            return CalibrationLabelType.STANDARD;
+        }
+        return CalibrationLabelType.fromServiceNames(invoice.getItems().stream().map(InvoiceItem::getItemName).toList());
     }
 
     default String buildOrderLabel(CalibrationProtocol protocol) {

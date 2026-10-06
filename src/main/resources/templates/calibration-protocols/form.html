@@ -261,6 +261,42 @@
                     <div class="muted">Для наклейки на тахограф — на бланку протоколу не друкується</div>
                 </div>
 
+                <th:block th:if="${labelType.smart}">
+                    <div class="field-full" style="grid-column:1/-1;margin-top:0.5rem;">
+                        <h2 style="font-size:1.05rem;margin-bottom:0.25rem;"
+                            th:text="${labelType.name() == 'SMART_2'} ? 'Наклейка Smart 2' : 'Наклейка Smart 1'"></h2>
+                        <div class="muted">Лише для наклейки смарт-тахографа — на бланку протоколу не друкується</div>
+                    </div>
+
+                    <div class="field" th:if="${labelType.name() == 'SMART_2'}">
+                        <label for="loadType">Load type (тип перевезень)</label>
+                        <select id="loadType" th:field="*{loadType}">
+                            <option value="">—</option>
+                            <option value="Goods">Goods (вантажі)</option>
+                            <option value="Passengers">Passengers (пасажири)</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="extGnss">Ext. GNSS (зовнішній GNSS)</label>
+                        <select id="extGnss" th:field="*{extGnss}">
+                            <option value="">—</option>
+                            <option value="Not available">Not available</option>
+                            <option value="Available">Available</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="gnssSerialNumber">GNSS S/N</label>
+                        <input type="text" id="gnssSerialNumber" th:field="*{gnssSerialNumber}">
+                    </div>
+
+                    <div class="field">
+                        <label for="dsrcSerialNumber">DSRC S/N</label>
+                        <input type="text" id="dsrcSerialNumber" th:field="*{dsrcSerialNumber}">
+                    </div>
+                </th:block>
+
                 <div class="field-full" style="grid-column:1/-1;margin-top:0.5rem;">
                     <h2 style="font-size:1.05rem;margin-bottom:0.25rem;">Роботи виконав</h2>
                 </div>
@@ -830,7 +866,10 @@
                     'pathDeviationInService', 'speedDeviationAfterInstall', 'speedDeviationInService',
                     'timeDeviationAfterInstall', 'timeDeviationInService', 'speedLimiterValue',
                     'coverOpeningRegistered', 'powerCutoffRegistered', 'pulseSensorInterruptionRegistered',
-                    'sealNumbers', 'executorPosition', 'executorName'];
+                    'sealNumbers', 'executorPosition', 'executorName',
+                    'loadType', 'extGnss', 'gnssSerialNumber', 'dsrcSerialNumber']
+                    // Smart-sticker fields exist only on a Smart 1/Smart 2 form.
+                    .filter(function (id) { return document.getElementById(id); });
                 var selectFieldIds = ['tachographBrand', 'tachographModel', 'tachographType', 'tachographManufacturer'];
 
                 function computeDraftLabel() {

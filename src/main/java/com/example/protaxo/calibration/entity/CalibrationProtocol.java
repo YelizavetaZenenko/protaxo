@@ -177,4 +177,20 @@ public class CalibrationProtocol extends BaseEntity {
      */
     @Column(name = "qr_hash")
     private String qrHash;
+
+    // Лише для наклейки смарт-тахографа (Smart 1 / Smart 2) — у PDF-бланку протоколу їх немає.
+
+    /** "Goods" / "Passengers" — друкується лише на наклейці Smart 2. */
+    @Column(name = "load_type")
+    private String loadType;
+
+    /** "Available" / "Not available". */
+    @Column(name = "ext_gnss")
+    private String extGnss;
+
+    @Column(name = "gnss_serial_number")
+    private String gnssSerialNumber;
+
+    @Column(name = "dsrc_serial_number")
+    private String dsrcSerialNumber;
 }

@@ -45,6 +45,10 @@ public record CalibrationProtocolRequest(
         String executorPosition,
         String executorName,
         Long invoiceId,
-        String sealNumbers
+        String sealNumbers,
+        String loadType,
+        String extGnss,
+        String gnssSerialNumber,
+        String dsrcSerialNumber
 ) {
 }

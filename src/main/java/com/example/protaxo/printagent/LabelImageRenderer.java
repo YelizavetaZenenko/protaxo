@@ -1,5 +1,6 @@
 package com.example.protaxo.printagent;
 
+import com.example.protaxo.calibration.dto.CalibrationLabelType;
 import com.example.protaxo.calibration.dto.CalibrationProtocolResponse;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
@@ -11,6 +12,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.FontMetrics;
+import java.awt.BasicStroke;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -19,7 +21,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import javax.imageio.ImageIO;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,6 +50,9 @@ public class LabelImageRenderer {
     private static final int MARGIN = 12;
     private static final int LOGO_WIDTH = 200;
     private static final int MAX_QR_MODULE = 4;
+    private static final int SMART_LOGO_WIDTH = 150;
+    private static final int SMART_VALUE_X = MARGIN + 150;
+    private static final int SMART_MAX_ROW_HEIGHT = 30;
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     private static final String FOP_NAME = "ФОП Вишивата Діана Олександрівна";
@@ -94,11 +101,21 @@ public class LabelImageRenderer {
     }
 
     /**
+     * The service on the linked наряд-заказ picks the layout: Smart 1/Smart 2 get the
+     * smart-tachograph sticker (no QR), everything else the original one with the QR code.
+     */
+    BufferedImage render(CalibrationProtocolResponse protocol, String clientEdrpou) {
+        return protocol.labelType() != null && protocol.labelType().isSmart()
+                ? renderSmart(protocol)
+                : renderStandard(protocol, clientEdrpou);
+    }
+
+    /**
      * Top to bottom: logo → company name, address (two lines — ~64 chars won't fit one), phone, all
      * centered → stamp number, large → Date, VIN, S/N (the client's EDRPOU/RNOKPP, so the seal traces
      * back to the carrier without a scan), Wheels, L, W, k in bold → QR filling the space left.
      */
-    BufferedImage render(CalibrationProtocolResponse protocol, String clientEdrpou) {
+    private BufferedImage renderStandard(CalibrationProtocolResponse protocol, String clientEdrpou) {
         BufferedImage canvas = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = canvas.createGraphics();
         try {
@@ -138,6 +155,89 @@ public class LabelImageRenderer {
             g.dispose();
         }
         return toMonochrome(canvas);
+    }
+
+    /**
+     * Smart-tachograph sticker after the workshop's sample (photos 2026-10-06): framed, smaller logo,
+     * company block and stamp number, then label / value / unit rows. Smart 2 differs only by the
+     * "Load type" row. No QR — thirteen rows leave no room for it. Empty values stay blank, as on
+     * the sample, rather than "-".
+     */
+    private BufferedImage renderSmart(CalibrationProtocolResponse protocol) {
+        BufferedImage canvas = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = canvas.createGraphics();
+        try {
+            g.setColor(Color.WHITE);
+            g.fillRect(0, 0, WIDTH, HEIGHT);
+            g.setColor(Color.BLACK);
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+
+            g.setStroke(new BasicStroke(3));
+            g.drawRoundRect(5, 5, WIDTH - 11, HEIGHT - 11, 18, 18);
+
+            int logoHeight = logo.getHeight() * SMART_LOGO_WIDTH / logo.getWidth();
+            int y = 12;
+            g.drawImage(logo, (WIDTH - SMART_LOGO_WIDTH) / 2, y, SMART_LOGO_WIDTH, logoHeight, null);
+            y += logoHeight + 2;
+
+            Font company = regular.deriveFont(16f);
+            y = centered(g, company, FOP_NAME, y);
+            y = centered(g, company, COMPANY_ADDRESS_LINE_1, y);
+            y = centered(g, company, COMPANY_ADDRESS_LINE_2, y);
+            y = centered(g, company, "Tel: " + COMPANY_PHONE, y);
+            y = centered(g, bold.deriveFont(34f), orDash(protocol.stampNumber()), y);
+            y += 4;
+
+            List<String[]> rows = smartRows(protocol);
+            int rowHeight = Math.min(SMART_MAX_ROW_HEIGHT, (HEIGHT - 16 - y) / rows.size());
+            Font label = regular.deriveFont(19f);
+            Font value = bold.deriveFont(19f);
+            Font unit = regular.deriveFont(16f);
+            for (String[] row : rows) {
+                FontMetrics fm = g.getFontMetrics(label);
+                int baseline = y + (rowHeight + fm.getAscent() - fm.getDescent()) / 2;
+                g.setFont(shrinkToFit(g, label, row[0], SMART_VALUE_X - MARGIN - 4));
+                g.drawString(row[0], MARGIN, baseline);
+                int unitWidth = row[2].isEmpty() ? 0 : g.getFontMetrics(unit).stringWidth(row[2]) + 6;
+                g.setFont(shrinkToFit(g, value, row[1], WIDTH - MARGIN - SMART_VALUE_X - unitWidth));
+                g.drawString(row[1], SMART_VALUE_X, baseline);
+                if (!row[2].isEmpty()) {
+                    g.setFont(unit);
+                    g.drawString(row[2], WIDTH - MARGIN - g.getFontMetrics(unit).stringWidth(row[2]), baseline);
+                }
+                y += rowHeight;
+            }
+        } finally {
+            g.dispose();
+        }
+        return toMonochrome(canvas);
+    }
+
+    /** {label, value, unit} — order and wording as on the sample sticker. */
+    private static List<String[]> smartRows(CalibrationProtocolResponse protocol) {
+        String date = protocol.protocolDate() == null ? null : DATE_FORMAT.format(protocol.protocolDate());
+        List<String[]> rows = new ArrayList<>();
+        rows.add(row("Date of calibration:", date, ""));
+        rows.add(row("VIN:", protocol.vehicleVin(), ""));
+        rows.add(row("VU Serial No:", protocol.tachographSerialNumber(), ""));
+        if (protocol.labelType() == CalibrationLabelType.SMART_2) {
+            rows.add(row("Load type:", protocol.loadType(), ""));
+        }
+        rows.add(row("Tyre size:", protocol.tireSize(), ""));
+        rows.add(row("L=", protocol.tireCircumferenceL(), "mm"));
+        rows.add(row("k=", protocol.constantK(), "imp/km"));
+        rows.add(row("W=", protocol.coefficientW(), "imp/km"));
+        rows.add(row("V(max):", protocol.speedLimiterValue(), "km/h"));
+        rows.add(row("Ext. GNSS:", protocol.extGnss(), ""));
+        rows.add(row("GNSS S/N=", protocol.gnssSerialNumber(), ""));
+        rows.add(row("DSRC S/N=", protocol.dsrcSerialNumber(), ""));
+        rows.add(row("Seal S/Ns=", protocol.sealNumbers(), ""));
+        return rows;
+    }
+
+    private static String[] row(String label, String value, String unit) {
+        return new String[] {label, value == null ? "" : value.strip(), unit};
     }
 
     private int centered(Graphics2D g, Font font, String text, int top) {

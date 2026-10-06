@@ -48,6 +48,11 @@ public record CalibrationProtocolResponse(
         Long invoiceId,
         String sealNumbers,
         String qrHash,
-        LocalDate nextInspectionDate
+        LocalDate nextInspectionDate,
+        String loadType,
+        String extGnss,
+        String gnssSerialNumber,
+        String dsrcSerialNumber,
+        CalibrationLabelType labelType
 ) {
 }

@@ -93,4 +93,12 @@ public class CalibrationProtocolFormData {
     private Long invoiceId;
 
     private String sealNumbers;
+
+    private String loadType;
+
+    private String extGnss;
+
+    private String gnssSerialNumber;
+
+    private String dsrcSerialNumber;
 }
