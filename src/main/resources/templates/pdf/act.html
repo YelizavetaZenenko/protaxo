@@ -29,12 +29,15 @@
         p.summary { margin: 8pt 0 2pt 0; font-size: 9pt; }
         p.summary-words { margin: 0 0 4pt 0; font-weight: bold; font-size: 9.5pt; }
         p.closing { margin: 8pt 0 0 0; text-align: justify; }
-        .signature-rule { border-top: 1px solid #000000; margin-top: 16pt; }
-        table.sig-table { width: 100%; border-collapse: collapse; margin-top: 10pt; }
-        table.sig-table td { border: none; padding: 0; font-size: 9.5pt; width: 50%; vertical-align: top; }
-        table.sig-table td.sig-name { padding-top: 2pt; }
-        .sig-line { display: inline-block; border-bottom: 1px solid #333333; width: 150pt; min-height: 11pt; margin-left: 6pt; }
-        table.sig-table td.sig-caption { font-size: 7.5pt; color: #555555; padding-left: 130pt; }
+        table.sig-table { width: 100%; border-collapse: collapse; margin-top: 22pt; }
+        table.sig-table > tbody > tr > td, table.sig-table > tr > td { border: none; padding: 0 12pt 0 0; font-size: 9.5pt; width: 50%; vertical-align: top; }
+        .sig-party { font-weight: bold; margin-bottom: 18pt; }
+        table.sig-inner { border-collapse: collapse; }
+        table.sig-inner td { border: none; padding: 0; font-size: 9.5pt; vertical-align: bottom; }
+        table.sig-inner td.line { width: 90pt; border-bottom: 1px solid #333333; height: 13pt; }
+        table.sig-inner td.gap { width: 8pt; }
+        table.sig-inner td.name { width: 140pt; border-bottom: 1px solid #333333; height: 13pt; text-align: center; }
+        table.sig-inner td.caption { font-size: 7.5pt; color: #555555; text-align: center; padding-top: 1pt; vertical-align: top; }
     </style>
 </head>
 <body>
@@ -142,15 +145,40 @@
         Замовник претензій щодо обсягу, якості та строків виконання робіт (надання послуг) не має.
     </p>
 
-    <div class="signature-rule"></div>
+    <!-- Підписують відповідальні особи: з боку Виконавця — «Відповідальний за ремонт» з наряду,
+         з боку Замовника — контактна особа з картки контрагента. Порожнє ім'я — лінія для вписування. -->
     <table class="sig-table">
         <tr>
-            <td class="sig-name">Від Виконавця:<span class="sig-line"></span></td>
-            <td class="sig-name">Від Замовника:<span class="sig-line"></span></td>
-        </tr>
-        <tr>
-            <td class="sig-caption">(підпис)</td>
-            <td class="sig-caption">(підпис)</td>
+            <td>
+                <div class="sig-party">Виконавець ремонту</div>
+                <table class="sig-inner">
+                    <tr>
+                        <td class="line"></td>
+                        <td class="gap"></td>
+                        <td class="name" th:text="${invoice.repairResponsibleName}"></td>
+                    </tr>
+                    <tr>
+                        <td class="caption">(підпис)</td>
+                        <td class="gap"></td>
+                        <td class="caption">(ПІБ)</td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <div class="sig-party">Контактна особа Замовника</div>
+                <table class="sig-inner">
+                    <tr>
+                        <td class="line"></td>
+                        <td class="gap"></td>
+                        <td class="name" th:text="${client.contactPersonName}"></td>
+                    </tr>
+                    <tr>
+                        <td class="caption">(підпис)</td>
+                        <td class="gap"></td>
+                        <td class="caption">(ПІБ)</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
     </table>
 </body>
