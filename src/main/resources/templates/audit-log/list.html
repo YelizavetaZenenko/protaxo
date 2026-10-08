@@ -174,6 +174,12 @@
                 e.stopPropagation();
                 box.classList.toggle('is-open');
                 label();
+                // After «Згорнути» the page shrinks under the reader — bring them back to this
+                // entry's row if its top has scrolled off screen.
+                var row = box.closest('tr');
+                if (!box.classList.contains('is-open') && row && row.getBoundingClientRect().top < 0) {
+                    row.scrollIntoView({ block: 'start' });
+                }
             });
         });
     </script>
