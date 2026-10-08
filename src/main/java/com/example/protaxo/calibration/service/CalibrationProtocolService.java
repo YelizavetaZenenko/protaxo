@@ -48,7 +48,7 @@ public class CalibrationProtocolService {
      * "Номер штампу" is fixed for this workshop — not a form field, {@code request.stampNumber()}
      * is ignored, same "server always wins" treatment as {@link #CHECK_METHOD}.
      */
-    private static final String STAMP_NUMBER = "UA-999";
+    private static final String STAMP_NUMBER = "UA-508";
 
     private final CalibrationProtocolRepository calibrationProtocolRepository;
     private final ClientRepository clientRepository;

@@ -58,7 +58,7 @@ public class LabelImageRenderer {
     private static final String FOP_NAME = "ФОП Вишивата Діана Олександрівна";
     private static final String COMPANY_ADDRESS_LINE_1 = "45604, Волинська обл., Луцький р-н,";
     private static final String COMPANY_ADDRESS_LINE_2 = "с. Крупа, вул. Дубнівська, 10";
-    private static final String COMPANY_PHONE = "+38(067)-223-22-63";
+    private static final String COMPANY_PHONE = "+38(096)-232-23-63";
 
     private final Font regular = loadFont("/fonts/DejaVuSans.ttf");
     private final Font bold = loadFont("/fonts/DejaVuSans-Bold.ttf");

@@ -76,7 +76,7 @@ class LabelImageRendererTest {
 
     private static CalibrationProtocolResponse smartProtocol(CalibrationLabelType type) {
         return new CalibrationProtocolResponse(
-                2L, "126", LocalDateTime.of(2026, 7, 13, 10, 0), null, "UA-999",
+                2L, "126", LocalDateTime.of(2026, 7, 13, 10, 0), null, "UA-508",
                 1L, null, null, null, null,
                 null, null, null, null, null,
                 null, "AA1234BB", "WMA06XZZ6EM644274", "0020303554", null,
