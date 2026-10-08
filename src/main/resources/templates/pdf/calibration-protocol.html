@@ -134,7 +134,8 @@
 
     <div class="field-block">
         <span class="field-num">7.</span> Перевірка та адаптація тахографа до транспортного засобу здійснюються за допомогою:
-        <div class="fill-line" th:text="${protocol.checkMethod}"></div>
+        <div class="fill-line">пристрою аналогічного відтворення параметрів руху транспортного засобу із застосуванням</div>
+        <div class="fill-line">устаткування</div>
     </div>
 
     <div class="section-title" style="page-break-before: always;">8. Результати перевірки та адаптації тахографа</div>
@@ -166,7 +167,7 @@
             </td>
             <td class="center">Кілометри</td>
             <td class="center">—</td>
-            <td class="stack-cell">
+            <td class="center stack-cell">
                 <div th:text="${protocol.mileageBefore}"></div>
                 <div th:text="${protocol.mileageAfter}"></div>
             </td>
@@ -218,7 +219,7 @@
                 <div>+/- 2,0</div>
                 <div>+/- 4,0</div>
             </td>
-            <td class="stack-cell">
+            <td class="center stack-cell">
                 <div th:text="${protocol.pathDeviationAfterInstall}"></div>
                 <div th:text="${protocol.pathDeviationInService}"></div>
             </td>
@@ -235,7 +236,7 @@
                 <div>+/- 4,0</div>
                 <div>+/- 6,0</div>
             </td>
-            <td class="stack-cell">
+            <td class="center stack-cell">
                 <div th:text="${protocol.speedDeviationAfterInstall}"></div>
                 <div th:text="${protocol.speedDeviationInService}"></div>
             </td>
@@ -252,7 +253,7 @@
                 <div>+/- 2,0 та +/- 10,0</div>
                 <div>+/- 2,0 та +/- 10,0</div>
             </td>
-            <td class="stack-cell">
+            <td class="center stack-cell">
                 <div th:text="${protocol.timeDeviationAfterInstall}"></div>
                 <div th:text="${protocol.timeDeviationInService}"></div>
             </td>
