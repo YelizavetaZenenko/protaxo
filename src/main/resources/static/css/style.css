@@ -1438,6 +1438,27 @@ th.money {
     color: var(--danger);
 }
 
+/* Стан оплати наряду — насичені кольори, щоб «оплачено / ні» читалось з першого погляду
+   (раніше блідо-зелений проти сірого майже не розрізнялись). Окремі класи, бо status-paid/unpaid
+   спільні з іншими бейджами (акт, ревізія, звірки). */
+.settle-paid {
+    background: #2e7d4f;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.settle-partial {
+    background: #f2a52b;
+    color: #3a2600;
+    font-weight: 600;
+}
+
+.settle-unpaid {
+    background: #c62828;
+    color: #ffffff;
+    font-weight: 600;
+}
+
 .row-cancelled td {
     color: var(--muted);
     text-decoration: line-through;
