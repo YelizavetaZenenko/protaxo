@@ -33,7 +33,7 @@ public class UserPageController {
     @GetMapping
     public String list(Model model) {
         model.addAttribute("users", userManagementService.findAll());
-        model.addAttribute("workers", repairWorkerService.findAll());
+        model.addAttribute("workers", repairWorkerService.findAllDetails());
 
         RolePermissionsFormData permissionsForm = new RolePermissionsFormData();
         permissionsForm.setCanViewAuditLog(permissionService.masterCanViewAuditLog());

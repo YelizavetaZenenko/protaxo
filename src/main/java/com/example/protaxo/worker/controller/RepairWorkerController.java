@@ -36,12 +36,12 @@ public class RepairWorkerController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public RepairWorkerResponse create(@Valid @RequestBody RepairWorkerRequest request) {
-        return repairWorkerService.create(request.fullName(), request.position());
+        return repairWorkerService.create(request);
     }
 
     @PutMapping("/{id}")
     public RepairWorkerResponse update(@PathVariable Long id, @Valid @RequestBody RepairWorkerRequest request) {
-        return repairWorkerService.update(id, request.fullName(), request.position());
+        return repairWorkerService.update(id, request);
     }
 
     @DeleteMapping("/{id}")

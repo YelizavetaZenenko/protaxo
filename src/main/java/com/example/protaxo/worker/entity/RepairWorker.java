@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,4 +34,26 @@ public class RepairWorker {
 
     @Column(nullable = false)
     private String position;
+
+    private String phone;
+
+    private String email;
+
+    private String address;
+
+    @Column(name = "hire_date")
+    private LocalDate hireDate;
+
+    /** Personal workshop card for digital tachographs — the number that goes into a calibration protocol. */
+    @Column(name = "workshop_card_number")
+    private String workshopCardNumber;
+
+    @Column(name = "workshop_card_valid_until")
+    private LocalDate workshopCardValidUntil;
+
+    /** Who to call if something happens to the worker — name and phone in one line. */
+    @Column(name = "emergency_contact")
+    private String emergencyContact;
+
+    private String notes;
 }

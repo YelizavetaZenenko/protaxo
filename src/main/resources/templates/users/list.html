@@ -72,47 +72,114 @@
             </div>
 
             <table class="clean-table">
-                <colgroup>
-                    <col style="width:36%">
-                    <col style="width:36%">
-                    <col style="width:28%">
-                </colgroup>
                 <thead>
                 <tr>
                     <th>ПІБ</th>
                     <th>Посада</th>
+                    <th>Телефон</th>
+                    <th>Картка майстерні</th>
                     <th></th>
                 </tr>
                 </thead>
                 <tbody id="workersTableBody">
-                <tr th:each="w : ${workers}">
+                <tr th:each="w : ${workers}" class="clickable-row worker-row"
+                    th:with="cardExpired=${w.workshopCardValidUntil != null and w.workshopCardValidUntil.isBefore(#temporals.createToday())}"
+                    th:attr="data-id=${w.id},data-full-name=${w.fullName},data-position=${w.position},
+                             data-phone=${w.phone},data-email=${w.email},data-address=${w.address},
+                             data-hire-date=${w.hireDate},data-card-number=${w.workshopCardNumber},
+                             data-card-valid-until=${w.workshopCardValidUntil},
+                             data-emergency-contact=${w.emergencyContact},data-notes=${w.notes}">
                     <td th:text="${w.fullName}"></td>
                     <td th:text="${w.position}"></td>
-                    <td class="actions-cell" sec:authorize="hasRole('ADMIN')">
-                        <button type="button" class="link-btn edit-worker-btn"
-                                th:attr="data-id=${w.id},data-full-name=${w.fullName},data-position=${w.position}">Редагувати</button>
-                        <button type="button" class="link-btn link-btn-danger delete-worker-btn" th:attr="data-id=${w.id}">Видалити</button>
+                    <td class="nowrap-cell" th:text="${w.phone ?: '—'}"></td>
+                    <td class="nowrap-cell">
+                        <span th:text="${w.workshopCardNumber ?: '—'}"></span>
+                        <span th:if="${w.workshopCardValidUntil != null}" class="muted"
+                              th:classappend="${cardExpired} ? 'worker-card-expired'"
+                              th:text="'до ' + ${#temporals.format(w.workshopCardValidUntil, 'dd.MM.yyyy')}"></span>
+                    </td>
+                    <td class="actions-cell">
+                        <th:block sec:authorize="hasRole('ADMIN')">
+                            <button type="button" class="link-btn edit-worker-btn">Редагувати</button>
+                            <button type="button" class="link-btn link-btn-danger delete-worker-btn" th:attr="data-id=${w.id}">Видалити</button>
+                        </th:block>
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(workers)}">
-                    <td colspan="3">Робітників ще немає</td>
+                    <td colspan="5">Робітників ще немає</td>
                 </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
+    <div class="modal-overlay" id="viewWorkerOverlay" hidden>
+        <div class="modal modal-wide">
+            <h2 id="viewWorkerName"></h2>
+            <div class="view-meta">
+                <div class="field"><label>Посада</label><div data-field="position"></div></div>
+                <div class="field"><label>Дата прийому на роботу</label><div data-field="hireDate" data-kind="date"></div></div>
+                <div class="field"><label>Телефон</label><div data-field="phone" data-kind="phone"></div></div>
+                <div class="field"><label>E-mail</label><div data-field="email" data-kind="email"></div></div>
+                <div class="field worker-view-full"><label>Адреса</label><div data-field="address"></div></div>
+                <div class="field"><label>Номер картки майстерні</label><div data-field="cardNumber"></div></div>
+                <div class="field"><label>Картка дійсна до</label><div data-field="cardValidUntil" data-kind="date"></div></div>
+                <div class="field worker-view-full"><label>Контакт для екстрених випадків</label><div data-field="emergencyContact"></div></div>
+                <div class="field worker-view-full"><label>Примітки</label><div data-field="notes" class="worker-notes"></div></div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="viewWorkerEditBtn" sec:authorize="hasRole('ADMIN')">Редагувати</button>
+                <button type="button" class="btn-outline" id="viewWorkerCloseBtn">Закрити</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="addWorkerOverlay" hidden>
-        <div class="modal">
+        <div class="modal modal-wide">
             <h2 id="workerModalTitle">Новий робітник</h2>
             <div class="alert alert-error" id="addWorkerError" hidden></div>
-            <div class="field field-full">
-                <label for="newWorkerFullName">ПІБ *</label>
-                <input type="text" id="newWorkerFullName">
-            </div>
-            <div class="field field-full">
-                <label for="newWorkerPosition">Посада *</label>
-                <input type="text" id="newWorkerPosition">
+            <div class="form-grid worker-form">
+                <div class="field">
+                    <label for="newWorkerFullName">ПІБ *</label>
+                    <input type="text" id="newWorkerFullName" data-key="fullName">
+                </div>
+                <div class="field">
+                    <label for="newWorkerPosition">Посада *</label>
+                    <input type="text" id="newWorkerPosition" data-key="position">
+                </div>
+                <div class="field">
+                    <label for="newWorkerPhone">Телефон</label>
+                    <input type="tel" id="newWorkerPhone" data-key="phone" placeholder="+380XXXXXXXXX">
+                </div>
+                <div class="field">
+                    <label for="newWorkerEmail">E-mail</label>
+                    <input type="email" id="newWorkerEmail" data-key="email">
+                </div>
+                <div class="field field-full">
+                    <label for="newWorkerAddress">Адреса</label>
+                    <input type="text" id="newWorkerAddress" data-key="address">
+                </div>
+                <div class="field">
+                    <label for="newWorkerHireDate">Дата прийому на роботу</label>
+                    <input type="date" id="newWorkerHireDate" data-key="hireDate">
+                </div>
+                <div class="field"></div>
+                <div class="field">
+                    <label for="newWorkerCardNumber">Номер картки майстерні</label>
+                    <input type="text" id="newWorkerCardNumber" data-key="workshopCardNumber">
+                </div>
+                <div class="field">
+                    <label for="newWorkerCardValidUntil">Картка дійсна до</label>
+                    <input type="date" id="newWorkerCardValidUntil" data-key="workshopCardValidUntil">
+                </div>
+                <div class="field field-full">
+                    <label for="newWorkerEmergency">Контакт для екстрених випадків</label>
+                    <input type="text" id="newWorkerEmergency" data-key="emergencyContact" placeholder="Ім'я, ким доводиться, телефон">
+                </div>
+                <div class="field field-full">
+                    <label for="newWorkerNotes">Примітки</label>
+                    <textarea id="newWorkerNotes" data-key="notes" rows="3"></textarea>
+                </div>
             </div>
             <div class="form-actions">
                 <button type="button" class="btn" id="saveNewWorkerBtn">Зберегти</button>
@@ -123,37 +190,93 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            var addWorkerBtn = document.getElementById('addWorkerBtn');
-            var editButtons = document.querySelectorAll('.edit-worker-btn');
-            if (!addWorkerBtn && editButtons.length === 0) return;
-
-            var addWorkerOverlay = document.getElementById('addWorkerOverlay');
-            var addWorkerError = document.getElementById('addWorkerError');
-            var workerModalTitle = document.getElementById('workerModalTitle');
-            var newWorkerFullName = document.getElementById('newWorkerFullName');
-            var newWorkerPosition = document.getElementById('newWorkerPosition');
+            var viewOverlay = document.getElementById('viewWorkerOverlay');
+            var viewEditBtn = document.getElementById('viewWorkerEditBtn');
+            var formOverlay = document.getElementById('addWorkerOverlay');
+            var formError = document.getElementById('addWorkerError');
+            var formTitle = document.getElementById('workerModalTitle');
+            var formInputs = formOverlay.querySelectorAll('[data-key]');
+            var viewedRow = null;
             var editingWorkerId = null;
 
-            function openModal(id, fullName, position) {
-                editingWorkerId = id;
-                workerModalTitle.textContent = id ? 'Редагувати робітника' : 'Новий робітник';
-                addWorkerError.hidden = true;
-                newWorkerFullName.value = fullName || '';
-                newWorkerPosition.value = position || '';
-                addWorkerOverlay.hidden = false;
-                newWorkerFullName.focus();
+            // Row data-* (dataset camelCase) → request field names.
+            var ROW_TO_KEY = {
+                fullName: 'fullName', position: 'position', phone: 'phone', email: 'email',
+                address: 'address', hireDate: 'hireDate', cardNumber: 'workshopCardNumber',
+                cardValidUntil: 'workshopCardValidUntil', emergencyContact: 'emergencyContact', notes: 'notes'
+            };
+
+            function formatDate(iso) {
+                var p = iso.split('-');
+                return p.length === 3 ? p[2] + '.' + p[1] + '.' + p[0] : iso;
             }
 
-            if (addWorkerBtn) {
-                addWorkerBtn.addEventListener('click', function () {
-                    openModal(null, '', '');
+            function openView(row) {
+                viewedRow = row;
+                document.getElementById('viewWorkerName').textContent = row.dataset.fullName;
+                viewOverlay.querySelectorAll('[data-field]').forEach(function (el) {
+                    var value = row.dataset[el.dataset.field] || '';
+                    el.textContent = '';
+                    if (!value) {
+                        el.textContent = '—';
+                        return;
+                    }
+                    if (el.dataset.kind === 'phone' || el.dataset.kind === 'email') {
+                        var a = document.createElement('a');
+                        a.href = (el.dataset.kind === 'phone' ? 'tel:' : 'mailto:') + value.replace(/\s/g, '');
+                        a.textContent = value;
+                        el.appendChild(a);
+                    } else {
+                        el.textContent = el.dataset.kind === 'date' ? formatDate(value) : value;
+                    }
                 });
+                viewOverlay.hidden = false;
             }
 
-            editButtons.forEach(function (btn) {
+            function openForm(row) {
+                editingWorkerId = row ? row.dataset.id : null;
+                formTitle.textContent = row ? 'Редагувати робітника' : 'Новий робітник';
+                formError.hidden = true;
+                formInputs.forEach(function (input) { input.value = ''; });
+                if (row) {
+                    Object.keys(ROW_TO_KEY).forEach(function (rowKey) {
+                        var input = formOverlay.querySelector('[data-key="' + ROW_TO_KEY[rowKey] + '"]');
+                        input.value = row.dataset[rowKey] || '';
+                    });
+                }
+                viewOverlay.hidden = true;
+                formOverlay.hidden = false;
+                document.getElementById('newWorkerFullName').focus();
+            }
+
+            document.querySelectorAll('.worker-row').forEach(function (row) {
+                row.addEventListener('click', function (e) {
+                    if (e.target.closest('.actions-cell')) return;
+                    openView(row);
+                });
+            });
+
+            document.querySelectorAll('.edit-worker-btn').forEach(function (btn) {
                 btn.addEventListener('click', function () {
-                    openModal(btn.dataset.id, btn.dataset.fullName, btn.dataset.position);
+                    openForm(btn.closest('.worker-row'));
                 });
+            });
+
+            var addWorkerBtn = document.getElementById('addWorkerBtn');
+            if (addWorkerBtn) {
+                addWorkerBtn.addEventListener('click', function () { openForm(null); });
+            }
+            if (viewEditBtn) {
+                viewEditBtn.addEventListener('click', function () { openForm(viewedRow); });
+            }
+            document.getElementById('viewWorkerCloseBtn').addEventListener('click', function () {
+                viewOverlay.hidden = true;
+            });
+            viewOverlay.addEventListener('click', function (e) {
+                if (e.target === viewOverlay) viewOverlay.hidden = true;
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') viewOverlay.hidden = true;
             });
 
             document.querySelectorAll('.delete-worker-btn').forEach(function (btn) {
@@ -172,34 +295,36 @@
             });
 
             document.getElementById('cancelNewWorkerBtn').addEventListener('click', function () {
-                addWorkerOverlay.hidden = true;
+                formOverlay.hidden = true;
             });
 
             document.getElementById('saveNewWorkerBtn').addEventListener('click', function () {
-                var fullName = newWorkerFullName.value.trim();
-                var position = newWorkerPosition.value.trim();
-                if (!fullName || !position) {
-                    addWorkerError.textContent = "ПІБ і посада обов'язкові";
-                    addWorkerError.hidden = false;
+                var body = {};
+                formInputs.forEach(function (input) {
+                    var v = input.value.trim();
+                    body[input.dataset.key] = v === '' ? null : v;
+                });
+                if (!body.fullName || !body.position) {
+                    formError.textContent = "ПІБ і посада обов'язкові";
+                    formError.hidden = false;
                     return;
                 }
                 var url = editingWorkerId ? '/api/repair-workers/' + editingWorkerId : '/api/repair-workers';
-                var method = editingWorkerId ? 'PUT' : 'POST';
                 fetch(url, {
-                    method: method,
+                    method: editingWorkerId ? 'PUT' : 'POST',
                     credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fullName: fullName, position: position })
+                    body: JSON.stringify(body)
                 }).then(function (resp) {
                     if (!resp.ok) {
-                        return resp.json().then(function (body) { throw new Error(body.message || 'Не вдалося зберегти робітника'); });
+                        return resp.json().then(function (b) { throw new Error(b.message || 'Не вдалося зберегти робітника'); });
                     }
                     return resp.json();
                 }).then(function () {
                     window.location.reload();
                 }).catch(function (err) {
-                    addWorkerError.textContent = err.message;
-                    addWorkerError.hidden = false;
+                    formError.textContent = err.message;
+                    formError.hidden = false;
                 });
             });
         });

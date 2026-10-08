@@ -4,6 +4,8 @@ import com.example.protaxo.audit.entity.AuditAction;
 import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.common.exception.NotFoundException;
 import com.example.protaxo.common.util.FieldDiff;
+import com.example.protaxo.worker.dto.RepairWorkerDetails;
+import com.example.protaxo.worker.dto.RepairWorkerRequest;
 import com.example.protaxo.worker.dto.RepairWorkerResponse;
 import com.example.protaxo.worker.entity.RepairWorker;
 import com.example.protaxo.worker.repository.RepairWorkerRepository;
@@ -27,21 +29,26 @@ public class RepairWorkerService {
                 .toList();
     }
 
-    public RepairWorkerResponse create(String fullName, String position) {
-        RepairWorker saved = repairWorkerRepository.save(RepairWorker.builder()
-                .fullName(fullName.trim())
-                .position(position.trim())
-                .build());
+    @Transactional(readOnly = true)
+    public List<RepairWorkerDetails> findAllDetails() {
+        return repairWorkerRepository.findAllByOrderByFullNameAsc().stream()
+                .map(RepairWorkerService::toDetails)
+                .toList();
+    }
+
+    public RepairWorkerResponse create(RepairWorkerRequest request) {
+        RepairWorker worker = new RepairWorker();
+        apply(worker, request);
+        RepairWorker saved = repairWorkerRepository.save(worker);
         auditLogService.record(AuditAction.CREATE, "RepairWorker", saved.getId(), FieldDiff.created(snapshot(saved)));
         return new RepairWorkerResponse(saved.getId(), saved.getFullName(), saved.getPosition());
     }
 
-    public RepairWorkerResponse update(Long id, String fullName, String position) {
+    public RepairWorkerResponse update(Long id, RepairWorkerRequest request) {
         RepairWorker worker = repairWorkerRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Робітника не знайдено: " + id));
         FieldDiff.Snapshot before = snapshot(worker);
-        worker.setFullName(fullName.trim());
-        worker.setPosition(position.trim());
+        apply(worker, request);
         RepairWorker saved = repairWorkerRepository.save(worker);
         auditLogService.record(AuditAction.UPDATE, "RepairWorker", id, FieldDiff.between(before, snapshot(saved)));
         return new RepairWorkerResponse(saved.getId(), saved.getFullName(), saved.getPosition());
@@ -62,9 +69,40 @@ public class RepairWorkerService {
         auditLogService.record(AuditAction.DELETE, "RepairWorker", id, FieldDiff.deleted(snapshot(worker)));
     }
 
+    private static void apply(RepairWorker worker, RepairWorkerRequest request) {
+        worker.setFullName(request.fullName().trim());
+        worker.setPosition(request.position().trim());
+        worker.setPhone(blankToNull(request.phone()));
+        worker.setEmail(blankToNull(request.email()));
+        worker.setAddress(blankToNull(request.address()));
+        worker.setHireDate(request.hireDate());
+        worker.setWorkshopCardNumber(blankToNull(request.workshopCardNumber()));
+        worker.setWorkshopCardValidUntil(request.workshopCardValidUntil());
+        worker.setEmergencyContact(blankToNull(request.emergencyContact()));
+        worker.setNotes(blankToNull(request.notes()));
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private static RepairWorkerDetails toDetails(RepairWorker w) {
+        return new RepairWorkerDetails(w.getId(), w.getFullName(), w.getPosition(), w.getPhone(), w.getEmail(),
+                w.getAddress(), w.getHireDate(), w.getWorkshopCardNumber(), w.getWorkshopCardValidUntil(),
+                w.getEmergencyContact(), w.getNotes());
+    }
+
     private static FieldDiff.Snapshot snapshot(RepairWorker worker) {
         return FieldDiff.snapshot()
                 .add("ПІБ", worker.getFullName())
-                .add("Посада", worker.getPosition());
+                .add("Посада", worker.getPosition())
+                .add("Телефон", worker.getPhone())
+                .add("E-mail", worker.getEmail())
+                .add("Адреса", worker.getAddress())
+                .add("Дата прийому на роботу", worker.getHireDate())
+                .add("Номер картки майстерні", worker.getWorkshopCardNumber())
+                .add("Картка майстерні дійсна до", worker.getWorkshopCardValidUntil())
+                .add("Екстрений контакт", worker.getEmergencyContact())
+                .add("Примітки", worker.getNotes());
     }
 }

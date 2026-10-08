@@ -2128,3 +2128,17 @@ a.acc-card-meta:hover {
         display: table-row !important;
     }
 }
+
+/* Картка робітника (сторінка «Користувачі»): широкі поля на весь рядок, прострочена картка майстерні — червоним. */
+.view-meta .worker-view-full {
+    grid-column: 1 / -1;
+}
+
+.worker-notes {
+    white-space: pre-wrap;
+}
+
+.worker-card-expired {
+    color: var(--danger);
+    font-weight: 600;
+}
