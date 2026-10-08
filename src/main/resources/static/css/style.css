@@ -162,7 +162,7 @@ a {
 }
 
 .container {
-    --container-max: 1280px;
+    --container-max: 1800px;
     max-width: var(--container-max);
     margin: 2rem auto;
     padding: 0 1.5rem;
@@ -172,7 +172,7 @@ a {
 /* Every page uses the same wide white card as the contractors list;
    kept as an explicit class for pages that must stay wide. */
 .container-wide {
-    --container-max: 1280px;
+    --container-max: 1800px;
 }
 
 .card {
@@ -601,6 +601,8 @@ th {
    flex row above, which is correct there since it isn't a table cell. */
 td.actions-cell {
     display: table-cell;
+    /* «Редагувати» / «Видалити» завжди в один рядок, а не одне над одним. */
+    white-space: nowrap;
 }
 
 td.actions-cell > * + * {
@@ -736,10 +738,9 @@ td.actions-cell > * + * {
     font-size: 0.85rem;
 }
 
+/* Короткі коди (ID, ЄДРПОУ, ІПН) — в один рядок і завжди повністю, без обрізання «…». */
 .nowrap-cell {
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .audit-change-row {
@@ -1087,15 +1088,11 @@ a.doc-tab-btn {
     overflow-wrap: break-word;
 }
 
-/* For long codes (VIN, chassis number) that would otherwise wrap to 2-3 lines
-   and make row heights jump around inconsistently between rows - truncate to
-   one line with an ellipsis instead; the full value is still available via
-   the title tooltip. */
+/* Довгі коди (VIN, номер кузова) — в один рядок, щоб висота рядків не скакала, але завжди
+   повністю: раніше обрізались «…» і повне значення було лише в підказці. Колонка розширюється
+   під код (таблиці автомобілів/тахографів — table-layout: auto). */
 .cell-value-badged > span.cell-value-truncate:first-child {
-    display: inline-block;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .view-meta {
@@ -1557,7 +1554,7 @@ th.money {
    без загальної картки: шапка на фоні, під нею картки-показники й білі блоки. */
 
 .acc-page {
-    --container-max: 1280px;
+    --container-max: 1800px;
 }
 
 .acc-header {
