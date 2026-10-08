@@ -255,7 +255,14 @@
                     var sidebar = document.getElementById(config.sidebarId);
                     var topbar = document.querySelector('.topbar');
                     if (sidebar && topbar) {
-                        sidebar.style.top = topbar.offsetHeight + 'px';
+                        // The topbar scrolls away with the page but the column is fixed, so track the
+                        // topbar's bottom edge: under it while visible, flush with the top once it's gone.
+                        var placeSidebar = function () {
+                            sidebar.style.top = Math.max(0, topbar.getBoundingClientRect().bottom) + 'px';
+                        };
+                        placeSidebar();
+                        window.addEventListener('scroll', placeSidebar, { passive: true });
+                        window.addEventListener('resize', placeSidebar);
                     }
                     renderSidebar();
                 });
