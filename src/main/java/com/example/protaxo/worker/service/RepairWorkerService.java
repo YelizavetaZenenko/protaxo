@@ -76,8 +76,6 @@ public class RepairWorkerService {
         worker.setEmail(blankToNull(request.email()));
         worker.setAddress(blankToNull(request.address()));
         worker.setHireDate(request.hireDate());
-        worker.setWorkshopCardNumber(blankToNull(request.workshopCardNumber()));
-        worker.setWorkshopCardValidUntil(request.workshopCardValidUntil());
         worker.setEmergencyContact(blankToNull(request.emergencyContact()));
         worker.setNotes(blankToNull(request.notes()));
     }
@@ -88,8 +86,7 @@ public class RepairWorkerService {
 
     private static RepairWorkerDetails toDetails(RepairWorker w) {
         return new RepairWorkerDetails(w.getId(), w.getFullName(), w.getPosition(), w.getPhone(), w.getEmail(),
-                w.getAddress(), w.getHireDate(), w.getWorkshopCardNumber(), w.getWorkshopCardValidUntil(),
-                w.getEmergencyContact(), w.getNotes());
+                w.getAddress(), w.getHireDate(), w.getEmergencyContact(), w.getNotes());
     }
 
     private static FieldDiff.Snapshot snapshot(RepairWorker worker) {
@@ -100,8 +97,6 @@ public class RepairWorkerService {
                 .add("E-mail", worker.getEmail())
                 .add("Адреса", worker.getAddress())
                 .add("Дата прийому на роботу", worker.getHireDate())
-                .add("Номер картки майстерні", worker.getWorkshopCardNumber())
-                .add("Картка майстерні дійсна до", worker.getWorkshopCardValidUntil())
                 .add("Екстрений контакт", worker.getEmergencyContact())
                 .add("Примітки", worker.getNotes());
     }

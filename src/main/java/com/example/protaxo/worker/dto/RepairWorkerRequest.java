@@ -12,8 +12,6 @@ public record RepairWorkerRequest(
         @Email(message = "Некоректний e-mail") @Size(max = 255, message = "E-mail задовгий") String email,
         @Size(max = 500, message = "Адреса задовга") String address,
         LocalDate hireDate,
-        @Size(max = 50, message = "Номер картки майстерні задовгий") String workshopCardNumber,
-        LocalDate workshopCardValidUntil,
         @Size(max = 255, message = "Екстрений контакт задовгий") String emergencyContact,
         @Size(max = 2000, message = "Примітки задовгі") String notes
 ) {

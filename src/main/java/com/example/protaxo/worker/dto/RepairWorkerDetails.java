@@ -15,8 +15,6 @@ public record RepairWorkerDetails(
         String email,
         String address,
         LocalDate hireDate,
-        String workshopCardNumber,
-        LocalDate workshopCardValidUntil,
         String emergencyContact,
         String notes
 ) {

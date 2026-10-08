@@ -77,27 +77,18 @@
                     <th>ПІБ</th>
                     <th>Посада</th>
                     <th>Телефон</th>
-                    <th>Картка майстерні</th>
                     <th></th>
                 </tr>
                 </thead>
                 <tbody id="workersTableBody">
                 <tr th:each="w : ${workers}" class="clickable-row worker-row"
-                    th:with="cardExpired=${w.workshopCardValidUntil != null and w.workshopCardValidUntil.isBefore(#temporals.createToday())}"
                     th:attr="data-id=${w.id},data-full-name=${w.fullName},data-position=${w.position},
                              data-phone=${w.phone},data-email=${w.email},data-address=${w.address},
-                             data-hire-date=${w.hireDate},data-card-number=${w.workshopCardNumber},
-                             data-card-valid-until=${w.workshopCardValidUntil},
+                             data-hire-date=${w.hireDate},
                              data-emergency-contact=${w.emergencyContact},data-notes=${w.notes}">
                     <td th:text="${w.fullName}"></td>
                     <td th:text="${w.position}"></td>
                     <td class="nowrap-cell" th:text="${w.phone ?: '—'}"></td>
-                    <td class="nowrap-cell">
-                        <span th:text="${w.workshopCardNumber ?: '—'}"></span>
-                        <span th:if="${w.workshopCardValidUntil != null}" class="muted"
-                              th:classappend="${cardExpired} ? 'worker-card-expired'"
-                              th:text="'до ' + ${#temporals.format(w.workshopCardValidUntil, 'dd.MM.yyyy')}"></span>
-                    </td>
                     <td class="actions-cell">
                         <th:block sec:authorize="hasRole('ADMIN')">
                             <button type="button" class="link-btn edit-worker-btn">Редагувати</button>
@@ -106,7 +97,7 @@
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(workers)}">
-                    <td colspan="5">Робітників ще немає</td>
+                    <td colspan="4">Робітників ще немає</td>
                 </tr>
                 </tbody>
             </table>
@@ -122,8 +113,6 @@
                 <div class="field"><label>Телефон</label><div data-field="phone" data-kind="phone"></div></div>
                 <div class="field"><label>E-mail</label><div data-field="email" data-kind="email"></div></div>
                 <div class="field worker-view-full"><label>Адреса</label><div data-field="address"></div></div>
-                <div class="field"><label>Номер картки майстерні</label><div data-field="cardNumber"></div></div>
-                <div class="field"><label>Картка дійсна до</label><div data-field="cardValidUntil" data-kind="date"></div></div>
                 <div class="field worker-view-full"><label>Контакт для екстрених випадків</label><div data-field="emergencyContact"></div></div>
                 <div class="field worker-view-full"><label>Примітки</label><div data-field="notes" class="worker-notes"></div></div>
             </div>
@@ -163,15 +152,6 @@
                     <label for="newWorkerHireDate">Дата прийому на роботу</label>
                     <input type="date" id="newWorkerHireDate" data-key="hireDate">
                 </div>
-                <div class="field"></div>
-                <div class="field">
-                    <label for="newWorkerCardNumber">Номер картки майстерні</label>
-                    <input type="text" id="newWorkerCardNumber" data-key="workshopCardNumber">
-                </div>
-                <div class="field">
-                    <label for="newWorkerCardValidUntil">Картка дійсна до</label>
-                    <input type="date" id="newWorkerCardValidUntil" data-key="workshopCardValidUntil">
-                </div>
                 <div class="field field-full">
                     <label for="newWorkerEmergency">Контакт для екстрених випадків</label>
                     <input type="text" id="newWorkerEmergency" data-key="emergencyContact" placeholder="Ім'я, ким доводиться, телефон">
@@ -202,8 +182,7 @@
             // Row data-* (dataset camelCase) → request field names.
             var ROW_TO_KEY = {
                 fullName: 'fullName', position: 'position', phone: 'phone', email: 'email',
-                address: 'address', hireDate: 'hireDate', cardNumber: 'workshopCardNumber',
-                cardValidUntil: 'workshopCardValidUntil', emergencyContact: 'emergencyContact', notes: 'notes'
+                address: 'address', hireDate: 'hireDate', emergencyContact: 'emergencyContact', notes: 'notes'
             };
 
             function formatDate(iso) {

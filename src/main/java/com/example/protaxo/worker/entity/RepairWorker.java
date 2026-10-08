@@ -44,7 +44,10 @@ public class RepairWorker {
     @Column(name = "hire_date")
     private LocalDate hireDate;
 
-    /** Personal workshop card for digital tachographs — the number that goes into a calibration protocol. */
+    /**
+     * Personal workshop card for digital tachographs. Not used yet — removed from the page on
+     * request (2026-10-08); the columns stay so it can come back without a migration.
+     */
     @Column(name = "workshop_card_number")
     private String workshopCardNumber;
 
