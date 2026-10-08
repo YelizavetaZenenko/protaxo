@@ -744,7 +744,8 @@ td.actions-cell > * + * {
 }
 
 /* Журнал дій: довгі зміни згорнуті до 3 полів по 3 рядки, решта — за кнопкою «Показати всі зміни». */
-.audit-changes:not(.is-open) .audit-change-extra {
+/* .audit-change-row у селекторі — щоб переважити правило line-clamp нижче (воно теж задає display). */
+.audit-changes:not(.is-open) .audit-change-row.audit-change-extra {
     display: none;
 }
 
