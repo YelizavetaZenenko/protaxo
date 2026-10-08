@@ -4,38 +4,84 @@
     <meta charset="UTF-8" />
     <title>Акт виконаних робіт</title>
     <style>
-        @page { size: A4; margin: 1.8cm; }
-        body { font-family: 'DejaVu Sans'; font-size: 10pt; color: #111111; }
-        h1 { font-size: 14pt; text-align: center; margin: 0 0 2pt 0; }
-        .subtitle { text-align: center; font-size: 10pt; margin: 0 0 4pt 0; }
-        .date-line { text-align: center; font-size: 10pt; margin: 0 0 16pt 0; }
-        p.intro { text-align: justify; margin: 0 0 12pt 0; }
-        table.items { width: 100%; border-collapse: collapse; margin-bottom: 10pt; }
-        table.items th, table.items td { border: 1px solid #333333; padding: 4pt 5pt; font-size: 9pt; }
+        @page { size: A4; margin: 1.6cm; }
+        body { font-family: 'Times New Roman'; font-size: 9.5pt; color: #111111; }
+        h1 { font-size: 13pt; margin: 0 0 8pt 0; }
+        .placeholder { color: #999999; font-style: italic; }
+        .fill-line { display: inline-block; border-bottom: 1px solid #333333; width: 220pt; min-height: 11pt; }
+        table.header-table { width: 100%; border-collapse: collapse; margin-bottom: 8pt; }
+        table.header-table td { border: none; padding: 0; vertical-align: top; font-size: 9.5pt; }
+        table.header-table tr.spacer td { padding-top: 4pt; }
+        table.header-table td.label { width: 13%; padding-right: 4pt; white-space: nowrap; }
+        table.header-table td.value strong { font-size: 10pt; }
+        p.supplier-details { margin: 3pt 0 0 0; line-height: 1.5; }
+        p.intro { margin: 6pt 0 0 0; text-align: justify; }
+        table.items { width: 100%; border-collapse: collapse; margin-top: 6pt; }
+        table.items th, table.items td { border: 1px solid #333333; padding: 4pt 5pt; font-size: 8.5pt; }
         table.items th { background-color: #eeeeee; text-align: center; }
         table.items td.num { text-align: right; }
         table.items td.center { text-align: center; }
-        p.summary { margin: 4pt 0 2pt 0; font-size: 9.5pt; }
-        p.summary-words { margin: 0 0 16pt 0; font-weight: bold; font-size: 10pt; }
-        p.closing { text-align: justify; margin: 0 0 26pt 0; }
-        table.sig-table { width: 100%; border-collapse: collapse; margin-top: 20pt; }
-        table.sig-table td { border: none; padding: 0; font-size: 10pt; width: 50%; vertical-align: top; }
-        .sig-line { display: inline-block; border-bottom: 1px solid #333333; width: 160pt; min-height: 12pt; margin-left: 6pt; }
-        .sig-caption { font-size: 8pt; color: #555555; margin-top: 2pt; }
+        table.totals-table { border-collapse: collapse; margin: 6pt 0 0 auto; }
+        table.totals-table td { border: none; padding: 2pt 0; font-size: 9.5pt; }
+        table.totals-table td.label { font-weight: bold; text-align: right; padding-right: 10pt; }
+        table.totals-table td.value { padding-left: 10pt; font-weight: bold; text-align: right; }
+        table.totals-table tr.grand-total td { font-size: 10pt; }
+        p.summary { margin: 8pt 0 2pt 0; font-size: 9pt; }
+        p.summary-words { margin: 0 0 4pt 0; font-weight: bold; font-size: 9.5pt; }
+        p.closing { margin: 8pt 0 0 0; text-align: justify; }
+        .signature-rule { border-top: 1px solid #000000; margin-top: 16pt; }
+        table.sig-table { width: 100%; border-collapse: collapse; margin-top: 10pt; }
+        table.sig-table td { border: none; padding: 0; font-size: 9.5pt; width: 50%; vertical-align: top; }
+        table.sig-table td.sig-name { padding-top: 2pt; }
+        .sig-line { display: inline-block; border-bottom: 1px solid #333333; width: 150pt; min-height: 11pt; margin-left: 6pt; }
+        table.sig-table td.sig-caption { font-size: 7.5pt; color: #555555; padding-left: 130pt; }
     </style>
 </head>
 <body>
 
-    <h1 th:text="'АКТ № ' + ${invoice.number}">АКТ</h1>
-    <div class="subtitle">виконаних робіт (наданих послуг)</div>
-    <div class="date-line" th:text="'від ' + ${#temporals.format(invoice.documentDate, 'd MMMM yyyy')} + ' р.'">від дати</div>
+    <h1 th:text="'Акт № ' + ${invoice.number} + ' виконаних робіт (наданих послуг) від ' + ${#temporals.format(invoice.documentDate, 'd MMMM yyyy')} + ' р.'">Акт виконаних робіт</h1>
 
-    <p class="intro">
-        Ми, що нижче підписалися, з одного боку <strong>ФОП Вишивата Діана Олександрівна</strong> (Виконавець),
-        Україна, вул. Дубнівська, 10, с. Крупа, Луцький р-н, Волинська обл., 45604,
-        і з іншого боку <strong th:text="${client.fullName()}">Замовник</strong> (Замовник), склали цей акт про те,
-        що Виконавцем були виконані наступні роботи (надані наступні послуги):
-    </p>
+    <table class="header-table">
+        <tr>
+            <td class="label">Виконавець:</td>
+            <td class="value"><strong>Фізична особа-підприємець Вишивата Діана Олександрівна</strong></td>
+        </tr>
+        <tr>
+            <td class="label"></td>
+            <td>
+                <p class="supplier-details">
+                    п/р <span class="placeholder">UA213223130000026007233566001 у банку АТ КБ «ПриватБанк»</span>,<br/>
+                    вул. Дубнівська, 10, с. Крупа, Луцький р-н, Волинська обл., 45604,<br/>
+                    тел.: +380962322363, e-mail: protaho2025@gmail.com,<br/>
+                    РНОКПП 3809602220
+                </p>
+            </td>
+        </tr>
+        <tr class="spacer">
+            <td class="label">Замовник:</td>
+            <td class="value"><strong th:text="${client.fullName()}">Замовник</strong></td>
+        </tr>
+        <tr>
+            <td class="label"></td>
+            <td>
+                <p class="supplier-details">
+                    <th:block th:if="${not #strings.isEmpty(client.edrpou)}">код за ЄДРПОУ <span th:text="${client.edrpou}">1234567890</span><br/></th:block>
+                    <th:block th:if="${not #strings.isEmpty(client.code)}">РНОКПП <span th:text="${client.code}">1234567890</span><br/></th:block>
+                    <th:block th:if="${not #strings.isEmpty(client.phone)}">тел.: <span th:text="${client.phone}">+38(0XX)-XXX-XX-XX</span><br/></th:block>
+                    <th:block th:if="${not #strings.isEmpty(client.contactPersonName)}">контактна особа: <span th:text="${client.contactPersonName}">Іванов Іван</span><th:block th:if="${not #strings.isEmpty(client.contactPersonPhone)}">, тел.: <span th:text="${client.contactPersonPhone}">+38(0XX)-XXX-XX-XX</span></th:block></th:block>
+                </p>
+            </td>
+        </tr>
+        <tr class="spacer">
+            <td class="label">Договір:</td>
+            <td class="value">
+                <th:block th:if="${contractNumber} != null">№ <span th:text="${contractNumber}">000001</span></th:block>
+                <th:block th:if="${contractNumber} == null">№ <span class="fill-line"></span></th:block>
+            </td>
+        </tr>
+    </table>
+
+    <p class="intro">Виконавець виконав, а Замовник прийняв такі роботи (послуги):</p>
 
     <table class="items">
         <thead>
@@ -46,7 +92,10 @@
             <th>Од.</th>
             <th>Ціна</th>
             <th th:if="${hasDiscount}">Знижка</th>
-            <th>Сума</th>
+            <th>Сума без ПДВ</th>
+            <th>Ставка ПДВ</th>
+            <th>ПДВ</th>
+            <th>Сума з ПДВ</th>
         </tr>
         </thead>
         <tbody>
@@ -57,23 +106,42 @@
             <td class="center" th:text="${row.unit}">шт.</td>
             <td class="num" th:text="${#numbers.formatDecimal(row.price, 1, 2)}">0,00</td>
             <td class="center" th:if="${hasDiscount}" th:text="${row.discountDisplay()}"></td>
+            <td class="num" th:text="${#numbers.formatDecimal(row.amountWithoutVat, 1, 2)}">0,00</td>
+            <td class="center" th:text="${row.vatRateLabel}">20%</td>
+            <td class="num" th:text="${#numbers.formatDecimal(row.vatAmount, 1, 2)}">0,00</td>
             <td class="num" th:text="${#numbers.formatDecimal(row.amount, 1, 2)}">0,00</td>
         </tr>
         </tbody>
     </table>
 
-    <p class="summary" th:text="'Всього виконано робіт (надано послуг) на суму ' + ${#numbers.formatDecimal(totalAmount, 1, 2)} + ' грн.'">Всього</p>
+    <table class="totals-table">
+        <tr>
+            <td class="label">Разом:</td>
+            <td class="value" th:text="${#numbers.formatDecimal(totalWithoutVat, 1, 2)}">0,00</td>
+        </tr>
+        <tr>
+            <td class="label">Сума ПДВ:</td>
+            <td class="value" th:text="${#numbers.formatDecimal(totalVat, 1, 2)}">0,00</td>
+        </tr>
+        <tr class="grand-total">
+            <td class="label">Усього з ПДВ:</td>
+            <td class="value" th:text="${#numbers.formatDecimal(totalAmount, 1, 2)}">0,00</td>
+        </tr>
+    </table>
+
+    <p class="summary" th:text="'Всього виконано робіт (надано послуг) ' + ${rows.size()} + ' найменувань, на суму ' + ${#numbers.formatDecimal(totalAmount, 1, 2)} + ' UAH.'">Всього</p>
     <p class="summary-words" th:text="${amountInWords}">Сума словами</p>
 
     <p class="closing">
-        Виконавець здав, а Замовник прийняв вищезазначені роботи (послуги) в повному обсязі.
-        Замовник претензій щодо обсягу, якості та строків виконання робіт (надання послуг) не має.
+        Роботи (послуги) виконано в повному обсязі. Замовник претензій щодо обсягу, якості та строків
+        виконання робіт (надання послуг) не має.
     </p>
 
+    <div class="signature-rule"></div>
     <table class="sig-table">
         <tr>
-            <td>Виконавець <span class="sig-line"></span></td>
-            <td>Замовник <span class="sig-line"></span></td>
+            <td class="sig-name">Від Виконавця:<span class="sig-line"></span></td>
+            <td class="sig-name">Від Замовника:<span class="sig-line"></span></td>
         </tr>
         <tr>
             <td class="sig-caption">(підпис)</td>

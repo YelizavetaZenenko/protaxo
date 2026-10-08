@@ -15,7 +15,6 @@ import com.example.protaxo.finance.dto.InvoiceSettlement;
 import com.example.protaxo.finance.entity.PaymentMethod;
 import com.example.protaxo.finance.service.FinanceQueryService;
 import com.example.protaxo.finance.web.FinancePageController;
-import com.example.protaxo.invoice.dto.ActItemRow;
 import com.example.protaxo.invoice.dto.BillItemRow;
 import com.example.protaxo.invoice.dto.InvoiceFormData;
 import com.example.protaxo.invoice.dto.InvoiceItemFormData;
@@ -294,16 +293,15 @@ public class InvoicePageController {
     }
 
     /**
-     * "Акт виконаних робіт" — a standard-layout Ukrainian works-completion act, generated without
-     * a user-provided sample (unlike the bill/protocol PDFs) since none exists for this document
-     * yet — see docs/"Наряд-заказ".md for the decision. No VAT breakdown (unlike the bill): this
-     * is a simpler, generic completion act, not a tax document.
+     * "Акт виконаних робіт" — laid out in the same style as the bill ("Рахунок на оплату"): parties
+     * block, contract, items with the VAT breakdown and totals, plus the acceptance wording and both
+     * signatures an act needs. See docs/"Наряд-заказ".md.
      */
     @GetMapping("/{id}/act-pdf")
     public void printActPdf(@PathVariable Long id, HttpServletResponse response) throws IOException {
         InvoiceResponse invoice = invoiceService.findById(id);
 
-        List<ActItemRow> rows = invoice.items().stream().map(this::toActItemRow).toList();
+        List<BillItemRow> rows = invoice.items().stream().map(this::toBillItemRow).toList();
         BigDecimal totalAmount = invoice.totalAmount();
         String amountInWords = UkrainianAmountWords.amountToWords(totalAmount);
 
@@ -312,8 +310,13 @@ public class InvoicePageController {
         context.setVariable("client", clientService.findById(invoice.clientId()));
         context.setVariable("rows", rows);
         context.setVariable("totalAmount", totalAmount);
+        context.setVariable("totalVat", invoice.totalVat());
+        context.setVariable("totalWithoutVat", invoice.totalWithoutVat());
         context.setVariable("amountInWords", amountInWords);
         context.setVariable("hasDiscount", rows.stream().anyMatch(r -> !r.discountDisplay().isEmpty()));
+        context.setVariable("contractNumber", contractService.findLatestByClientId(invoice.clientId())
+                .map(ContractResponse::contractNumber)
+                .orElse(null));
         byte[] pdf = pdfRenderService.render("act", context);
         invoiceService.markActPrinted(id);
 
@@ -322,12 +325,6 @@ public class InvoicePageController {
         response.setContentLength(pdf.length);
         response.getOutputStream().write(pdf);
         response.getOutputStream().flush();
-    }
-
-    private ActItemRow toActItemRow(InvoiceItemResponse item) {
-        String unit = item.catalogItemType() == CatalogItemType.SERVICE ? "послуга" : "шт.";
-        return new ActItemRow(item.lineNumber(), item.itemName(), unit, item.quantity(), item.price(),
-                item.discountPercent(), item.amount());
     }
 
     private BillItemRow toBillItemRow(InvoiceItemResponse item) {
