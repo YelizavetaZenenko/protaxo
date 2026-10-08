@@ -114,7 +114,9 @@
                         </div>
                     </td>
                     <td>
-                        <div th:each="c : ${changes}" class="audit-change-row">
+                        <div class="audit-changes" th:unless="${#maps.isEmpty(changes)}">
+                        <div th:each="c, st : ${changes}" class="audit-change-row"
+                             th:classappend="${st.index >= 3} ? 'audit-change-extra'">
                             <strong th:text="${c.key}"></strong>:
                             <th:block th:if="${act == 'CREATE' or act == 'LOGIN_FAILED'}">
                                 <span th:text="${#strings.isEmpty(c.value[1]) ? '—' : c.value[1]}"></span>
@@ -127,6 +129,9 @@
                                 <span>→</span>
                                 <span class="audit-new" th:text="${#strings.isEmpty(c.value[1]) ? '—' : c.value[1]}"></span>
                             </th:block>
+                        </div>
+                        <button type="button" class="link-btn audit-changes-toggle" hidden
+                                th:attr="data-count=${changes.size()}"></button>
                         </div>
                         <span th:if="${#maps.isEmpty(changes)}" class="muted">—</span>
                     </td>
@@ -148,5 +153,29 @@
             </div>
         </div>
     </div>
+    <script>
+        // Довгі зміни згорнуті: видно перші 3 поля, кожне — до 3 рядків. Кнопка з'являється лише
+        // там, де справді щось сховано, і розгортає/згортає саме цей запис.
+        document.querySelectorAll('.audit-changes').forEach(function (box) {
+            var btn = box.querySelector('.audit-changes-toggle');
+            var hasExtra = box.querySelector('.audit-change-extra') !== null;
+            var hasLong = Array.prototype.some.call(box.querySelectorAll('.audit-change-row'), function (row) {
+                return row.scrollHeight > row.clientHeight + 1;
+            });
+            if (!hasExtra && !hasLong) return;
+            var label = function () {
+                btn.textContent = box.classList.contains('is-open')
+                    ? 'Згорнути'
+                    : 'Показати всі зміни (' + btn.dataset.count + ')';
+            };
+            label();
+            btn.hidden = false;
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                box.classList.toggle('is-open');
+                label();
+            });
+        });
+    </script>
 </body>
 </html>

@@ -743,6 +743,23 @@ td.actions-cell > * + * {
     white-space: nowrap;
 }
 
+/* Журнал дій: довгі зміни згорнуті до 3 полів по 3 рядки, решта — за кнопкою «Показати всі зміни». */
+.audit-changes:not(.is-open) .audit-change-extra {
+    display: none;
+}
+
+.audit-changes:not(.is-open) .audit-change-row {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+}
+
+.audit-changes-toggle {
+    margin-top: 0.3rem;
+    font-size: 0.85rem;
+}
+
 .audit-change-row {
     font-size: 0.85rem;
     line-height: 1.5;
