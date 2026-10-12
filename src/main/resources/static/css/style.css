@@ -205,12 +205,13 @@ a {
 
 /* Full-window truck illustration behind the card: a transparent PNG already
    tinted --brand-dark, softened with opacity so the form stays the focus.
-   Fixed, so it fills the viewport even when the page scrolls. */
+   Fixed, so it stays put when the page scrolls. `contain` + inset margin: the
+   whole truck is always visible, never cropped by the window edges. */
 .auth-page::after {
     content: "";
     position: fixed;
-    inset: 0;
-    background: url('/images/truck.png') no-repeat center / cover;
+    inset: 2rem;
+    background: url('/images/truck.png') no-repeat center / contain;
     opacity: 0.2;
     pointer-events: none;
 }
@@ -672,6 +673,17 @@ td.actions-cell > * + * {
     grid-template-columns: 1fr 1fr;
     gap: 0 1.5rem;
     max-width: 640px;
+    /* Картка сторінки широка (до 1800px), тож вузька форма стоїть посередині картки,
+       а не притиснута до лівого краю з порожнечею праворуч. */
+    margin-inline: auto;
+}
+
+/* Сторінки фінансових дій (скасування, повернення, розгляд звірки): блок даних і пояснення
+   над формою — тієї ж ширини й теж посередині, щоб стояти рівно над полями форми. */
+.card:has(> .form-grid) > .view-meta,
+.card:has(> .form-grid) > p.muted {
+    max-width: 640px;
+    margin-inline: auto;
 }
 
 .form-grid .field-full {
