@@ -69,6 +69,12 @@
 			<artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
 		<dependency>
+			<!-- Сесії входу зберігаються в Postgres, а не в пам'яті контейнера — деплой (перезапуск app)
+			     нікого не розлогінює. Таблиці — міграція Flyway V54, не автоініціалізація. -->
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-session-jdbc</artifactId>
+		</dependency>
+		<dependency>
 			<!-- Лише для попереднього перегляду наклейки в браузері (calibration-protocols/label-preview.html)
 			     — сам термопринтер малює QR власною прошивкою з команди TSPL QRCODE, це не використовується
 			     на шляху реального друку. -->
