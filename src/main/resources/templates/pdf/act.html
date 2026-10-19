@@ -4,49 +4,47 @@
     <meta charset="UTF-8" />
     <title>Акт виконаних робіт</title>
     <style>
-        @page { size: A4; margin: 1cm 1.4cm; }
-        body { font-family: 'DejaVu Sans'; font-size: 8pt; color: #111111; line-height: 1.2; }
+        @page { size: A4; margin: 0.8cm 1.3cm; }
+        body { font-family: 'Times New Roman'; font-size: 9.5pt; color: #111111; line-height: 1.15; }
         .placeholder { color: #999999; font-style: italic; }
 
-        .head { text-align: center; font-weight: bold; margin-bottom: 6pt; }
-        .head .title { font-size: 10.5pt; margin-bottom: 2pt; }
-        .head .line { font-size: 9pt; margin-top: 1pt; }
+        .head { text-align: center; font-weight: bold; margin-bottom: 4pt; }
+        .head .title { font-size: 12pt; margin-bottom: 2pt; }
+        .head .line { font-size: 10pt; margin-top: 0; }
 
-        /* Автомобіль / власник — дві таблиці-картки поруч, як на бланку. */
-        table.layout { width: 100%; border-collapse: collapse; }
-        table.layout > tbody > tr > td, table.layout > tr > td { border: none; padding: 0; vertical-align: top; }
+        /* Автомобіль / власник — одна таблиця на 4 колонки (як дві картки бланка поруч, без порожніх рядків). */
         table.card { width: 100%; border-collapse: collapse; border: 1.5px solid #000000; }
-        table.card td { border: 1px solid #000000; padding: 1pt 3pt; font-size: 8pt; height: 9pt; vertical-align: top; }
-        table.card td.lbl { font-weight: bold; white-space: nowrap; width: 88pt; }
+        table.card td { border: 1px solid #000000; padding: 0.5pt 3pt; font-size: 9.5pt; vertical-align: top; }
+        table.card td.lbl { font-weight: bold; white-space: nowrap; width: 1%; }
 
-        h2 { font-size: 8pt; font-weight: bold; margin: 7pt 0 2pt 0; }
+        h2 { font-size: 9.5pt; font-weight: bold; margin: 5pt 0 1pt 0; }
         table.items { width: 100%; border-collapse: collapse; border: 1.5px solid #000000; table-layout: fixed; }
-        table.items th, table.items td { border: 1px solid #000000; padding: 1pt 3pt; font-size: 8pt; }
-        table.items th { text-align: center; font-weight: bold; padding: 2pt 3pt; }
+        table.items th, table.items td { border: 1px solid #000000; padding: 0.5pt 3pt; font-size: 9.5pt; }
+        table.items th { text-align: center; font-weight: bold; padding: 1pt 2pt; white-space: nowrap; }
         table.items td.num { text-align: right; white-space: nowrap; }
         table.items td.center { text-align: center; }
         table.items td.sum-lbl { font-weight: bold; white-space: nowrap; }
         table.items td.blank { border-top: none; border-bottom: none; }
 
-        table.pay { border-collapse: collapse; margin-top: 6pt; }
-        table.pay td { border: none; padding: 0.5pt 0; font-weight: bold; font-size: 8.5pt; }
+        table.pay { border-collapse: collapse; margin-top: 4pt; }
+        table.pay td { border: none; padding: 0.5pt 0; font-weight: bold; font-size: 10pt; }
         table.pay td.lbl { width: 140pt; }
 
-        .warranty { border: 1.5px solid #000000; padding: 2pt 5pt; margin-top: 6pt; font-size: 7.5pt; line-height: 1.25; }
+        .warranty { border: 1.5px solid #000000; padding: 1.5pt 5pt; margin-top: 4pt; font-size: 8.5pt; line-height: 1.1; }
         .warranty .item { padding-left: 40pt; }
 
-        table.handover { width: 100%; border-collapse: collapse; margin-top: 8pt; }
-        table.handover td { border: none; padding: 0; vertical-align: bottom; font-size: 8pt; }
-        .sign-line { border-bottom: 1px solid #000000; min-height: 11pt; padding-top: 8pt; text-align: right; }
-        .caption { font-size: 6.5pt; text-align: center; margin-bottom: 5pt; }
+        table.handover { width: 100%; border-collapse: collapse; margin-top: 4pt; }
+        table.handover td { border: none; padding: 0; vertical-align: bottom; font-size: 9pt; line-height: 1.1; }
+        .sign-line { border-bottom: 1px solid #000000; min-height: 11pt; padding-top: 4pt; text-align: right; }
+        .caption { font-size: 7pt; text-align: center; margin-bottom: 2pt; }
         
-        p.place { font-size: 9pt; margin: 8pt 0 0 0; padding-bottom: 3pt; border-bottom: 2px solid #000000; }
+        p.place { font-size: 10pt; margin: 4pt 0 0 0; padding-bottom: 2pt; border-bottom: 2px solid #000000; }
 
-        table.parties { width: 100%; border-collapse: collapse; margin-top: 6pt; }
-        table.parties td { border: none; padding: 0; vertical-align: top; font-size: 8pt; width: 50%; line-height: 1.25; }
+        table.parties { width: 100%; border-collapse: collapse; margin-top: 3pt; }
+        table.parties td { border: none; padding: 0; vertical-align: top; font-size: 9pt; width: 50%; line-height: 1.1; }
         table.parties td.left { padding-right: 20pt; }
-        .party-title { font-size: 9pt; margin-bottom: 10pt; }
-        .party-line { border-bottom: 1px solid #000000; height: 12pt; margin-bottom: 4pt; }
+        .party-title { font-size: 10pt; margin-bottom: 8pt; }
+        .party-line { border-bottom: 1px solid #000000; height: 10pt; margin-bottom: 2pt; }
     </style>
 </head>
 <body>
@@ -61,52 +59,37 @@
         <div class="line" th:text="'Рахунок: № ' + ${invoice.number} + ' від ' + ${#temporals.format(invoice.documentDate, 'dd.MM.yyyy')}">Рахунок</div>
     </div>
 
-    <table class="layout">
+    <table class="card">
         <tr>
-            <td style="width: 54%; padding-right: 0;">
-                <table class="card">
-                    <tr>
-                        <td class="lbl">Автомобіль</td>
-                        <td th:if="${vehicle} != null" th:text="${#strings.trim((vehicle.make() ?: '') + ' ' + (vehicle.model() ?: ''))}">Volvo FH</td>
-                        <td th:if="${vehicle} == null" th:text="${invoice.vehicleName}"></td>
-                    </tr>
-                    <tr><td colspan="2"></td></tr>
-                    <tr>
-                        <td class="lbl">Державний номер</td>
-                        <td th:text="${vehicle} != null ? ${vehicle.registrationNumber()} : ''"></td>
-                    </tr>
-                    <tr><td class="lbl">Пробіг</td><td></td></tr>
-                    <tr>
-                        <td class="lbl">№ кузова</td>
-                        <td th:text="${vehicle} != null ? ${vehicle.vin()} : ''"></td>
-                    </tr>
-                    <tr>
-                        <td class="lbl">Водій</td>
-                        <td th:text="${invoice.driverName}"></td>
-                    </tr>
-                    <tr>
-                        <td class="lbl">Приймальник</td>
-                        <td th:text="${invoice.repairSupervisorName}"></td>
-                    </tr>
-                </table>
-            </td>
-            <td>
-                <table class="card">
-                    <tr>
-                        <td class="lbl" style="width: 70pt;">Власник</td>
-                        <td th:text="${client.fullName()}">Власник</td>
-                    </tr>
-                    <tr><td colspan="2"></td></tr>
-                    <tr>
-                        <td class="lbl" style="width: 70pt;" th:text="${not #strings.isEmpty(client.edrpou)} ? 'Код ЄДРПОУ' : 'РНОКПП'">Код</td>
-                        <td th:text="${not #strings.isEmpty(client.edrpou)} ? ${client.edrpou} : ${client.code}"></td>
-                    </tr>
-                    <tr>
-                        <td class="lbl" style="width: 70pt;">Телефон</td>
-                        <td th:text="${client.phone}"></td>
-                    </tr>
-                </table>
-            </td>
+            <td class="lbl">Автомобіль</td>
+            <td th:if="${vehicle} != null" th:text="${#strings.trim((vehicle.make() ?: '') + ' ' + (vehicle.model() ?: ''))}">Volvo FH</td>
+            <td th:if="${vehicle} == null" th:text="${invoice.vehicleName}"></td>
+            <td class="lbl">Власник</td>
+            <td th:text="${client.fullName()}">Власник</td>
+        </tr>
+        <tr>
+            <td class="lbl">Державний номер</td>
+            <td th:text="${vehicle} != null ? ${vehicle.registrationNumber()} : ''"></td>
+            <td class="lbl" th:text="${not #strings.isEmpty(client.edrpou)} ? 'Код ЄДРПОУ' : 'РНОКПП'">Код</td>
+            <td th:text="${not #strings.isEmpty(client.edrpou)} ? ${client.edrpou} : ${client.code}"></td>
+        </tr>
+        <tr>
+            <td class="lbl">№ кузова</td>
+            <td th:text="${vehicle} != null ? ${vehicle.vin()} : ''"></td>
+            <td class="lbl">Телефон</td>
+            <td th:text="${client.phone}"></td>
+        </tr>
+        <tr>
+            <td class="lbl">Пробіг</td>
+            <td></td>
+            <td class="lbl">Водій</td>
+            <td th:text="${invoice.driverName}"></td>
+        </tr>
+        <tr>
+            <td class="lbl">Приймальник</td>
+            <td th:text="${invoice.repairSupervisorName}"></td>
+            <td class="lbl"></td>
+            <td></td>
         </tr>
     </table>
 
@@ -121,8 +104,8 @@
                 <th style="width: 46pt;">Од. вим.</th>
                 <th style="width: 34pt;">К-сть</th>
                 <th th:if="${section.hasDiscount()}" style="width: 40pt;">Знижка</th>
-                <th style="width: 74pt;">Ціна грн., без ПДВ</th>
-                <th style="width: 78pt;">Сума грн., без ПДВ</th>
+                <th style="width: 92pt;">Ціна грн., без ПДВ</th>
+                <th style="width: 96pt;">Сума грн., без ПДВ</th>
             </tr>
             </thead>
             <tbody>
@@ -140,7 +123,7 @@
                 <td class="blank" th:colspan="${section.hasDiscount()} ? 4 : 3"></td>
                 <td class="num" th:text="${#numbers.formatDecimal(section.totalWithoutVat(), 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
             </tr>
-            <tr>
+            <tr th:if="${section.hasDiscount()}">
                 <td class="sum-lbl" colspan="2">Знижка</td>
                 <td class="blank" th:colspan="${section.hasDiscount()} ? 4 : 3"></td>
                 <td class="num" th:text="${section.hasDiscount()} ? ${#numbers.formatDecimal(section.discount(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
@@ -201,10 +184,9 @@
             </td>
         </tr>
         <tr>
-            <td></td>
-            <td>
-                Замінені (запасні) частини і невикористані матеріали<br/>
-                прийняв.
+            <td style="padding-right: 24pt;"></td>
+            <td style="padding-top: 3pt;">
+                Замінені (запасні) частини і невикористані матеріали прийняв.
                 <div class="sign-line"><span th:text="${client.contactPersonName}"></span></div>
                 <div class="caption">(підпис) (прізвище та ініціали)</div>
             </td>
@@ -218,12 +200,10 @@
             <td class="left">
                 <div class="party-title">Від виконавця</div>
                 <div class="party-line"></div>
-                <div th:if="${not #strings.isEmpty(invoice.repairResponsibleName)}" th:text="${invoice.repairResponsibleName}"></div>
-                <div th:text="${#temporals.format(invoice.documentDate, 'dd.MM.yyyy')}">01.01.2026</div>
+                <div><span th:text="${invoice.repairResponsibleName}"></span><th:block th:if="${not #strings.isEmpty(invoice.repairResponsibleName)}">, </th:block><span th:text="${#temporals.format(invoice.documentDate, 'dd.MM.yyyy')}">01.01.2026</span></div>
                 ФОП Вишивата Діана Олександрівна,<br/>
                 РНОКПП 3809602220, тел.: +380962322363,<br/>
-                р/р <span class="placeholder">UA213223130000026007233566001</span>,<br/>
-                у банку <span class="placeholder">АТ КБ «ПриватБанк»</span>,<br/>
+                р/р <span class="placeholder">UA213223130000026007233566001</span> у банку <span class="placeholder">АТ КБ «ПриватБанк»</span>,<br/>
                 45604, Волинська обл., Луцький р-н, с. Крупа, вул. Дубнівська, 10
             </td>
             <td>

@@ -5,53 +5,53 @@
     <title>Рахунок на оплату</title>
     <style>
         @page { size: A4; margin: 1.4cm 1.6cm; }
-        body { font-family: 'DejaVu Sans'; font-size: 9pt; color: #111111; }
+        body { font-family: 'Times New Roman'; font-size: 10pt; color: #111111; }
         .placeholder { color: #999999; font-style: italic; }
         .fill-line { display: inline-block; border-bottom: 1px solid #333333; width: 160pt; min-height: 10pt; }
         .nobreak { white-space: nowrap; }
 
-        .notice-box { border: 1px solid #000000; padding: 4pt 8pt; margin: 0 20pt 4pt 20pt; text-align: center; font-size: 7.5pt; line-height: 1.35; }
-        p.validity { margin: 0; text-align: center; font-weight: bold; font-size: 9pt; }
-        p.transfer-request { margin: 1pt 0 6pt 0; text-align: center; font-size: 9pt; }
+        .notice-box { border: 1px solid #000000; padding: 4pt 8pt; margin: 0 20pt 4pt 20pt; text-align: center; font-size: 8.5pt; line-height: 1.3; }
+        p.validity { margin: 0; text-align: center; font-weight: bold; font-size: 10pt; }
+        p.transfer-request { margin: 1pt 0 6pt 0; text-align: center; font-size: 10pt; }
 
         /* Зразок заповнення платіжного доручення — рамка з полями-«клітинками», як на паперовому бланку. */
         table.sample { width: 100%; border-collapse: collapse; border: 1px solid #000000; margin-bottom: 14pt; }
-        table.sample td { border: none; padding: 2pt 5pt; font-family: 'Times New Roman'; font-size: 9pt; vertical-align: middle; }
-        table.sample td.heading { text-align: center; font-weight: bold; font-family: 'DejaVu Sans'; font-size: 9pt; padding: 4pt 0 6pt 0; }
+        table.sample td { border: none; padding: 2pt 5pt; font-size: 10pt; vertical-align: middle; }
+        table.sample td.heading { text-align: center; font-weight: bold; font-size: 10.5pt; padding: 4pt 0 6pt 0; }
         table.sample td.lbl { width: 62pt; }
         .boxed { border: 1.5px solid #000000; padding: 3pt 6pt; font-weight: bold; text-align: center; }
         table.sample td.credit-lbl { text-align: center; font-size: 8.5pt; padding-bottom: 1pt; }
         table.sample td.bank-code-lbl { text-align: center; font-size: 8.5pt; padding-bottom: 1pt; }
 
-        h1 { font-size: 12pt; margin: 0; padding-bottom: 3pt; border-bottom: 2px solid #000000; }
+        h1 { font-size: 14pt; margin: 0; padding-bottom: 3pt; border-bottom: 2px solid #000000; }
 
         table.parties { width: 100%; border-collapse: collapse; margin-top: 10pt; }
-        table.parties td { border: none; padding: 0; vertical-align: top; font-size: 9.5pt; }
+        table.parties td { border: none; padding: 0; vertical-align: top; font-size: 10.5pt; }
         table.parties td.label { width: 78pt; text-decoration: underline; }
-        table.parties td.value strong { font-size: 10pt; }
+        table.parties td.value strong { font-size: 11pt; }
         table.parties tr.spacer td { padding-top: 8pt; }
         p.details { margin: 2pt 0 0 14pt; line-height: 1.4; }
 
         table.items { width: 100%; border-collapse: collapse; margin-top: 8pt; border: 1.5px solid #000000; }
-        table.items th, table.items td { border: 1px solid #000000; padding: 2pt 4pt; font-size: 8.5pt; }
-        table.items th { text-align: center; font-weight: bold; font-size: 9pt; }
+        table.items th, table.items td { border: 1px solid #000000; padding: 2pt 4pt; font-size: 10pt; }
+        table.items th { text-align: center; font-weight: bold; font-size: 10pt; }
         table.items td.num { text-align: right; white-space: nowrap; }
         table.items td.center { text-align: center; }
         table.items td.qty { text-align: right; border-right: none; width: 30pt; }
-        table.items td.unit { border-left: 1px solid #000000; width: 34pt; font-size: 8pt; }
+        table.items td.unit { border-left: 1px solid #000000; width: 34pt; font-size: 9pt; }
 
         table.totals { border-collapse: collapse; margin: 6pt 0 0 auto; }
-        table.totals td { border: none; padding: 1.5pt 0; font-size: 10pt; font-weight: bold; }
+        table.totals td { border: none; padding: 1.5pt 0; font-size: 11pt; font-weight: bold; }
         table.totals td.label { text-align: right; padding-right: 20pt; }
         table.totals td.value { text-align: right; width: 80pt; }
 
-        p.summary { margin: 14pt 0 2pt 0; font-size: 8.5pt; }
-        p.summary-words { margin: 0; font-weight: bold; font-size: 10pt; }
+        p.summary { margin: 14pt 0 2pt 0; font-size: 9.5pt; }
+        p.summary-words { margin: 0; font-weight: bold; font-size: 11pt; }
         .rule { border-top: 2px solid #000000; margin-top: 6pt; }
         table.issued { border-collapse: collapse; margin: 18pt 0 0 auto; }
-        table.issued td { border: none; padding: 0; font-size: 10pt; vertical-align: bottom; }
+        table.issued td { border: none; padding: 0; font-size: 11pt; vertical-align: bottom; }
         table.issued td.label { font-weight: bold; padding-right: 8pt; }
-        table.issued td.line { width: 210pt; border-bottom: 1px solid #000000; text-align: right; font-size: 9pt; }
+        table.issued td.line { width: 210pt; border-bottom: 1px solid #000000; text-align: right; font-size: 10pt; }
     </style>
 </head>
 <body>
