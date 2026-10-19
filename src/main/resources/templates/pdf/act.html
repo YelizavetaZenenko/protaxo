@@ -35,8 +35,8 @@
 
         table.handover { width: 100%; border-collapse: collapse; margin-top: 4pt; }
         table.handover td { border: none; padding: 0; vertical-align: bottom; font-size: 9pt; line-height: 1.1; }
-        .sign-line { border-bottom: 1px solid #000000; min-height: 11pt; padding-top: 4pt; text-align: right; }
-        .caption { font-size: 7pt; text-align: center; margin-bottom: 2pt; }
+        .sign-line { border-bottom: 1px solid #000000; min-height: 11pt; padding-top: 4pt; text-align: left; }
+        .caption { font-size: 7pt; text-align: left; margin-bottom: 2pt; }
         
         p.place { font-size: 10pt; margin: 4pt 0 0 0; padding-bottom: 2pt; border-bottom: 2px solid #000000; }
 
@@ -171,7 +171,7 @@
                 ДТЗ (його складові), замінені (запасні)<br/>
                 частини і невикористані матеріали передав
                 <div class="sign-line"><span th:text="${invoice.repairResponsibleName}"></span></div>
-                <div class="caption">(підпис) (прізвище та ініціали)</div>
+                <div class="caption">(прізвище та ініціали) (підпис)</div>
             </td>
             <td style="width: 50%;">
                 Договірна вартість автозапчастин, матеріалів<br/>
@@ -180,7 +180,7 @@
                 З правилами експлуатації тахографа, місцями<br/>
                 нанесення та к-тю пломб і наклейок ознайомлений.
                 <div class="sign-line"><span th:text="${client.contactPersonName}"></span></div>
-                <div class="caption">(підпис) (прізвище та ініціали)</div>
+                <div class="caption">(прізвище та ініціали) (підпис)</div>
             </td>
         </tr>
         <tr>
@@ -188,7 +188,7 @@
             <td style="padding-top: 3pt;">
                 Замінені (запасні) частини і невикористані матеріали прийняв.
                 <div class="sign-line"><span th:text="${client.contactPersonName}"></span></div>
-                <div class="caption">(підпис) (прізвище та ініціали)</div>
+                <div class="caption">(прізвище та ініціали) (підпис)</div>
             </td>
         </tr>
     </table>

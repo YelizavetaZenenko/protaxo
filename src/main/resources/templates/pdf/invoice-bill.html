@@ -14,23 +14,29 @@
         p.validity { margin: 0; text-align: center; font-weight: bold; font-size: 10pt; }
         p.transfer-request { margin: 1pt 0 6pt 0; text-align: center; font-size: 10pt; }
 
-        /* Зразок заповнення платіжного доручення — рамка з полями-«клітинками», як на паперовому бланку. */
+        /* Зразок заповнення платіжного доручення: підписи полів і значення — два рівні стовпчики,
+           праворуч — порожній квадрат під QR-код, який наклеюється / друкується окремо. */
         table.sample { width: 100%; border-collapse: collapse; border: 1px solid #000000; margin-bottom: 14pt; }
-        table.sample td { border: none; padding: 2pt 5pt; font-size: 10pt; vertical-align: middle; }
-        table.sample td.heading { text-align: center; font-weight: bold; font-size: 10.5pt; padding: 4pt 0 6pt 0; }
-        table.sample td.lbl { width: 62pt; }
-        .boxed { border: 1.5px solid #000000; padding: 3pt 6pt; font-weight: bold; text-align: center; }
-        table.sample td.credit-lbl { text-align: center; font-size: 8.5pt; padding-bottom: 1pt; }
-        table.sample td.bank-code-lbl { text-align: center; font-size: 8.5pt; padding-bottom: 1pt; }
+        table.sample > tbody > tr > td, table.sample > tr > td { border: none; padding: 0; vertical-align: top; }
+        table.sample td.heading { text-align: center; font-weight: bold; font-size: 10.5pt; padding: 4pt 0 4pt 0; }
+        table.sample td.fields { padding: 0 6pt 6pt 6pt; }
+        table.sample td.qr-cell { width: 100pt; padding: 0 8pt 6pt 0; }
+        table.fields-table { width: 100%; border-collapse: collapse; }
+        table.fields-table td { border: none; padding: 3pt 0; font-size: 10pt; vertical-align: middle; }
+        table.fields-table td.lbl { width: 105pt; }
+        .boxed { border: 1.5px solid #000000; padding: 2pt 6pt; font-weight: bold; }
+        table.qr-box { width: 92pt; height: 92pt; border-collapse: collapse; margin-left: auto; }
+        table.qr-box td { border: 1px dashed #888888; color: #999999; font-size: 8pt; text-align: center; vertical-align: middle; }
 
         h1 { font-size: 14pt; margin: 0; padding-bottom: 3pt; border-bottom: 2px solid #000000; }
 
         table.parties { width: 100%; border-collapse: collapse; margin-top: 10pt; }
         table.parties td { border: none; padding: 0; vertical-align: top; font-size: 10.5pt; }
-        table.parties td.label { width: 78pt; text-decoration: underline; }
+        table.parties td.label { width: 92pt; }
+        table.parties td.label span { text-decoration: underline; }
         table.parties td.value strong { font-size: 11pt; }
         table.parties tr.spacer td { padding-top: 8pt; }
-        p.details { margin: 2pt 0 0 14pt; line-height: 1.4; }
+        p.details { margin: 2pt 0 0 0; line-height: 1.4; }
 
         table.items { width: 100%; border-collapse: collapse; margin-top: 8pt; border: 1.5px solid #000000; }
         table.items th, table.items td { border: 1px solid #000000; padding: 2pt 4pt; font-size: 10pt; }
@@ -51,7 +57,7 @@
         table.issued { border-collapse: collapse; margin: 18pt 0 0 auto; }
         table.issued td { border: none; padding: 0; font-size: 11pt; vertical-align: bottom; }
         table.issued td.label { font-weight: bold; padding-right: 8pt; }
-        table.issued td.line { width: 210pt; border-bottom: 1px solid #000000; text-align: right; font-size: 10pt; }
+        table.issued td.line { width: 210pt; border-bottom: 1px solid #000000; text-align: left; font-size: 10pt; }
     </style>
 </head>
 <body>
@@ -65,25 +71,35 @@
     <p class="transfer-request">Прохання перераховувати кошти за реквізитами вказаними у рахунку</p>
 
     <table class="sample">
-        <tr><td class="heading" colspan="4">Зразок заповнення платіжного доручення</td></tr>
+        <tr><td class="heading" colspan="2">Зразок заповнення платіжного доручення</td></tr>
         <tr>
-            <td class="lbl">Одержувач</td>
-            <td colspan="3"><strong>ФОП Вишивата Діана Олександрівна</strong></td>
-        </tr>
-        <tr>
-            <td class="lbl">Код</td>
-            <td style="width: 140pt;"><div class="boxed">3809602220</div></td>
-            <td></td>
-            <td class="credit-lbl" style="width: 190pt;">КРЕДИТ рах. N</td>
-        </tr>
-        <tr>
-            <td class="lbl" colspan="2">Банк одержувача</td>
-            <td class="bank-code-lbl" style="width: 80pt;">Код банку</td>
-            <td rowspan="2" style="vertical-align: top;"><div class="boxed"><span class="placeholder">UA213223130000026007233566001</span></div></td>
-        </tr>
-        <tr>
-            <td colspan="2" style="padding-bottom: 5pt;"><strong><span class="placeholder">АТ КБ «ПриватБанк»</span></strong></td>
-            <td style="padding-bottom: 5pt;"><div class="boxed"><span class="placeholder">322313</span></div></td>
+            <td class="fields">
+                <table class="fields-table">
+                    <tr>
+                        <td class="lbl">Одержувач</td>
+                        <td><strong>ФОП Вишивата Діана Олександрівна</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="lbl">Код</td>
+                        <td><span class="boxed">3809602220</span></td>
+                    </tr>
+                    <tr>
+                        <td class="lbl">Банк одержувача</td>
+                        <td><strong><span class="placeholder">АТ КБ «ПриватБанк»</span></strong></td>
+                    </tr>
+                    <tr>
+                        <td class="lbl">Код банку</td>
+                        <td><span class="boxed"><span class="placeholder">322313</span></span></td>
+                    </tr>
+                    <tr>
+                        <td class="lbl">КРЕДИТ рах. N</td>
+                        <td><span class="boxed"><span class="placeholder">UA213223130000026007233566001</span></span></td>
+                    </tr>
+                </table>
+            </td>
+            <td class="qr-cell">
+                <table class="qr-box"><tr><td>QR-код</td></tr></table>
+            </td>
         </tr>
     </table>
 
@@ -91,7 +107,7 @@
 
     <table class="parties">
         <tr>
-            <td class="label">Постачальник:</td>
+            <td class="label"><span>Постачальник:</span></td>
             <td class="value">
                 <strong>Фізична особа-підприємець Вишивата Діана Олександрівна</strong>
                 <p class="details">
@@ -103,7 +119,7 @@
             </td>
         </tr>
         <tr class="spacer">
-            <td class="label">Покупець:</td>
+            <td class="label"><span>Покупець:</span></td>
             <td class="value">
                 <strong th:text="${client.fullName()}">Покупець</strong>
                 <p class="details">
@@ -115,7 +131,7 @@
             </td>
         </tr>
         <tr class="spacer">
-            <td class="label" style="text-decoration: none;">Договір:</td>
+            <td class="label">Договір:</td>
             <td class="value">
                 <th:block th:if="${contractNumber} != null">№ <span th:text="${contractNumber}">000001</span><th:block th:if="${contractDate} != null"> від <span th:text="${#temporals.format(contractDate, 'dd.MM.yyyy')}">01.01.2026</span></th:block></th:block>
                 <th:block th:if="${contractNumber} == null">№ <span class="fill-line"></span></th:block>
