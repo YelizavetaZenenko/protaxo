@@ -12,7 +12,10 @@ public record BillItemRow(
         BigDecimal amountWithoutVat,
         String vatRateLabel,
         BigDecimal vatAmount,
-        BigDecimal amount
+        BigDecimal amount,
+        boolean service,
+        BigDecimal priceWithoutVat,
+        BigDecimal grossWithoutVat
 ) {
 
     /** "1" instead of "1.000", "0.5" instead of "0.500" — matches how quantities are printed on the sample invoice. */

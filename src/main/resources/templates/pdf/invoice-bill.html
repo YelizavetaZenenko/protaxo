@@ -4,124 +4,120 @@
     <meta charset="UTF-8" />
     <title>Рахунок на оплату</title>
     <style>
-        @page { size: A4; margin: 1.6cm; }
-        body { font-family: 'Times New Roman'; font-size: 9.5pt; color: #111111; }
-        h1 { font-size: 13pt; margin: 12pt 0 8pt 0; }
-        .notice-box { border: 1px solid #333333; padding: 4pt 6pt; margin-bottom: 8pt; }
-        p.notice { font-size: 7pt; color: #333333; margin: 0; text-align: justify; }
-        .sample-heading { font-weight: bold; font-size: 9pt; margin: 0 0 4pt 0; text-align: center; }
-        table.sample-wrapper { width: 100%; border-collapse: collapse; margin-bottom: 10pt; }
-        table.sample-wrapper td { border: none; padding: 0; vertical-align: top; }
-        table.sample-wrapper td.qr-cell { width: 90pt; text-align: right; }
-        table.sample-order { border-collapse: collapse; width: 100%; }
-        table.sample-order td { border: 1px solid #333333; padding: 2pt 5pt; font-size: 8pt; vertical-align: middle; }
-        table.sample-order td.label { width: 40%; }
-        table.sample-order td.bold { font-weight: bold; }
-        table.qr-box-table { border-collapse: collapse; width: 80pt; height: 80pt; margin-left: auto; }
-        table.qr-box-table td { border: 1px dashed #999999; color: #999999; font-size: 7pt; text-align: center; vertical-align: middle; padding: 4pt; }
-        p.validity-note { margin: 0 0 8pt 0; font-size: 7pt; color: #333333; }
-        .nobreak { white-space: nowrap; }
-        table.header-table { width: 100%; border-collapse: collapse; margin-bottom: 8pt; }
-        table.header-table td { border: none; padding: 0; vertical-align: top; font-size: 9.5pt; }
-        table.header-table tr.spacer td { padding-top: 4pt; }
-        table.header-table td.label { width: 13%; padding-right: 4pt; white-space: nowrap; }
-        table.header-table td.value strong { font-size: 10pt; }
-        p.supplier-details { margin: 3pt 0 0 0; line-height: 1.5; }
+        @page { size: A4; margin: 1.4cm 1.6cm; }
+        body { font-family: 'DejaVu Sans'; font-size: 9pt; color: #111111; }
         .placeholder { color: #999999; font-style: italic; }
-        .fill-line { display: inline-block; border-bottom: 1px solid #333333; width: 220pt; min-height: 11pt; }
-        table.items { width: 100%; border-collapse: collapse; margin-top: 6pt; }
-        table.items th, table.items td { border: 1px solid #333333; padding: 4pt 5pt; font-size: 8.5pt; }
-        table.items th { background-color: #eeeeee; text-align: center; }
-        table.items td.num { text-align: right; }
+        .fill-line { display: inline-block; border-bottom: 1px solid #333333; width: 160pt; min-height: 10pt; }
+        .nobreak { white-space: nowrap; }
+
+        .notice-box { border: 1px solid #000000; padding: 4pt 8pt; margin: 0 20pt 4pt 20pt; text-align: center; font-size: 7.5pt; line-height: 1.35; }
+        p.validity { margin: 0; text-align: center; font-weight: bold; font-size: 9pt; }
+        p.transfer-request { margin: 1pt 0 6pt 0; text-align: center; font-size: 9pt; }
+
+        /* Зразок заповнення платіжного доручення — рамка з полями-«клітинками», як на паперовому бланку. */
+        table.sample { width: 100%; border-collapse: collapse; border: 1px solid #000000; margin-bottom: 14pt; }
+        table.sample td { border: none; padding: 2pt 5pt; font-family: 'Times New Roman'; font-size: 9pt; vertical-align: middle; }
+        table.sample td.heading { text-align: center; font-weight: bold; font-family: 'DejaVu Sans'; font-size: 9pt; padding: 4pt 0 6pt 0; }
+        table.sample td.lbl { width: 62pt; }
+        .boxed { border: 1.5px solid #000000; padding: 3pt 6pt; font-weight: bold; text-align: center; }
+        table.sample td.credit-lbl { text-align: center; font-size: 8.5pt; padding-bottom: 1pt; }
+        table.sample td.bank-code-lbl { text-align: center; font-size: 8.5pt; padding-bottom: 1pt; }
+
+        h1 { font-size: 12pt; margin: 0; padding-bottom: 3pt; border-bottom: 2px solid #000000; }
+
+        table.parties { width: 100%; border-collapse: collapse; margin-top: 10pt; }
+        table.parties td { border: none; padding: 0; vertical-align: top; font-size: 9.5pt; }
+        table.parties td.label { width: 78pt; text-decoration: underline; }
+        table.parties td.value strong { font-size: 10pt; }
+        table.parties tr.spacer td { padding-top: 8pt; }
+        p.details { margin: 2pt 0 0 14pt; line-height: 1.4; }
+
+        table.items { width: 100%; border-collapse: collapse; margin-top: 8pt; border: 1.5px solid #000000; }
+        table.items th, table.items td { border: 1px solid #000000; padding: 2pt 4pt; font-size: 8.5pt; }
+        table.items th { text-align: center; font-weight: bold; font-size: 9pt; }
+        table.items td.num { text-align: right; white-space: nowrap; }
         table.items td.center { text-align: center; }
-        table.totals-table { border-collapse: collapse; margin: 6pt 0 0 auto; }
-        table.totals-table td { border: none; padding: 2pt 0; font-size: 9.5pt; }
-        table.totals-table td.label { font-weight: bold; text-align: right; padding-right: 10pt; }
-        table.totals-table td.value { padding-left: 10pt; font-weight: bold; text-align: right; }
-        table.totals-table tr.grand-total td { font-size: 10pt; }
-        p.summary { margin: 8pt 0 2pt 0; font-size: 9pt; }
-        p.summary-words { margin: 0 0 4pt 0; font-weight: bold; font-size: 9.5pt; }
-        .signature-rule { border-top: 1px solid #000000; margin-top: 16pt; }
-        p.issued-row { margin-top: 10pt; }
+        table.items td.qty { text-align: right; border-right: none; width: 30pt; }
+        table.items td.unit { border-left: 1px solid #000000; width: 34pt; font-size: 8pt; }
+
+        table.totals { border-collapse: collapse; margin: 6pt 0 0 auto; }
+        table.totals td { border: none; padding: 1.5pt 0; font-size: 10pt; font-weight: bold; }
+        table.totals td.label { text-align: right; padding-right: 20pt; }
+        table.totals td.value { text-align: right; width: 80pt; }
+
+        p.summary { margin: 14pt 0 2pt 0; font-size: 8.5pt; }
+        p.summary-words { margin: 0; font-weight: bold; font-size: 10pt; }
+        .rule { border-top: 2px solid #000000; margin-top: 6pt; }
+        table.issued { border-collapse: collapse; margin: 18pt 0 0 auto; }
+        table.issued td { border: none; padding: 0; font-size: 10pt; vertical-align: bottom; }
+        table.issued td.label { font-weight: bold; padding-right: 8pt; }
+        table.issued td.line { width: 210pt; border-bottom: 1px solid #000000; text-align: right; font-size: 9pt; }
     </style>
 </head>
 <body>
 
     <div class="notice-box">
-        <p class="notice">Увага! Оплата цього рахунку означає погодження з умовами поставки товарів. Повідомлення про оплату є обов'язковим, в іншому випадку не гарантується наявність товарів на складі. Товар відпускається за фактом надходження коштів на п/р Постачальника, самовивозом, за наявності довіреності та паспорта.</p>
+        Увага! Оплата цього рахунку означає погодження з умовами поставки товарів. Повідомлення про оплату є
+        обов'язковим, в іншому випадку не гарантується наявність товарів на складі. Товар відпускається за фактом
+        надходження коштів на р/р Постачальника, самовивозом, за наявності довіреності та паспорта.
     </div>
+    <p class="validity">УВАГА!&#160; Рахунок дійсний протягом <span class="nobreak">3-х</span> банківських днів з дня виписки.</p>
+    <p class="transfer-request">Прохання перераховувати кошти за реквізитами вказаними у рахунку</p>
 
-    <p style="text-align: center;">Рахунок дійсний протягом <span class="nobreak">3-х</span> банківських днів з дня виписки</p>
-
-    <div class="sample-heading">Зразок заповнення платіжного доручення</div>
-    <table class="sample-wrapper">
+    <table class="sample">
+        <tr><td class="heading" colspan="4">Зразок заповнення платіжного доручення</td></tr>
         <tr>
-            <td>
-                <table class="sample-order">
-                    <tr>
-                        <td class="label">Отримувач</td>
-                        <td class="bold">ФОП Вишивата Діана Олександрівна</td>
-                    </tr>
-                    <tr>
-                        <td class="label">Код</td>
-                        <td class="bold">3809602220</td>
-                    </tr>
-                    <tr>
-                        <td class="label">Банк отримувача</td>
-                        <td class="bold"><span class="placeholder">АТ КБ «ПриватБанк»</span></td>
-                    </tr>
-                    <tr>
-                        <td class="label">КРЕДИТ рах. №</td>
-                        <td class="bold"><span class="placeholder">UA213223130000026007233566001</span></td>
-                    </tr>
-                </table>
-            </td>
-            <td class="qr-cell">
-                <table class="qr-box-table">
-                    <tr><td>QR-код</td></tr>
-                </table>
-            </td>
+            <td class="lbl">Одержувач</td>
+            <td colspan="3"><strong>ФОП Вишивата Діана Олександрівна</strong></td>
+        </tr>
+        <tr>
+            <td class="lbl">Код</td>
+            <td style="width: 140pt;"><div class="boxed">3809602220</div></td>
+            <td></td>
+            <td class="credit-lbl" style="width: 190pt;">КРЕДИТ рах. N</td>
+        </tr>
+        <tr>
+            <td class="lbl" colspan="2">Банк одержувача</td>
+            <td class="bank-code-lbl" style="width: 80pt;">Код банку</td>
+            <td rowspan="2" style="vertical-align: top;"><div class="boxed"><span class="placeholder">UA213223130000026007233566001</span></div></td>
+        </tr>
+        <tr>
+            <td colspan="2" style="padding-bottom: 5pt;"><strong><span class="placeholder">АТ КБ «ПриватБанк»</span></strong></td>
+            <td style="padding-bottom: 5pt;"><div class="boxed"><span class="placeholder">322313</span></div></td>
         </tr>
     </table>
 
-    <h1 th:text="'Рахунок на оплату № ' + ${invoice.number} + ' від ' + ${#temporals.format(invoice.documentDate, 'd MMMM yyyy')} + ' р.'">Рахунок на оплату</h1>
+    <h1 th:text="'Рахунок на оплату по замовленню № ' + ${invoice.number} + ' від ' + ${#temporals.format(invoice.documentDate, 'd MMMM yyyy')} + ' р.'">Рахунок на оплату по замовленню</h1>
 
-    <table class="header-table">
+    <table class="parties">
         <tr>
             <td class="label">Постачальник:</td>
-            <td class="value"><strong>Фізична особа-підприємець Вишивата Діана Олександрівна</strong></td>
-        </tr>
-        <tr>
-            <td class="label"></td>
-            <td>
-                <p class="supplier-details">
-                    п/р <span class="placeholder">UA213223130000026007233566001 у банку АТ КБ «ПриватБанк»</span>,<br/>
-                    вул. Дубнівська, 10, с. Крупа, Луцький р-н, Волинська обл., 45604,<br/>
+            <td class="value">
+                <strong>Фізична особа-підприємець Вишивата Діана Олександрівна</strong>
+                <p class="details">
+                    Р/р <span class="placeholder">UA213223130000026007233566001, Банк АТ КБ «ПриватБанк»</span><br/>
+                    45604, Волинська обл., Луцький р-н, с. Крупа, вул. Дубнівська, 10,<br/>
                     тел.: +380962322363, e-mail: protaho2025@gmail.com,<br/>
-                    РНОКПП 3809602220,<br/>
-                    код за ЄДРПОУ <span class="placeholder">1234567890</span>
+                    РНОКПП 3809602220
                 </p>
             </td>
         </tr>
         <tr class="spacer">
             <td class="label">Покупець:</td>
-            <td class="value"><strong th:text="${client.fullName()}">Покупець</strong></td>
-        </tr>
-        <tr>
-            <td class="label"></td>
-            <td>
-                <p class="supplier-details">
+            <td class="value">
+                <strong th:text="${client.fullName()}">Покупець</strong>
+                <p class="details">
                     <th:block th:if="${not #strings.isEmpty(client.edrpou)}">код за ЄДРПОУ <span th:text="${client.edrpou}">1234567890</span><br/></th:block>
                     <th:block th:if="${not #strings.isEmpty(client.code)}">РНОКПП <span th:text="${client.code}">1234567890</span><br/></th:block>
-                    <th:block th:if="${not #strings.isEmpty(client.phone)}">тел.: <span th:text="${client.phone}">+38(0XX)-XXX-XX-XX</span><br/></th:block>
-                    <th:block th:if="${not #strings.isEmpty(client.contactPersonName)}">контактна особа: <span th:text="${client.contactPersonName}">Іванов Іван</span><th:block th:if="${not #strings.isEmpty(client.contactPersonPhone)}">, тел.: <span th:text="${client.contactPersonPhone}">+38(0XX)-XXX-XX-XX</span></th:block></th:block>
+                    <th:block th:if="${not #strings.isEmpty(client.phone)}">Тел.: <span th:text="${client.phone}">+38(0XX)-XXX-XX-XX</span><br/></th:block>
+                    <th:block th:if="${not #strings.isEmpty(client.contactPersonName)}">Контактна особа: <span th:text="${client.contactPersonName}">Іванов Іван</span><th:block th:if="${not #strings.isEmpty(client.contactPersonPhone)}">, тел.: <span th:text="${client.contactPersonPhone}">+38(0XX)-XXX-XX-XX</span></th:block></th:block>
                 </p>
             </td>
         </tr>
         <tr class="spacer">
-            <td class="label">Договір:</td>
+            <td class="label" style="text-decoration: none;">Договір:</td>
             <td class="value">
-                <th:block th:if="${contractNumber} != null">№ <span th:text="${contractNumber}">000001</span></th:block>
+                <th:block th:if="${contractNumber} != null">№ <span th:text="${contractNumber}">000001</span><th:block th:if="${contractDate} != null"> від <span th:text="${#temporals.format(contractDate, 'dd.MM.yyyy')}">01.01.2026</span></th:block></th:block>
                 <th:block th:if="${contractNumber} == null">№ <span class="fill-line"></span></th:block>
             </td>
         </tr>
@@ -130,53 +126,52 @@
     <table class="items">
         <thead>
         <tr>
-            <th>№</th>
-            <th>Товари (роботи, послуги)</th>
-            <th>Кіл-сть</th>
-            <th>Од.</th>
-            <th>Ціна</th>
-            <th th:if="${hasDiscount}">Знижка</th>
-            <th>Сума без ПДВ</th>
-            <th>Ставка ПДВ</th>
-            <th>ПДВ</th>
-            <th>Сума з ПДВ</th>
+            <th style="width: 22pt;">№</th>
+            <th>Товар</th>
+            <th colspan="2">Кількість</th>
+            <th style="width: 58pt;">Ціна без ПДВ</th>
+            <th th:if="${hasDiscount}" style="width: 40pt;">Знижка</th>
+            <th style="width: 62pt;">Сума без ПДВ</th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="row : ${rows}">
             <td class="center" th:text="${row.lineNumber}">1</td>
             <td th:text="${row.itemName}">Позиція</td>
-            <td class="num" th:text="${row.quantityDisplay()}">1</td>
-            <td class="center" th:text="${row.unit}">шт.</td>
-            <td class="num" th:text="${#numbers.formatDecimal(row.price, 1, 2)}">0,00</td>
+            <td class="qty" th:text="${row.quantityDisplay()}">1</td>
+            <td class="unit" th:text="${row.unit}">шт</td>
+            <td class="num" th:text="${#numbers.formatDecimal(row.priceWithoutVat, 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
             <td class="center" th:if="${hasDiscount}" th:text="${row.discountDisplay()}"></td>
-            <td class="num" th:text="${#numbers.formatDecimal(row.amountWithoutVat, 1, 2)}">0,00</td>
-            <td class="center" th:text="${row.vatRateLabel}">20%</td>
-            <td class="num" th:text="${#numbers.formatDecimal(row.vatAmount, 1, 2)}">0,00</td>
-            <td class="num" th:text="${#numbers.formatDecimal(row.amount, 1, 2)}">0,00</td>
+            <td class="num" th:text="${#numbers.formatDecimal(row.amountWithoutVat, 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
         </tr>
         </tbody>
     </table>
 
-    <table class="totals-table">
+    <table class="totals">
         <tr>
             <td class="label">Разом:</td>
-            <td class="value" th:text="${#numbers.formatDecimal(totalWithoutVat, 1, 2)}">0,00</td>
+            <td class="value" th:text="${#numbers.formatDecimal(totalWithoutVat, 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
         </tr>
         <tr>
             <td class="label">Сума ПДВ:</td>
-            <td class="value" th:text="${#numbers.formatDecimal(totalVat, 1, 2)}">0,00</td>
+            <td class="value" th:text="${#numbers.formatDecimal(totalVat, 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
         </tr>
-        <tr class="grand-total">
+        <tr>
             <td class="label">Усього з ПДВ:</td>
-            <td class="value" th:text="${#numbers.formatDecimal(totalAmount, 1, 2)}">0,00</td>
+            <td class="value" th:text="${#numbers.formatDecimal(totalAmount, 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
         </tr>
     </table>
 
-    <p class="summary" th:text="'Всього найменувань ' + ${rows.size()} + ', на суму ' + ${#numbers.formatDecimal(totalAmount, 1, 2)} + ' UAH.'">Всього найменувань</p>
+    <p class="summary" th:text="'Всього найменувань ' + ${rows.size()} + ', на суму ' + ${#numbers.formatDecimal(totalAmount, 1, 'WHITESPACE', 2, 'COMMA')} + ' грн.'">Всього найменувань</p>
     <p class="summary-words" th:text="${amountInWords}">Сума словами</p>
+    <p class="summary-words" th:text="'У т.ч. ПДВ: ' + ${vatInWords}">У т.ч. ПДВ</p>
 
-    <div class="signature-rule"></div>
-    <p class="issued-row">Виписав(ла): <span th:text="${invoice.repairSupervisorName}">Керівник ремонту</span></p>
+    <div class="rule"></div>
+    <table class="issued">
+        <tr>
+            <td class="label">Виписав(ла):</td>
+            <td class="line" th:text="${invoice.repairSupervisorName}">Керівник ремонту</td>
+        </tr>
+    </table>
 </body>
 </html>

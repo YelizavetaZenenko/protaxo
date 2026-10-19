@@ -15,6 +15,7 @@ import com.example.protaxo.finance.dto.InvoiceSettlement;
 import com.example.protaxo.finance.entity.PaymentMethod;
 import com.example.protaxo.finance.service.FinanceQueryService;
 import com.example.protaxo.finance.web.FinancePageController;
+import com.example.protaxo.invoice.dto.ActSection;
 import com.example.protaxo.invoice.dto.BillItemRow;
 import com.example.protaxo.invoice.dto.InvoiceFormData;
 import com.example.protaxo.invoice.dto.InvoiceItemFormData;
@@ -32,6 +33,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -251,38 +253,20 @@ public class InvoicePageController {
     }
 
     /**
-     * "Рахунок на оплату" — a distinct document from the plain Наряд-заказ PDF above, modeled
-     * on the sample the user provided (rahunok-na-oplatu-2026-roku-vid-01.07.2025.docx): warning
-     * notice, a "зразок заповнення платіжного доручення" mini-table (with blank space reserved
-     * for a QR code the user stamps on manually), supplier/buyer/contract block, an items table
-     * with a per-line VAT breakdown, total in words, and a validity date. Постачальник requisites and
-     * the Договір number are placeholder/blank text — the system has no data about its own
-     * company yet, and the contract number is filled in by hand.
+     * "Рахунок на оплату по замовленню" — laid out after the user's sample bill (photo of a paper
+     * bill, 2026-10-19): warning notice, "зразок заповнення платіжного доручення" box,
+     * supplier/buyer/contract (number + date) block, a compact items table with prices without
+     * VAT, Разом / Сума ПДВ / Усього з ПДВ, total and VAT in words, "Виписав(ла)".
      */
     @GetMapping("/{id}/bill-pdf")
     public void printBillPdf(@PathVariable Long id, HttpServletResponse response) throws IOException {
         InvoiceResponse invoice = invoiceService.findById(id);
 
         List<BillItemRow> rows = invoice.items().stream().map(this::toBillItemRow).toList();
-        BigDecimal totalAmount = invoice.totalAmount();
-        BigDecimal totalVat = invoice.totalVat();
-        BigDecimal totalWithoutVat = invoice.totalWithoutVat();
-        String amountInWords = UkrainianAmountWords.amountToWords(totalAmount);
 
-        String contractNumber = contractService.findLatestByClientId(invoice.clientId())
-                .map(ContractResponse::contractNumber)
-                .orElse(null);
-
-        Context context = new Context(new Locale("uk"));
-        context.setVariable("invoice", invoice);
-        context.setVariable("client", clientService.findById(invoice.clientId()));
+        Context context = documentContext(invoice);
         context.setVariable("rows", rows);
-        context.setVariable("totalAmount", totalAmount);
-        context.setVariable("totalVat", totalVat);
-        context.setVariable("totalWithoutVat", totalWithoutVat);
         context.setVariable("hasDiscount", rows.stream().anyMatch(r -> !r.discountDisplay().isEmpty()));
-        context.setVariable("amountInWords", amountInWords);
-        context.setVariable("contractNumber", contractNumber);
         byte[] pdf = pdfRenderService.render("invoice-bill", context);
 
         response.setContentType(MediaType.APPLICATION_PDF_VALUE);
@@ -293,30 +277,22 @@ public class InvoicePageController {
     }
 
     /**
-     * "Акт виконаних робіт" — laid out in the same style as the bill ("Рахунок на оплату"): parties
-     * block, contract, items with the VAT breakdown and totals, plus the acceptance wording and both
-     * signatures an act needs. See docs/"Наряд-заказ".md.
+     * "Акт виконаних робіт з технічного обслуговування і ремонту транспортного засобу" — laid out
+     * after the user's sample act (same photo set): vehicle/owner table, separate "Надані
+     * матеріали" and "Надані послуги" blocks each with Всього / Знижка / ПДВ / Всього з ПДВ,
+     * До оплати (in words), warranty terms, hand-over/acceptance signatures and both parties'
+     * requisites. See docs/"Наряд-заказ".md.
      */
     @GetMapping("/{id}/act-pdf")
     public void printActPdf(@PathVariable Long id, HttpServletResponse response) throws IOException {
         InvoiceResponse invoice = invoiceService.findById(id);
 
         List<BillItemRow> rows = invoice.items().stream().map(this::toBillItemRow).toList();
-        BigDecimal totalAmount = invoice.totalAmount();
-        String amountInWords = UkrainianAmountWords.amountToWords(totalAmount);
 
-        Context context = new Context(new Locale("uk"));
-        context.setVariable("invoice", invoice);
-        context.setVariable("client", clientService.findById(invoice.clientId()));
-        context.setVariable("rows", rows);
-        context.setVariable("totalAmount", totalAmount);
-        context.setVariable("totalVat", invoice.totalVat());
-        context.setVariable("totalWithoutVat", invoice.totalWithoutVat());
-        context.setVariable("amountInWords", amountInWords);
-        context.setVariable("hasDiscount", rows.stream().anyMatch(r -> !r.discountDisplay().isEmpty()));
-        context.setVariable("contractNumber", contractService.findLatestByClientId(invoice.clientId())
-                .map(ContractResponse::contractNumber)
-                .orElse(null));
+        Context context = documentContext(invoice);
+        context.setVariable("materials", ActSection.of(rows.stream().filter(r -> !r.service()).toList()));
+        context.setVariable("services", ActSection.of(rows.stream().filter(BillItemRow::service).toList()));
+        context.setVariable("vehicle", findInvoiceVehicle(invoice));
         byte[] pdf = pdfRenderService.render("act", context);
         invoiceService.markActPrinted(id);
 
@@ -327,12 +303,52 @@ public class InvoicePageController {
         response.getOutputStream().flush();
     }
 
+    /** Variables shared by the bill and the act: parties, contract, totals and their words. */
+    private Context documentContext(InvoiceResponse invoice) {
+        ContractResponse contract = contractService.findLatestByClientId(invoice.clientId()).orElse(null);
+
+        Context context = new Context(new Locale("uk"));
+        context.setVariable("invoice", invoice);
+        context.setVariable("client", clientService.findById(invoice.clientId()));
+        context.setVariable("totalAmount", invoice.totalAmount());
+        context.setVariable("totalVat", invoice.totalVat());
+        context.setVariable("totalWithoutVat", invoice.totalWithoutVat());
+        context.setVariable("amountInWords", UkrainianAmountWords.amountToWords(invoice.totalAmount()));
+        context.setVariable("vatInWords", UkrainianAmountWords.amountToWords(invoice.totalVat()));
+        context.setVariable("contractNumber", contract == null ? null : contract.contractNumber());
+        context.setVariable("contractDate", contract == null ? null : contract.contractDate());
+        return context;
+    }
+
+    /**
+     * The наряд stores the vehicle only as its picker label ("AC1466HI (Volvo FH)"), so the act's
+     * VIN / make / plate come from matching that label against the client's vehicles; null if the
+     * vehicle was since edited or removed — the act then prints just the stored label.
+     */
+    private VehicleResponse findInvoiceVehicle(InvoiceResponse invoice) {
+        if (invoice.vehicleName() == null || invoice.vehicleName().isBlank()) {
+            return null;
+        }
+        return vehicleService.findByClientId(invoice.clientId()).stream()
+                .filter(v -> vehicleLabel(v).equals(invoice.vehicleName()))
+                .findFirst()
+                .orElse(null);
+    }
+
     private BillItemRow toBillItemRow(InvoiceItemResponse item) {
-        String unit = item.catalogItemType() == CatalogItemType.SERVICE ? "послуга" : "шт.";
+        boolean service = item.catalogItemType() == CatalogItemType.SERVICE;
+        String unit = service ? "послуга" : "шт";
         // ПДВ рахується й зберігається під час збереження наряду (InvoiceService.applyItems) —
-        // PDF лише показує збережені суми, щоб документ збігався з обліком.
+        // PDF лише показує збережені суми, щоб документ збігався з обліком. Ціна в наряді — з ПДВ,
+        // документи ж показують ціну без ПДВ; без знижки сума до знижки = збережена сума без ПДВ.
+        BigDecimal priceWithoutVat = item.price().subtract(item.vatRate().vatFrom(item.price()));
+        boolean discounted = item.discountPercent() != null && item.discountPercent().signum() != 0;
+        BigDecimal grossWithoutVat = discounted
+                ? item.quantity().multiply(priceWithoutVat).setScale(2, RoundingMode.HALF_UP)
+                : item.amountWithoutVat();
         return new BillItemRow(item.lineNumber(), item.itemName(), unit, item.quantity(), item.price(),
-                item.discountPercent(), item.amountWithoutVat(), item.vatRate().getLabel(), item.vatAmount(), item.amount());
+                item.discountPercent(), item.amountWithoutVat(), item.vatRate().getLabel(), item.vatAmount(), item.amount(),
+                service, priceWithoutVat, grossWithoutVat);
     }
 
     /** Строк оплати, який отримає наряд після збереження: дата наряду (для нового — сьогодні) + 15 днів. */

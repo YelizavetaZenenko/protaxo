@@ -4,180 +4,237 @@
     <meta charset="UTF-8" />
     <title>Акт виконаних робіт</title>
     <style>
-        @page { size: A4; margin: 1.6cm; }
-        body { font-family: 'Times New Roman'; font-size: 9.5pt; color: #111111; }
-        h1 { font-size: 13pt; margin: 0 0 8pt 0; }
+        @page { size: A4; margin: 1cm 1.4cm; }
+        body { font-family: 'DejaVu Sans'; font-size: 8pt; color: #111111; line-height: 1.2; }
         .placeholder { color: #999999; font-style: italic; }
-        .fill-line { display: inline-block; border-bottom: 1px solid #333333; width: 220pt; min-height: 11pt; }
-        table.header-table { width: 100%; border-collapse: collapse; margin-bottom: 8pt; }
-        table.header-table td { border: none; padding: 0; vertical-align: top; font-size: 9.5pt; }
-        table.header-table tr.spacer td { padding-top: 4pt; }
-        table.header-table td.label { width: 13%; padding-right: 4pt; white-space: nowrap; }
-        table.header-table td.value strong { font-size: 10pt; }
-        p.supplier-details { margin: 3pt 0 0 0; line-height: 1.5; }
-        p.intro { margin: 6pt 0 0 0; text-align: justify; }
-        table.items { width: 100%; border-collapse: collapse; margin-top: 6pt; }
-        table.items th, table.items td { border: 1px solid #333333; padding: 4pt 5pt; font-size: 8.5pt; }
-        table.items th { background-color: #eeeeee; text-align: center; }
-        table.items td.num { text-align: right; }
+
+        .head { text-align: center; font-weight: bold; margin-bottom: 6pt; }
+        .head .title { font-size: 10.5pt; margin-bottom: 2pt; }
+        .head .line { font-size: 9pt; margin-top: 1pt; }
+
+        /* Автомобіль / власник — дві таблиці-картки поруч, як на бланку. */
+        table.layout { width: 100%; border-collapse: collapse; }
+        table.layout > tbody > tr > td, table.layout > tr > td { border: none; padding: 0; vertical-align: top; }
+        table.card { width: 100%; border-collapse: collapse; border: 1.5px solid #000000; }
+        table.card td { border: 1px solid #000000; padding: 1pt 3pt; font-size: 8pt; height: 9pt; vertical-align: top; }
+        table.card td.lbl { font-weight: bold; white-space: nowrap; width: 88pt; }
+
+        h2 { font-size: 8pt; font-weight: bold; margin: 7pt 0 2pt 0; }
+        table.items { width: 100%; border-collapse: collapse; border: 1.5px solid #000000; table-layout: fixed; }
+        table.items th, table.items td { border: 1px solid #000000; padding: 1pt 3pt; font-size: 8pt; }
+        table.items th { text-align: center; font-weight: bold; padding: 2pt 3pt; }
+        table.items td.num { text-align: right; white-space: nowrap; }
         table.items td.center { text-align: center; }
-        table.totals-table { border-collapse: collapse; margin: 6pt 0 0 auto; }
-        table.totals-table td { border: none; padding: 2pt 0; font-size: 9.5pt; }
-        table.totals-table td.label { font-weight: bold; text-align: right; padding-right: 10pt; }
-        table.totals-table td.value { padding-left: 10pt; font-weight: bold; text-align: right; }
-        table.totals-table tr.grand-total td { font-size: 10pt; }
-        p.summary { margin: 8pt 0 2pt 0; font-size: 9pt; }
-        p.summary-words { margin: 0 0 4pt 0; font-weight: bold; font-size: 9.5pt; }
-        p.closing { margin: 8pt 0 0 0; text-align: justify; }
-        table.sig-table { width: 100%; border-collapse: collapse; margin-top: 22pt; }
-        table.sig-table > tbody > tr > td, table.sig-table > tr > td { border: none; padding: 0 12pt 0 0; font-size: 9.5pt; width: 50%; vertical-align: top; }
-        .sig-party { font-weight: bold; margin-bottom: 18pt; }
-        table.sig-inner { border-collapse: collapse; }
-        table.sig-inner td { border: none; padding: 0; font-size: 9.5pt; vertical-align: bottom; }
-        table.sig-inner td.line { width: 90pt; border-bottom: 1px solid #333333; height: 13pt; }
-        table.sig-inner td.gap { width: 8pt; }
-        table.sig-inner td.name { width: 140pt; border-bottom: 1px solid #333333; height: 13pt; text-align: center; }
-        table.sig-inner td.caption { font-size: 7.5pt; color: #555555; text-align: center; padding-top: 1pt; vertical-align: top; }
+        table.items td.sum-lbl { font-weight: bold; white-space: nowrap; }
+        table.items td.blank { border-top: none; border-bottom: none; }
+
+        table.pay { border-collapse: collapse; margin-top: 6pt; }
+        table.pay td { border: none; padding: 0.5pt 0; font-weight: bold; font-size: 8.5pt; }
+        table.pay td.lbl { width: 140pt; }
+
+        .warranty { border: 1.5px solid #000000; padding: 2pt 5pt; margin-top: 6pt; font-size: 7.5pt; line-height: 1.25; }
+        .warranty .item { padding-left: 40pt; }
+
+        table.handover { width: 100%; border-collapse: collapse; margin-top: 8pt; }
+        table.handover td { border: none; padding: 0; vertical-align: bottom; font-size: 8pt; }
+        .sign-line { border-bottom: 1px solid #000000; min-height: 11pt; padding-top: 8pt; text-align: right; }
+        .caption { font-size: 6.5pt; text-align: center; margin-bottom: 5pt; }
+        
+        p.place { font-size: 9pt; margin: 8pt 0 0 0; padding-bottom: 3pt; border-bottom: 2px solid #000000; }
+
+        table.parties { width: 100%; border-collapse: collapse; margin-top: 6pt; }
+        table.parties td { border: none; padding: 0; vertical-align: top; font-size: 8pt; width: 50%; line-height: 1.25; }
+        table.parties td.left { padding-right: 20pt; }
+        .party-title { font-size: 9pt; margin-bottom: 10pt; }
+        .party-line { border-bottom: 1px solid #000000; height: 12pt; margin-bottom: 4pt; }
     </style>
 </head>
 <body>
 
-    <h1 th:text="'Акт № ' + ${invoice.number} + ' виконаних робіт (наданих послуг) від ' + ${#temporals.format(invoice.documentDate, 'd MMMM yyyy')} + ' р.'">Акт виконаних робіт</h1>
+    <div class="head">
+        <div class="title">АКТ ВИКОНАНИХ РОБІТ З ТЕХНІЧНОГО ОБСЛУГОВУВАННЯ І РЕМОНТУ ТРАНСПОРТНОГО ЗАСОБУ</div>
+        <div class="line" th:text="'№ ' + ${invoice.number} + ' від ' + ${#temporals.format(invoice.documentDate, 'd MMMM yyyy')} + ' р.'">№ від</div>
+        <div class="line">Договір:
+            <th:block th:if="${contractNumber} != null">№<span th:text="${contractNumber}">000001</span><th:block th:if="${contractDate} != null"> від <span th:text="${#temporals.format(contractDate, 'd MMMM yyyy')}">1 січня 2026</span> р.</th:block></th:block>
+            <th:block th:if="${contractNumber} == null">№ ________________</th:block>
+        </div>
+        <div class="line" th:text="'Рахунок: № ' + ${invoice.number} + ' від ' + ${#temporals.format(invoice.documentDate, 'dd.MM.yyyy')}">Рахунок</div>
+    </div>
 
-    <table class="header-table">
+    <table class="layout">
         <tr>
-            <td class="label">Виконавець:</td>
-            <td class="value"><strong>Фізична особа-підприємець Вишивата Діана Олександрівна</strong></td>
-        </tr>
-        <tr>
-            <td class="label"></td>
-            <td>
-                <p class="supplier-details">
-                    п/р <span class="placeholder">UA213223130000026007233566001 у банку АТ КБ «ПриватБанк»</span>,<br/>
-                    вул. Дубнівська, 10, с. Крупа, Луцький р-н, Волинська обл., 45604,<br/>
-                    тел.: +380962322363, e-mail: protaho2025@gmail.com,<br/>
-                    РНОКПП 3809602220
-                </p>
-            </td>
-        </tr>
-        <tr class="spacer">
-            <td class="label">Замовник:</td>
-            <td class="value"><strong th:text="${client.fullName()}">Замовник</strong></td>
-        </tr>
-        <tr>
-            <td class="label"></td>
-            <td>
-                <p class="supplier-details">
-                    <th:block th:if="${not #strings.isEmpty(client.edrpou)}">код за ЄДРПОУ <span th:text="${client.edrpou}">1234567890</span><br/></th:block>
-                    <th:block th:if="${not #strings.isEmpty(client.code)}">РНОКПП <span th:text="${client.code}">1234567890</span><br/></th:block>
-                    <th:block th:if="${not #strings.isEmpty(client.phone)}">тел.: <span th:text="${client.phone}">+38(0XX)-XXX-XX-XX</span><br/></th:block>
-                    <th:block th:if="${not #strings.isEmpty(client.contactPersonName)}">контактна особа: <span th:text="${client.contactPersonName}">Іванов Іван</span><th:block th:if="${not #strings.isEmpty(client.contactPersonPhone)}">, тел.: <span th:text="${client.contactPersonPhone}">+38(0XX)-XXX-XX-XX</span></th:block></th:block>
-                </p>
-            </td>
-        </tr>
-        <tr class="spacer">
-            <td class="label">Договір:</td>
-            <td class="value">
-                <th:block th:if="${contractNumber} != null">№ <span th:text="${contractNumber}">000001</span></th:block>
-                <th:block th:if="${contractNumber} == null">№ <span class="fill-line"></span></th:block>
-            </td>
-        </tr>
-    </table>
-
-    <p class="intro">
-        Ми, що нижче підписалися, з одного боку <strong>ФОП Вишивата Діана Олександрівна</strong> (Виконавець),
-        Україна, вул. Дубнівська, 10, с. Крупа, Луцький р-н, Волинська обл., 45604,
-        і з іншого боку <strong th:text="${client.fullName()}">Замовник</strong> (Замовник), склали цей акт про те,
-        що Виконавцем були виконані наступні роботи (надані наступні послуги):
-    </p>
-
-    <table class="items">
-        <thead>
-        <tr>
-            <th>№</th>
-            <th>Найменування робіт (послуг)</th>
-            <th>Кіл-сть</th>
-            <th>Од.</th>
-            <th>Ціна</th>
-            <th th:if="${hasDiscount}">Знижка</th>
-            <th>Сума без ПДВ</th>
-            <th>Ставка ПДВ</th>
-            <th>ПДВ</th>
-            <th>Сума з ПДВ</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="row : ${rows}">
-            <td class="center" th:text="${row.lineNumber}">1</td>
-            <td th:text="${row.itemName}">Позиція</td>
-            <td class="num" th:text="${row.quantityDisplay()}">1</td>
-            <td class="center" th:text="${row.unit}">шт.</td>
-            <td class="num" th:text="${#numbers.formatDecimal(row.price, 1, 2)}">0,00</td>
-            <td class="center" th:if="${hasDiscount}" th:text="${row.discountDisplay()}"></td>
-            <td class="num" th:text="${#numbers.formatDecimal(row.amountWithoutVat, 1, 2)}">0,00</td>
-            <td class="center" th:text="${row.vatRateLabel}">20%</td>
-            <td class="num" th:text="${#numbers.formatDecimal(row.vatAmount, 1, 2)}">0,00</td>
-            <td class="num" th:text="${#numbers.formatDecimal(row.amount, 1, 2)}">0,00</td>
-        </tr>
-        </tbody>
-    </table>
-
-    <table class="totals-table">
-        <tr>
-            <td class="label">Разом:</td>
-            <td class="value" th:text="${#numbers.formatDecimal(totalWithoutVat, 1, 2)}">0,00</td>
-        </tr>
-        <tr>
-            <td class="label">Сума ПДВ:</td>
-            <td class="value" th:text="${#numbers.formatDecimal(totalVat, 1, 2)}">0,00</td>
-        </tr>
-        <tr class="grand-total">
-            <td class="label">Усього з ПДВ:</td>
-            <td class="value" th:text="${#numbers.formatDecimal(totalAmount, 1, 2)}">0,00</td>
-        </tr>
-    </table>
-
-    <p class="summary" th:text="'Всього виконано робіт (надано послуг) ' + ${rows.size()} + ' найменувань, на суму ' + ${#numbers.formatDecimal(totalAmount, 1, 2)} + ' UAH.'">Всього</p>
-    <p class="summary-words" th:text="${amountInWords}">Сума словами</p>
-
-    <p class="closing">
-        Виконавець здав, а Замовник прийняв вищезазначені роботи (послуги) в повному обсязі.
-        Замовник претензій щодо обсягу, якості та строків виконання робіт (надання послуг) не має.
-    </p>
-
-    <!-- Підписують відповідальні особи: з боку Виконавця — «Відповідальний за ремонт» з наряду,
-         з боку Замовника — контактна особа з картки контрагента. Порожнє ім'я — лінія для вписування. -->
-    <table class="sig-table">
-        <tr>
-            <td>
-                <div class="sig-party">Виконавець ремонту</div>
-                <table class="sig-inner">
+            <td style="width: 54%; padding-right: 0;">
+                <table class="card">
                     <tr>
-                        <td class="line"></td>
-                        <td class="gap"></td>
-                        <td class="name" th:text="${invoice.repairResponsibleName}"></td>
+                        <td class="lbl">Автомобіль</td>
+                        <td th:if="${vehicle} != null" th:text="${#strings.trim((vehicle.make() ?: '') + ' ' + (vehicle.model() ?: ''))}">Volvo FH</td>
+                        <td th:if="${vehicle} == null" th:text="${invoice.vehicleName}"></td>
+                    </tr>
+                    <tr><td colspan="2"></td></tr>
+                    <tr>
+                        <td class="lbl">Державний номер</td>
+                        <td th:text="${vehicle} != null ? ${vehicle.registrationNumber()} : ''"></td>
+                    </tr>
+                    <tr><td class="lbl">Пробіг</td><td></td></tr>
+                    <tr>
+                        <td class="lbl">№ кузова</td>
+                        <td th:text="${vehicle} != null ? ${vehicle.vin()} : ''"></td>
                     </tr>
                     <tr>
-                        <td class="caption">(підпис)</td>
-                        <td class="gap"></td>
-                        <td class="caption">(ПІБ)</td>
+                        <td class="lbl">Водій</td>
+                        <td th:text="${invoice.driverName}"></td>
+                    </tr>
+                    <tr>
+                        <td class="lbl">Приймальник</td>
+                        <td th:text="${invoice.repairSupervisorName}"></td>
                     </tr>
                 </table>
             </td>
             <td>
-                <div class="sig-party">Контактна особа Замовника</div>
-                <table class="sig-inner">
+                <table class="card">
                     <tr>
-                        <td class="line"></td>
-                        <td class="gap"></td>
-                        <td class="name" th:text="${client.contactPersonName}"></td>
+                        <td class="lbl" style="width: 70pt;">Власник</td>
+                        <td th:text="${client.fullName()}">Власник</td>
+                    </tr>
+                    <tr><td colspan="2"></td></tr>
+                    <tr>
+                        <td class="lbl" style="width: 70pt;" th:text="${not #strings.isEmpty(client.edrpou)} ? 'Код ЄДРПОУ' : 'РНОКПП'">Код</td>
+                        <td th:text="${not #strings.isEmpty(client.edrpou)} ? ${client.edrpou} : ${client.code}"></td>
                     </tr>
                     <tr>
-                        <td class="caption">(підпис)</td>
-                        <td class="gap"></td>
-                        <td class="caption">(ПІБ)</td>
+                        <td class="lbl" style="width: 70pt;">Телефон</td>
+                        <td th:text="${client.phone}"></td>
                     </tr>
                 </table>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Два блоки «Надані матеріали» / «Надані послуги», кожен зі своїми підсумками; порожній блок не друкується. -->
+    <th:block th:each="section, st : ${ {materials, services} }" th:if="${not section.rows().isEmpty()}">
+        <h2 th:text="${st.index == 0} ? 'НАДАНІ МАТЕРІАЛИ' : 'НАДАНІ ПОСЛУГИ'">НАДАНІ МАТЕРІАЛИ</h2>
+        <table class="items">
+            <thead>
+            <tr>
+                <th style="width: 30pt;">№ п/п</th>
+                <th>Назва</th>
+                <th style="width: 46pt;">Од. вим.</th>
+                <th style="width: 34pt;">К-сть</th>
+                <th th:if="${section.hasDiscount()}" style="width: 40pt;">Знижка</th>
+                <th style="width: 74pt;">Ціна грн., без ПДВ</th>
+                <th style="width: 78pt;">Сума грн., без ПДВ</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="row : ${section.rows()}">
+                <td class="center" th:text="${row.lineNumber}">1</td>
+                <td th:text="${row.itemName}">Позиція</td>
+                <td class="center" th:text="${row.unit}">шт</td>
+                <td class="center" th:text="${row.quantityDisplay()}">1</td>
+                <td class="center" th:if="${section.hasDiscount()}" th:text="${row.discountDisplay()}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(row.priceWithoutVat, 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
+                <td class="num" th:text="${#numbers.formatDecimal(row.grossWithoutVat, 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
+            </tr>
+            <tr>
+                <td class="sum-lbl" colspan="2">Всього</td>
+                <td class="blank" th:colspan="${section.hasDiscount()} ? 4 : 3"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(section.totalWithoutVat(), 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
+            </tr>
+            <tr>
+                <td class="sum-lbl" colspan="2">Знижка</td>
+                <td class="blank" th:colspan="${section.hasDiscount()} ? 4 : 3"></td>
+                <td class="num" th:text="${section.hasDiscount()} ? ${#numbers.formatDecimal(section.discount(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
+            </tr>
+            <tr>
+                <td class="sum-lbl" colspan="2" th:text="${section.vatLabel()}">ПДВ (20%)</td>
+                <td class="blank" th:colspan="${section.hasDiscount()} ? 4 : 3"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(section.vat(), 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
+            </tr>
+            <tr>
+                <td class="sum-lbl" colspan="2">Всього з ПДВ</td>
+                <td class="blank" th:colspan="${section.hasDiscount()} ? 4 : 3"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(section.totalWithVat(), 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
+            </tr>
+            </tbody>
+        </table>
+    </th:block>
+
+    <table class="pay">
+        <tr><td class="lbl">Передплата:</td><td></td></tr>
+        <tr>
+            <td class="lbl">До оплати:</td>
+            <td th:text="${#numbers.formatDecimal(totalAmount, 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
+        </tr>
+        <tr>
+            <td class="lbl">До оплати прописом:</td>
+            <td th:text="${amountInWords}">Сума словами</td>
+        </tr>
+    </table>
+
+    <div class="warranty">
+        Умови гарантії (базуються на умовах гарантії та ДСТУ 2322-93)<br/>
+        <div class="item">- на оригінальні запчастини 1 (один) рік або 20 тис. км пробігу;</div>
+        <div class="item">- 20 діб або не більше 1500 км пробігу на регулювальні роботи;</div>
+        Гарантія не розповсюджується на деталі, вузли і агрегати, надані для здійснення ремонту Замовником.<br/>
+        Увага! Гарантія на виконані роботи та встановлені деталі, вузли і агрегати надається виконавцем за таких умов:
+        <div class="item">- виконання правил експлуатації та зберігання автомобіля згідно вимог заводу-виробника;</div>
+        <div class="item">- технічно справний стан всіх вузлів і агрегатів автомобіля;</div>
+    </div>
+
+    <!-- Передав — відповідальний за ремонт з наряду; отримав / прийняв — замовник (контактна особа). -->
+    <table class="handover">
+        <tr>
+            <td style="width: 50%; padding-right: 24pt;">
+                ДТЗ (його складові), замінені (запасні)<br/>
+                частини і невикористані матеріали передав
+                <div class="sign-line"><span th:text="${invoice.repairResponsibleName}"></span></div>
+                <div class="caption">(підпис) (прізвище та ініціали)</div>
+            </td>
+            <td style="width: 50%;">
+                Договірна вартість автозапчастин, матеріалів<br/>
+                та робіт узгоджена.<br/>
+                ДТЗ (його складові) отримав.<br/>
+                З правилами експлуатації тахографа, місцями<br/>
+                нанесення та к-тю пломб і наклейок ознайомлений.
+                <div class="sign-line"><span th:text="${client.contactPersonName}"></span></div>
+                <div class="caption">(підпис) (прізвище та ініціали)</div>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+                Замінені (запасні) частини і невикористані матеріали<br/>
+                прийняв.
+                <div class="sign-line"><span th:text="${client.contactPersonName}"></span></div>
+                <div class="caption">(підпис) (прізвище та ініціали)</div>
+            </td>
+        </tr>
+    </table>
+
+    <p class="place">Місце складання:&#160; 45604, Волинська обл., Луцький р-н, с. Крупа, вул. Дубнівська, 10</p>
+
+    <table class="parties">
+        <tr>
+            <td class="left">
+                <div class="party-title">Від виконавця</div>
+                <div class="party-line"></div>
+                <div th:if="${not #strings.isEmpty(invoice.repairResponsibleName)}" th:text="${invoice.repairResponsibleName}"></div>
+                <div th:text="${#temporals.format(invoice.documentDate, 'dd.MM.yyyy')}">01.01.2026</div>
+                ФОП Вишивата Діана Олександрівна,<br/>
+                РНОКПП 3809602220, тел.: +380962322363,<br/>
+                р/р <span class="placeholder">UA213223130000026007233566001</span>,<br/>
+                у банку <span class="placeholder">АТ КБ «ПриватБанк»</span>,<br/>
+                45604, Волинська обл., Луцький р-н, с. Крупа, вул. Дубнівська, 10
+            </td>
+            <td>
+                <div class="party-title">Від замовника</div>
+                <div class="party-line"></div>
+                <div th:text="${#temporals.format(invoice.documentDate, 'dd.MM.yyyy')}">01.01.2026</div>
+                <span th:text="${client.fullName()}">Замовник</span>,<br/>
+                <th:block th:if="${not #strings.isEmpty(client.edrpou)}">код за ЄДРПОУ <span th:text="${client.edrpou}"></span>,<br/></th:block>
+                <th:block th:if="${not #strings.isEmpty(client.code)}">код за ДРФО <span th:text="${client.code}"></span>,<br/></th:block>
+                <th:block th:if="${not #strings.isEmpty(client.phone)}">тел.: <span th:text="${client.phone}"></span><br/></th:block>
+                <th:block th:if="${not #strings.isEmpty(client.contactPersonName)}">контактна особа: <span th:text="${client.contactPersonName}"></span></th:block>
             </td>
         </tr>
     </table>
