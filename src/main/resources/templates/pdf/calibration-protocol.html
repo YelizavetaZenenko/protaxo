@@ -46,10 +46,10 @@
         table.name-table td.name-label-cell { white-space: nowrap; padding-right: 4pt; }
         table.name-table td.name-line-cell { border-bottom: 1px solid #333333; width: 100%; text-align: center; min-width: 160pt; }
         table.name-table td.sig-caption-cell { font-size: 9pt; color: #555555; text-align: center; padding-top: 1pt; }
-        /* Водяний знак: блідий логотип по діагоналі, плиткою на всю сторінку (3 × 4 цілі плитки по 6 см, по центру — без обрізаних країв) на кожній
+        /* Водяний знак: блідий логотип по діагоналі в шаховому порядку на всю сторінку (одна картинка 18 × 24 см, по центру — без обрізаних країв) на кожній
            сторінці — position: fixed повторюється openhtmltopdf на всіх сторінках, PNG прозорий, тож текст не перекриває. */
         .watermark { position: fixed; top: 1.35cm; left: 0; width: 18cm; height: 24cm; z-index: -1;
-                     background-repeat: repeat; background-size: 6cm 6cm; }
+                     background-repeat: no-repeat; background-size: 18cm 24cm; }
     </style>
 </head>
 <body>
