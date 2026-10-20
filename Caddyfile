@@ -47,6 +47,7 @@
 			# Сюди долітає вже розшифрований HTTP від tailscaled, але зовні був HTTPS (:8443) —
 			# кажемо застосунку правду, щоб його редиректи вели на https:// (forward-headers-strategy).
 			header_up X-Forwarded-Proto https
+			header_up X-Forwarded-Port 8443
 		}
 	}
 	handle {
