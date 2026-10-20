@@ -14,7 +14,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
     <title>ProTaxo — Технічні роботи</title>
-    <noscript><meta http-equiv="refresh" content="20"></noscript>
+    <!-- Сама перевіряє кожні 20 с: щойно роботи завершаться, людина повернеться на сайт. -->
+    <meta http-equiv="refresh" content="20">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&amp;family=Unbounded:wght@700;800&amp;display=swap" rel="stylesheet">
@@ -165,7 +166,7 @@
         .progress {
             position: relative;
             height: 6px;
-            margin: 1.9rem auto 0.9rem;
+            margin: 1.9rem auto 0.4rem;
             max-width: 360px;
             overflow: hidden;
             background: #e5ebe7;
@@ -183,31 +184,6 @@
             background: linear-gradient(90deg, var(--accent), var(--accent-bright));
             animation: slide 1.8s ease-in-out infinite;
         }
-
-        .refresh {
-            margin: 0;
-            font-size: 0.86rem;
-            color: var(--ink-muted);
-        }
-
-        .refresh strong { color: var(--ink); font-variant-numeric: tabular-nums; }
-
-        .contact {
-            margin-top: 1.75rem;
-            padding-top: 1.25rem;
-            border-top: 1px solid var(--hair);
-            font-size: 0.9rem;
-            color: var(--ink-muted);
-        }
-
-        .contact a {
-            color: var(--accent);
-            font-weight: 600;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .contact a:hover { text-decoration: underline; }
 
         footer {
             padding: 1rem 2rem 1.5rem;
@@ -290,35 +266,13 @@
             <h1>Ми оновлюємо систему</h1>
             <p class="lead">
                 Зараз тривають планові технічні роботи — додаємо зміни, щоб усе працювало ще краще.
-                Це займе кілька хвилин, дані в безпеці.
             </p>
 
             <div class="progress" aria-hidden="true"></div>
-            <p class="refresh">Сторінка оновиться сама через <strong id="countdown">20</strong> с</p>
-
-            <div class="contact">
-                Термінове питання? Телефонуйте: <a href="tel:+380962322363">+38 (096) 232-23-63</a>
-            </div>
         </section>
     </main>
 
     <footer>© ProTaxo · Дякуємо за терпіння</footer>
 
-    <script>
-        (function () {
-            var seconds = 20;
-            var el = document.getElementById('countdown');
-            el.textContent = seconds;
-            var timer = setInterval(function () {
-                seconds -= 1;
-                if (seconds <= 0) {
-                    clearInterval(timer);
-                    location.reload();
-                    return;
-                }
-                el.textContent = seconds;
-            }, 1000);
-        })();
-    </script>
 </body>
 </html>
