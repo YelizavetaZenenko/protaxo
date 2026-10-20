@@ -163,27 +163,6 @@
             color: var(--ink-muted);
         }
 
-        .progress {
-            position: relative;
-            height: 6px;
-            margin: 1.9rem auto 0.4rem;
-            max-width: 360px;
-            overflow: hidden;
-            background: #e5ebe7;
-            border-radius: 999px;
-        }
-
-        .progress::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: -40%;
-            width: 40%;
-            border-radius: 999px;
-            background: linear-gradient(90deg, var(--accent), var(--accent-bright));
-            animation: slide 1.8s ease-in-out infinite;
-        }
 
         footer {
             padding: 1rem 2rem 1.5rem;
@@ -200,10 +179,6 @@
         @keyframes glow {
             0%, 100% { stroke: var(--accent); }
             50% { stroke: var(--accent-bright); }
-        }
-        @keyframes slide {
-            0% { left: -40%; }
-            100% { left: 100%; }
         }
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
@@ -268,11 +243,10 @@
                 Зараз тривають планові технічні роботи — додаємо зміни, щоб усе працювало ще краще.
             </p>
 
-            <div class="progress" aria-hidden="true"></div>
         </section>
     </main>
 
-    <footer>© ProTaxo · Дякуємо за терпіння</footer>
+    <footer>© ProTaxo</footer>
 
 </body>
 </html>
