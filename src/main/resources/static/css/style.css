@@ -2156,3 +2156,56 @@ a.acc-card-meta:hover {
 .worker-notes {
     white-space: pre-wrap;
 }
+
+/* Технічні роботи (docs/Технічні роботи.md): смуга внизу екрана для розробника, поки
+   режим увімкнено, — щоб не забути вимкнути. Інші користувачі бачать maintenance.html. */
+.maintenance-banner {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding: 0.6rem 1rem;
+    background: #e8840c;
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 -2px 10px rgba(28, 43, 49, 0.15);
+}
+
+.maintenance-banner form {
+    margin: 0;
+}
+
+.maintenance-banner button {
+    font: inherit;
+    padding: 0.3rem 0.9rem;
+    border: 1px solid #ffffff;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #b45f00;
+    cursor: pointer;
+}
+
+.maintenance-banner button:hover {
+    background: #fff4e6;
+}
+
+.maintenance-banner a {
+    color: #ffffff;
+}
+
+.maintenance-card p {
+    color: var(--ink-muted);
+    line-height: 1.5;
+    margin: 0.5rem 0 0;
+}
+
+.maintenance-card h1 {
+    margin-bottom: 0.25rem;
+}

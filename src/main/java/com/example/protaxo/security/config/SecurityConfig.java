@@ -36,6 +36,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css/**", "/images/**", "/login", "/accept-invite", "/forgot-password", "/reset-password", "/ws/print-agent", "/verify/**").permitAll()
+                        // Технічні роботи (docs/Технічні роботи.md): сторінку бачать усі, вмикає — лише розробник (DeveloperAccounts).
+                        .requestMatchers("/maintenance").permitAll()
+                        .requestMatchers("/maintenance/toggle").hasRole("DEVELOPER")
                         // Не hasRole('ADMIN') напряму — MASTER може отримати доступ через
                         // RolePermissions (Users -> "Права ролі MASTER"), без зміни коду.
                         // Див. PermissionService.

@@ -33,10 +33,25 @@
                    th:classappend="${active == 'profile'} ? 'active'" class="user-menu-item">Мій профіль</a>
                 <a th:if="${canManageUsers}" th:href="@{/users}"
                    th:classappend="${active == 'users'} ? 'active'" class="user-menu-item">Користувачі</a>
+                <!-- Технічні роботи (docs/Технічні роботи.md): поки увімкнено, сайт бачить лише розробник. -->
+                <form sec:authorize="hasRole('DEVELOPER')" th:action="@{/maintenance/toggle}" method="post">
+                    <input type="hidden" name="enabled" th:value="${!maintenanceEnabled}">
+                    <button type="submit" class="user-menu-item"
+                            th:text="${maintenanceEnabled} ? 'Вимкнути технічні роботи' : 'Увімкнути технічні роботи'">Технічні роботи</button>
+                </form>
                 <form th:action="@{/logout}" method="post">
                     <button type="submit" class="user-menu-item user-menu-logout">Вийти</button>
                 </form>
             </div>
+        </div>
+
+        <div class="maintenance-banner" sec:authorize="hasRole('DEVELOPER')" th:if="${maintenanceEnabled}">
+            <span>Увімкнено технічні роботи — сайт зараз недоступний для всіх, крім розробника (адміністраторів теж).</span>
+            <form th:action="@{/maintenance/toggle}" method="post">
+                <input type="hidden" name="enabled" value="false">
+                <button type="submit">Вимкнути</button>
+            </form>
+            <a th:href="@{/maintenance}" target="_blank">Як це бачать інші</a>
         </div>
 
         <script>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<!--
+    Сторінка «Технічні роботи», яку віддає сам Caddy, поки контейнер app недоступний (деплой,
+    перезапуск) — див. Caddyfile, handle_errors. Повністю автономна: жодних запитів до застосунку
+    (його в цей момент немає), стилі інлайн. Вигляд — як у templates/maintenance.html.
+    Див. docs/Технічні роботи.md.
+-->
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="refresh" content="20">
+    <title>ProTaxo — Технічні роботи</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            box-sizing: border-box;
+            font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+            background: radial-gradient(ellipse 90% 60% at 22% -10%, #f8faf8, transparent 60%), #eef2ef;
+            color: #1c2b31;
+        }
+        .card {
+            width: 100%;
+            max-width: 380px;
+            padding: 2.5rem 2.25rem 2.25rem;
+            box-sizing: border-box;
+            background: #ffffff;
+            border: 1px solid #dfe4e0;
+            border-radius: 6px;
+            box-shadow: 0 20px 45px rgba(28, 43, 49, 0.1), 0 2px 8px rgba(28, 43, 49, 0.06);
+            text-align: center;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.7rem;
+            margin-bottom: 1.5rem;
+        }
+        .brand svg { width: 46px; height: 46px; }
+        .brand-name { font-size: 1.5rem; font-weight: 800; letter-spacing: 0.01em; color: #2c4a56; }
+        h1 { font-size: 1.35rem; margin: 0 0 0.25rem; }
+        p { color: #5b6b70; line-height: 1.5; margin: 0.5rem 0 0; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="brand">
+            <svg viewBox="0 0 200 200" aria-hidden="true">
+                <circle cx="100" cy="100" r="80" fill="#2c4a56"></circle>
+                <circle cx="100" cy="100" r="58" fill="#ffffff"></circle>
+                <circle cx="100" cy="100" r="42" fill="none" stroke="#5ab98a" stroke-width="10"
+                        stroke-dasharray="198 264" transform="rotate(135 100 100)"></circle>
+                <line x1="100" y1="100" x2="100" y2="62" stroke="#2c4a56" stroke-width="8" stroke-linecap="round"></line>
+                <circle cx="100" cy="100" r="9" fill="#2c4a56"></circle>
+            </svg>
+            <span class="brand-name">ProTaxo</span>
+        </div>
+        <h1>Технічні роботи</h1>
+        <p>Зараз ми оновлюємо систему. Сайт тимчасово недоступний.</p>
+        <p>Спробуйте трохи пізніше — сторінка оновиться сама, щойно роботи завершаться.</p>
+    </div>
+</body>
+</html>

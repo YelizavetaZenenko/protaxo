@@ -19,6 +19,17 @@
 
 	encode gzip
 
+	# Поки контейнер app недоступний (деплой, перезапуск) — замість голої помилки 502 віддаємо
+	# сторінку «Технічні роботи» (/srv/maintenance.html, змонтована з репозиторію, див.
+	# docker-compose.prod.yml). Режим робіт, увімкнений адміністратором, обробляє вже сам
+	# застосунок. Див. docs/Технічні роботи.md.
+	handle_errors 502 503 504 {
+		rewrite * /maintenance.html
+		file_server {
+			root /srv
+		}
+	}
+
 	log {
 		output file /data/access.log
 	}

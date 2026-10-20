@@ -18,6 +18,8 @@ services:
       MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
       MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-true}
       PRINT_AGENT_TOKEN: ${PRINT_AGENT_TOKEN}
+      # Email(и) розробника через кому — лише він працює під час технічних робіт (docs/Технічні роботи.md).
+      APP_DEVELOPER_EMAILS: ${APP_DEVELOPER_EMAILS:-}
     volumes:
       - app_logs:/app/logs
     depends_on:
@@ -69,6 +71,8 @@ services:
       - "127.0.0.1:8081:8081"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Сторінка «Технічні роботи» на час, коли app недоступний (Caddyfile, handle_errors).
+      - ./maintenance.html:/srv/maintenance.html:ro
       - /opt/protaxo/certs:/certs:ro
       - caddy_data:/data
       - caddy_config:/config

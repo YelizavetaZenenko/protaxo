@@ -13,16 +13,21 @@ import org.springframework.stereotype.Service;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final DeveloperAccounts developerAccounts;
 
     @Override
     public UserDetails loadUserByUsername(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
+        String role = "ROLE_" + user.getRole().name();
+        String[] authorities = developerAccounts.isDeveloper(user.getEmail())
+                ? new String[] {role, DeveloperAccounts.AUTHORITY}
+                : new String[] {role};
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPasswordHash())
-                .authorities("ROLE_" + user.getRole().name())
+                .authorities(authorities)
                 .disabled(!user.isActive())
                 .build();
     }
