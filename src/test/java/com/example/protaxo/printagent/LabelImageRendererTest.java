@@ -19,7 +19,7 @@ class LabelImageRendererTest {
     @Test
     void rendersPureBlackAndWhitePngAtPrinterResolution() throws Exception {
         LabelImageRenderer renderer = new LabelImageRenderer();
-        ReflectionTestUtils.setField(renderer, "publicVerifyBaseUrl", "https://vmi3593666.tail3cfdbd.ts.net:8443");
+        ReflectionTestUtils.setField(renderer, "publicVerifyBaseUrl", "https://protaxo.tail3cfdbd.ts.net:8443");
 
         byte[] png = renderer.renderPng(protocol(), "3124509876");
 
