@@ -2,11 +2,13 @@ package com.example.protaxo.security.config;
 
 import com.example.protaxo.security.entity.PermissionKey;
 import com.example.protaxo.security.listener.AuthAuditRecorder;
+import com.example.protaxo.security.service.LoginAttemptService;
 import com.example.protaxo.security.service.PermissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,6 +16,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 
@@ -24,6 +27,7 @@ public class SecurityConfig {
 
     private final PermissionService permissionService;
     private final AuthAuditRecorder authAuditRecorder;
+    private final LoginAttemptService loginAttemptService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -68,6 +72,7 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/login")
                         .successHandler(roleLandingHandler())
+                        .failureHandler(loginFailureHandler())
                         .permitAll())
                 .logout(logout -> logout
                         .addLogoutHandler((request, response, authentication) -> authAuditRecorder.loggedOut(authentication))
@@ -88,6 +93,20 @@ public class SecurityConfig {
             boolean accountant = authentication.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ACCOUNTANT"));
             response.sendRedirect(request.getContextPath() + (accountant ? "/finance" : "/invoices"));
+        };
+    }
+
+    /**
+     * Забагато невдалих спроб (LoginAttemptService) — окреме повідомлення з часом до
+     * розблокування; решта помилок — як і раніше, «Невірний email або пароль».
+     */
+    private AuthenticationFailureHandler loginFailureHandler() {
+        return (request, response, exception) -> {
+            String target = "/login?error";
+            if (exception instanceof LockedException) {
+                target = "/login?locked=" + loginAttemptService.minutesLeft(request.getParameter("username"));
+            }
+            response.sendRedirect(request.getContextPath() + target);
         };
     }
 

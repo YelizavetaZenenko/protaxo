@@ -47,6 +47,11 @@
         <div class="alert alert-error" th:if="${param.error}">
             Невірний email або пароль
         </div>
+        <!-- LoginAttemptService: забагато невдалих спроб — вхід для цього email тимчасово закрито. -->
+        <div class="alert alert-error" th:if="${param.locked}">
+            Забагато невдалих спроб входу. Спробуйте знову через
+            <span th:text="${param.locked[0]}">15</span> хв.
+        </div>
         <div class="alert alert-success" th:if="${param.logout}">
             Ви вийшли з системи
         </div>

@@ -14,6 +14,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final DeveloperAccounts developerAccounts;
+    private final LoginAttemptService loginAttemptService;
 
     @Override
     public UserDetails loadUserByUsername(String email) {
@@ -29,6 +30,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .password(user.getPasswordHash())
                 .authorities(authorities)
                 .disabled(!user.isActive())
+                // Забагато невдалих спроб — LockedException ще до перевірки пароля (LoginAttemptService).
+                .accountLocked(loginAttemptService.isLocked(user.getEmail()))
                 .build();
     }
 }
