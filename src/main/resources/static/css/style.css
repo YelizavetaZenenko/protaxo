@@ -2158,7 +2158,7 @@ a.acc-card-meta:hover {
 }
 
 /* Технічні роботи (docs/Технічні роботи.md): смуга внизу екрана для розробника, поки
-   режим увімкнено, — щоб не забути вимкнути. Інші користувачі бачать maintenance.html. */
+   режим увімкнено, — щоб не забути вимкнути. Інші користувачі бачать templates/maintenance.html (автономна сторінка, власні стилі). */
 .maintenance-banner {
     position: fixed;
     left: 0;
@@ -2198,14 +2198,4 @@ a.acc-card-meta:hover {
 
 .maintenance-banner a {
     color: #ffffff;
-}
-
-.maintenance-card p {
-    color: var(--ink-muted);
-    line-height: 1.5;
-    margin: 0.5rem 0 0;
-}
-
-.maintenance-card h1 {
-    margin-bottom: 0.25rem;
 }

@@ -1,69 +1,324 @@
 <!DOCTYPE html>
 <!--
-    Сторінка «Технічні роботи», яку віддає сам Caddy, поки контейнер app недоступний (деплой,
-    перезапуск) — див. Caddyfile, handle_errors. Повністю автономна: жодних запитів до застосунку
-    (його в цей момент немає), стилі інлайн. Вигляд — як у templates/maintenance.html.
+    Сторінка «Технічні роботи». Дві копії з однаковою версткою (тримати в синхроні):
+      - maintenance.html (корінь репозиторію) — віддає сам Caddy, поки контейнер app недоступний
+        (деплой, перезапуск; Caddyfile, handle_errors). Повністю автономна: стилі й SVG інлайн,
+        до застосунку жодних запитів (його в цей момент немає);
+      - src/main/resources/templates/maintenance.html — віддає застосунок, поки розробник увімкнув
+        режим технічних робіт.
     Див. docs/Технічні роботи.md.
 -->
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="refresh" content="20">
+    <meta name="robots" content="noindex">
     <title>ProTaxo — Технічні роботи</title>
+    <noscript><meta http-equiv="refresh" content="20"></noscript>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&amp;family=Unbounded:wght@700;800&amp;display=swap" rel="stylesheet">
     <style>
+        :root {
+            --ink: #1c2b31;
+            --ink-muted: #5b6b70;
+            --brand: #2c4a56;
+            --accent: #2f6f4f;
+            --accent-bright: #5ab98a;
+            --paper: #ffffff;
+            --hair: #dfe4e0;
+            --font: "Golos Text", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+            --font-brand: "Unbounded", var(--font);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body { height: 100%; }
+
         body {
             margin: 0;
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
+            font-family: var(--font);
+            color: var(--ink);
+            background:
+                radial-gradient(ellipse 70% 55% at 15% 0%, rgba(90, 185, 138, 0.22), transparent 60%),
+                radial-gradient(ellipse 60% 50% at 100% 100%, rgba(44, 74, 86, 0.18), transparent 60%),
+                #eef2ef;
+            overflow-x: hidden;
+        }
+
+        /* Ледь помітна «дорожня» розмітка, що повільно їде — фон без зайвої уваги. */
+        body::before {
+            content: "";
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 14vh;
+            height: 4px;
+            background: repeating-linear-gradient(90deg, rgba(44, 74, 86, 0.10) 0 48px, transparent 48px 96px);
+            animation: road 2.4s linear infinite;
+            pointer-events: none;
+        }
+
+        header {
+            display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 2rem 1rem;
-            box-sizing: border-box;
-            font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-            background: radial-gradient(ellipse 90% 60% at 22% -10%, #f8faf8, transparent 60%), #eef2ef;
-            color: #1c2b31;
+            gap: 0.6rem;
+            padding: 1.5rem 2rem;
         }
-        .card {
-            width: 100%;
-            max-width: 380px;
-            padding: 2.5rem 2.25rem 2.25rem;
-            box-sizing: border-box;
-            background: #ffffff;
-            border: 1px solid #dfe4e0;
-            border-radius: 6px;
-            box-shadow: 0 20px 45px rgba(28, 43, 49, 0.1), 0 2px 8px rgba(28, 43, 49, 0.06);
-            text-align: center;
+
+        .logo-mark { width: 34px; height: 34px; }
+
+        .logo-name {
+            font-family: var(--font-brand);
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: var(--brand);
+            letter-spacing: 0.01em;
         }
-        .brand {
+
+        .logo-kicker {
+            font-size: 0.78rem;
+            color: var(--ink-muted);
+            margin-left: 0.35rem;
+            padding-left: 0.75rem;
+            border-left: 1px solid var(--hair);
+        }
+
+        main {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.7rem;
-            margin-bottom: 1.5rem;
+            padding: 1rem 1.25rem 3rem;
         }
-        .brand svg { width: 46px; height: 46px; }
-        .brand-name { font-size: 1.5rem; font-weight: 800; letter-spacing: 0.01em; color: #2c4a56; }
-        h1 { font-size: 1.35rem; margin: 0 0 0.25rem; }
-        p { color: #5b6b70; line-height: 1.5; margin: 0.5rem 0 0; }
+
+        .panel {
+            position: relative;
+            width: 100%;
+            max-width: 560px;
+            min-width: 0;
+            padding: 2.75rem 2.5rem 2.25rem;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.86);
+            backdrop-filter: blur(6px);
+            border: 1px solid var(--hair);
+            border-radius: 14px;
+            box-shadow: 0 30px 60px rgba(28, 43, 49, 0.12), 0 2px 8px rgba(28, 43, 49, 0.06);
+        }
+
+        .gauge {
+            display: block;
+            width: 150px;
+            height: 150px;
+            margin: -6.5rem auto 1.25rem;
+            filter: drop-shadow(0 12px 22px rgba(28, 43, 49, 0.18));
+        }
+
+        .gauge .cog { transform-origin: 100px 100px; animation: spin 14s linear infinite; }
+        .gauge .needle { transform-origin: 100px 100px; animation: sweep 3.2s ease-in-out infinite; }
+        .gauge .arc { animation: glow 3.2s ease-in-out infinite; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.3rem 0.8rem;
+            margin-bottom: 1rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #b45f00;
+            background: #fff3e2;
+            border: 1px solid #f6d6a8;
+            border-radius: 999px;
+        }
+
+        .badge::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #e8840c;
+            animation: pulse 1.6s ease-in-out infinite;
+        }
+
+        h1 {
+            margin: 0 0 0.75rem;
+            font-family: var(--font-brand);
+            font-size: clamp(1.45rem, 4.5vw, 1.95rem);
+            line-height: 1.2;
+            color: var(--brand);
+        }
+
+        p.lead {
+            margin: 0 auto;
+            max-width: 420px;
+            font-size: 1.02rem;
+            line-height: 1.6;
+            color: var(--ink-muted);
+        }
+
+        .progress {
+            position: relative;
+            height: 6px;
+            margin: 1.9rem auto 0.9rem;
+            max-width: 360px;
+            overflow: hidden;
+            background: #e5ebe7;
+            border-radius: 999px;
+        }
+
+        .progress::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: -40%;
+            width: 40%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+            animation: slide 1.8s ease-in-out infinite;
+        }
+
+        .refresh {
+            margin: 0;
+            font-size: 0.86rem;
+            color: var(--ink-muted);
+        }
+
+        .refresh strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+        .contact {
+            margin-top: 1.75rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--hair);
+            font-size: 0.9rem;
+            color: var(--ink-muted);
+        }
+
+        .contact a {
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .contact a:hover { text-decoration: underline; }
+
+        footer {
+            padding: 1rem 2rem 1.5rem;
+            text-align: center;
+            font-size: 0.78rem;
+            color: var(--ink-muted);
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes sweep {
+            0%, 100% { transform: rotate(-115deg); }
+            50% { transform: rotate(115deg); }
+        }
+        @keyframes glow {
+            0%, 100% { stroke: var(--accent); }
+            50% { stroke: var(--accent-bright); }
+        }
+        @keyframes slide {
+            0% { left: -40%; }
+            100% { left: 100%; }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.35; transform: scale(0.75); }
+        }
+        @keyframes road { to { background-position: -96px 0; } }
+
+        @media (max-width: 560px) {
+            header { padding: 1.1rem 1.25rem; }
+            .logo-kicker { display: none; }
+            .panel { padding: 2.5rem 1.4rem 1.75rem; }
+            .gauge { width: 120px; height: 120px; margin-top: -5.5rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; }
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="brand">
-            <svg viewBox="0 0 200 200" aria-hidden="true">
-                <circle cx="100" cy="100" r="80" fill="#2c4a56"></circle>
-                <circle cx="100" cy="100" r="58" fill="#ffffff"></circle>
-                <circle cx="100" cy="100" r="42" fill="none" stroke="#5ab98a" stroke-width="10"
-                        stroke-dasharray="198 264" transform="rotate(135 100 100)"></circle>
-                <line x1="100" y1="100" x2="100" y2="62" stroke="#2c4a56" stroke-width="8" stroke-linecap="round"></line>
+    <header>
+        <svg class="logo-mark" viewBox="0 0 200 200" aria-hidden="true">
+            <circle cx="100" cy="100" r="86" fill="#2c4a56"></circle>
+            <circle cx="100" cy="100" r="60" fill="#ffffff"></circle>
+            <circle cx="100" cy="100" r="44" fill="none" stroke="#5ab98a" stroke-width="12"
+                    stroke-dasharray="207 277" transform="rotate(135 100 100)"></circle>
+            <line x1="100" y1="100" x2="100" y2="64" stroke="#2c4a56" stroke-width="10" stroke-linecap="round"></line>
+            <circle cx="100" cy="100" r="10" fill="#2c4a56"></circle>
+        </svg>
+        <span class="logo-name">ProTaxo</span>
+        <span class="logo-kicker">Ремонт і калібрування тахографів</span>
+    </header>
+
+    <main>
+        <section class="panel" role="status" aria-live="polite">
+            <svg class="gauge" viewBox="0 0 200 200" aria-hidden="true">
+                <g class="cog" fill="#2c4a56">
+                    <rect x="90" y="8" width="20" height="30" rx="4"></rect>
+                    <rect x="90" y="8" width="20" height="30" rx="4" transform="rotate(36 100 100)"></rect>
+                    <rect x="90" y="8" width="20" height="30" rx="4" transform="rotate(72 100 100)"></rect>
+                    <rect x="90" y="8" width="20" height="30" rx="4" transform="rotate(108 100 100)"></rect>
+                    <rect x="90" y="8" width="20" height="30" rx="4" transform="rotate(144 100 100)"></rect>
+                    <rect x="90" y="8" width="20" height="30" rx="4" transform="rotate(180 100 100)"></rect>
+                    <rect x="90" y="8" width="20" height="30" rx="4" transform="rotate(216 100 100)"></rect>
+                    <rect x="90" y="8" width="20" height="30" rx="4" transform="rotate(252 100 100)"></rect>
+                    <rect x="90" y="8" width="20" height="30" rx="4" transform="rotate(288 100 100)"></rect>
+                    <rect x="90" y="8" width="20" height="30" rx="4" transform="rotate(324 100 100)"></rect>
+                    <circle cx="100" cy="100" r="72"></circle>
+                </g>
+                <circle cx="100" cy="100" r="56" fill="#ffffff"></circle>
+                <circle class="arc" cx="100" cy="100" r="42" fill="none" stroke="#2f6f4f" stroke-width="9"
+                        stroke-linecap="round" stroke-dasharray="198 264" transform="rotate(135 100 100)"></circle>
+                <g class="needle">
+                    <line x1="100" y1="100" x2="100" y2="62" stroke="#2c4a56" stroke-width="7" stroke-linecap="round"></line>
+                </g>
                 <circle cx="100" cy="100" r="9" fill="#2c4a56"></circle>
             </svg>
-            <span class="brand-name">ProTaxo</span>
-        </div>
-        <h1>Технічні роботи</h1>
-        <p>Зараз ми оновлюємо систему. Сайт тимчасово недоступний.</p>
-        <p>Спробуйте трохи пізніше — сторінка оновиться сама, щойно роботи завершаться.</p>
-    </div>
+
+            <div class="badge">Технічні роботи</div>
+            <h1>Ми оновлюємо систему</h1>
+            <p class="lead">
+                Зараз тривають планові технічні роботи — додаємо зміни, щоб усе працювало ще краще.
+                Це займе кілька хвилин, дані в безпеці.
+            </p>
+
+            <div class="progress" aria-hidden="true"></div>
+            <p class="refresh">Сторінка оновиться сама через <strong id="countdown">20</strong> с</p>
+
+            <div class="contact">
+                Термінове питання? Телефонуйте: <a href="tel:+380962322363">+38 (096) 232-23-63</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>© ProTaxo · Дякуємо за терпіння</footer>
+
+    <script>
+        (function () {
+            var seconds = 20;
+            var el = document.getElementById('countdown');
+            el.textContent = seconds;
+            var timer = setInterval(function () {
+                seconds -= 1;
+                if (seconds <= 0) {
+                    clearInterval(timer);
+                    location.reload();
+                    return;
+                }
+                el.textContent = seconds;
+            }, 1000);
+        })();
+    </script>
 </body>
 </html>
