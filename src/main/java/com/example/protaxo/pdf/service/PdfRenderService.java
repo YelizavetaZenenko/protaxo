@@ -34,7 +34,7 @@ public class PdfRenderService {
      */
     private static final String TIMES_FONT_FAMILY = "Times New Roman";
 
-    private static final double WATERMARK_OPACITY = 0.10;
+    private static final double WATERMARK_OPACITY = 0.16;
     private static final double WATERMARK_ANGLE = Math.toRadians(-30);
     /** Logo width inside the watermark tile and empty space around it, in tile pixels. */
     private static final int WATERMARK_LOGO_WIDTH = 300;
