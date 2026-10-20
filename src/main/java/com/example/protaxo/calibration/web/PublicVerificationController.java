@@ -41,6 +41,7 @@ public class PublicVerificationController {
         context.setVariable("protocol", protocol);
         context.setVariable("clientName", clientName);
         context.setVariable("logoDataUri", pdfRenderService.classpathImageDataUri("images/logo.png", "image/png"));
+        context.setVariable("watermarkDataUri", pdfRenderService.watermarkTileDataUri("images/logo.png"));
         byte[] pdf = pdfRenderService.render("calibration-protocol", context);
 
         response.setContentType(MediaType.APPLICATION_PDF_VALUE);

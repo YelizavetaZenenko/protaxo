@@ -46,9 +46,15 @@
         table.name-table td.name-label-cell { white-space: nowrap; padding-right: 4pt; }
         table.name-table td.name-line-cell { border-bottom: 1px solid #333333; width: 100%; text-align: center; min-width: 160pt; }
         table.name-table td.sig-caption-cell { font-size: 9pt; color: #555555; text-align: center; padding-top: 1pt; }
+        /* Водяний знак: блідий логотип по діагоналі, плиткою на весь аркуш (разом з полями) на кожній
+           сторінці — position: fixed повторюється openhtmltopdf на всіх сторінках, PNG прозорий, тож текст не перекриває. */
+        .watermark { position: fixed; top: -1.5cm; left: -1.5cm; width: 21cm; height: 29.7cm; z-index: -1;
+                     background-repeat: repeat; background-size: 6.5cm 6.5cm; }
     </style>
 </head>
 <body>
+
+    <div class="watermark" th:style="'background-image: url(' + ${watermarkDataUri} + ');'"></div>
 
     <table class="title-block">
         <tr>
