@@ -275,49 +275,49 @@
             <td colspan="2">Реєстрування факту відкриття кришки аналогового тахографа (виймання тахокарти)</td>
             <td class="center">—</td>
             <td class="center">Має бути зареєстровано тахографом</td>
-            <td class="center" th:text="${protocol.coverOpeningRegistered}"></td>
+            <td class="center" th:text="${#strings.isEmpty(protocol.coverOpeningRegistered)} ? '-' : ${protocol.coverOpeningRegistered}"></td>
         </tr>
         <tr>
             <td class="center">12</td>
             <td colspan="2">Реєстрування факту вимкнення живлення на час, довший ніж 100 мс</td>
             <td class="center">—</td>
             <td class="center">Має бути зареєстровано тахографом</td>
-            <td class="center" th:text="${protocol.powerCutoffRegistered}"></td>
+            <td class="center" th:text="${#strings.isEmpty(protocol.powerCutoffRegistered)} ? '-' : ${protocol.powerCutoffRegistered}"></td>
         </tr>
         <tr>
             <td class="center">13</td>
             <td colspan="2">Реєстрування факту перерви з'єднання давача імпульсів з тахографом</td>
             <td class="center">—</td>
             <td class="center">Має бути зареєстровано тахографом</td>
-            <td class="center" th:text="${protocol.pulseSensorInterruptionRegistered}"></td>
+            <td class="center" th:text="${#strings.isEmpty(protocol.pulseSensorInterruptionRegistered)} ? '-' : ${protocol.pulseSensorInterruptionRegistered}"></td>
         </tr>
         <tr>
             <td class="center">14</td>
             <td colspan="2">Наявність знака затвердження типу на тахографі</td>
             <td class="center">—</td>
             <td class="center">Знак наявний</td>
-            <td class="center" th:text="${protocol.markPresent} ? 'Так' : ''"></td>
+            <td class="center" th:text="${protocol.markPresent} ? 'Так' : '-'"></td>
         </tr>
         <tr>
             <td class="center">15</td>
             <td colspan="2">Наявність таблички перевірки та адаптації тахографа до транспортного засобу</td>
             <td class="center">—</td>
             <td class="center">Табличка наявна</td>
-            <td class="center" th:text="${protocol.verificationPlatePresent} ? 'Так' : ''"></td>
+            <td class="center" th:text="${protocol.verificationPlatePresent} ? 'Так' : '-'"></td>
         </tr>
         <tr>
             <td class="center">16</td>
             <td colspan="2">Цілісність та надійність пломб, накладених на складові тахографа</td>
             <td class="center">—</td>
             <td class="center">Пломби не пошкоджені та надійні</td>
-            <td class="center" th:text="${protocol.sealsIntact} ? 'Так' : ''"></td>
+            <td class="center" th:text="${protocol.sealsIntact} ? 'Так' : '-'"></td>
         </tr>
         <tr>
             <td class="center">17</td>
             <td colspan="2">Відсутність маніпуляційних пристроїв, під'єднаних до тахографа, або ознак використання таких пристроїв</td>
             <td class="center">—</td>
             <td class="center">Відсутні</td>
-            <td class="center" th:text="${protocol.noManipulationDevices} ? 'Так' : ''"></td>
+            <td class="center" th:text="${protocol.noManipulationDevices} ? 'Так' : '-'"></td>
         </tr>
         </tbody>
     </table>
