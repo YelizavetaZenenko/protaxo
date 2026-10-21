@@ -755,15 +755,27 @@ td.actions-cell > * + * {
     font-weight: 500;
 }
 
-/* Одна колонка (рядок «Наряд») — довгий текст переноситься, а не вилазить за край */
-.protocol-meta-single {
-    grid-template-columns: 1fr;
+/* Рядок «Наряд» під трьома колонками: на всю ширину, заголовок ліворуч, текст праворуч */
+.protocol-meta-item.protocol-meta-wide {
+    grid-column: 1 / -1;
+    grid-template-rows: none;
+    grid-template-columns: 9.5rem 1fr;
+    border-left: none;
+    border-top: 1px solid var(--border);
 }
 
-.protocol-meta-single .protocol-meta-value {
-    padding: 0.4rem 1rem;
+.protocol-meta-wide .protocol-meta-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: none;
+    border-right: 1px solid var(--border);
+}
+
+.protocol-meta-wide .protocol-meta-value {
+    justify-self: start;
+    padding: 0.65rem 1rem;
     white-space: normal;
-    text-align: center;
     font-size: 0.95rem;
 }
 

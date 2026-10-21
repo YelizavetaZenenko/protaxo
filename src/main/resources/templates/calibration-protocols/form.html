@@ -38,6 +38,11 @@
                         <span class="protocol-meta-label">Номер штампу</span>
                         <span class="protocol-meta-value">UA-508</span>
                     </div>
+                    <!-- Наряд відомий лише після збереження — до того рядка просто немає -->
+                    <div class="protocol-meta-item protocol-meta-wide" th:if="${orderLabel} != null">
+                        <span class="protocol-meta-label">Наряд</span>
+                        <span class="protocol-meta-value" th:text="${orderLabel}"></span>
+                    </div>
                 </div>
 
                 <div class="field">
@@ -76,12 +81,6 @@
                     <input type="text" id="vehicleVin" th:field="*{vehicleVin}">
                 </div>
 
-                <div class="protocol-meta protocol-meta-single field-full">
-                    <div class="protocol-meta-item">
-                        <span class="protocol-meta-label">Наряд</span>
-                        <span th:if="${orderLabel} != null" class="protocol-meta-value" th:text="${orderLabel}"></span>
-                        <span th:if="${orderLabel} == null" class="protocol-meta-auto">з'явиться після збереження</span>
-                    </div>
                 </div>
 
                 <div class="field combobox-field">
