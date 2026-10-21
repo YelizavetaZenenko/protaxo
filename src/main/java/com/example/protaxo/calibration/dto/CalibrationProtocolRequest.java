@@ -49,6 +49,10 @@ public record CalibrationProtocolRequest(
         String loadType,
         String extGnss,
         String gnssSerialNumber,
-        String dsrcSerialNumber
+        String dsrcSerialNumber,
+        boolean verificationPlatePresent,
+        boolean markPresent,
+        boolean noManipulationDevices,
+        boolean sealsIntact
 ) {
 }

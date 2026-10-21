@@ -177,6 +177,10 @@ public class CalibrationProtocolService {
                 .add("Зафіксовано відкриття кришки", p.getCoverOpeningRegistered())
                 .add("Зафіксовано відключення живлення", p.getPowerCutoffRegistered())
                 .add("Зафіксовано переривання імпульсного датчика", p.getPulseSensorInterruptionRegistered())
+                .add("Табличка перевірки", p.isVerificationPlatePresent() ? "Так" : "Ні")
+                .add("Наявність знака", p.isMarkPresent() ? "Так" : "Ні")
+                .add("Відсутність маніпуляційних пристроїв", p.isNoManipulationDevices() ? "Так" : "Ні")
+                .add("Цілісність пломб", p.isSealsIntact() ? "Так" : "Ні")
                 .add("Посада виконавця", p.getExecutorPosition())
                 .add("ПІБ виконавця", p.getExecutorName())
                 .add("Номери пломб", p.getSealNumbers())
@@ -238,6 +242,10 @@ public class CalibrationProtocolService {
         protocol.setCoverOpeningRegistered(request.coverOpeningRegistered());
         protocol.setPowerCutoffRegistered(request.powerCutoffRegistered());
         protocol.setPulseSensorInterruptionRegistered(request.pulseSensorInterruptionRegistered());
+        protocol.setVerificationPlatePresent(request.verificationPlatePresent());
+        protocol.setMarkPresent(request.markPresent());
+        protocol.setNoManipulationDevices(request.noManipulationDevices());
+        protocol.setSealsIntact(request.sealsIntact());
         protocol.setExecutorPosition(request.executorPosition());
         protocol.setExecutorName(request.executorName());
         protocol.setSealNumbers(request.sealNumbers());

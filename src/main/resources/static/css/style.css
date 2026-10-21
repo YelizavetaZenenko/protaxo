@@ -1653,6 +1653,51 @@ th.money {
     width: auto;
 }
 
+/* Протокол калібрування, "Реєстрування факту": галочки плитками по дві в рядок */
+.fact-checks {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.fact-check {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.fact-check:hover {
+    border-color: var(--accent);
+}
+
+.fact-check:has(input:checked) {
+    border-color: var(--accent);
+    background: rgba(47, 111, 79, 0.07);
+}
+
+.fact-check input {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin: 0;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+}
+
+@media (max-width: 560px) {
+    .fact-checks {
+        grid-template-columns: 1fr;
+    }
+}
+
 .checkbox-field label {
     display: flex;
     align-items: center;

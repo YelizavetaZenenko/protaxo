@@ -4,5 +4,6 @@ public enum TachographAttributeCategory {
     BRAND,
     MODEL,
     TYPE,
-    MANUFACTURER
+    MANUFACTURER,
+    INSPECTION_REASON
 }

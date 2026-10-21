@@ -151,14 +151,14 @@
                 </div>
 
                 <div class="field">
-                    <label for="tachographManufactureYear">Дата виготовлення</label>
+                    <label for="tachographManufactureYear">Рік виготовлення</label>
                     <input type="text" id="tachographManufactureYear" th:field="*{tachographManufactureYear}" placeholder="напр. 2014">
                 </div>
 
                 <div class="field field-full">
                     <label for="inspectionReason">Підстава для перевірки та адаптації</label>
-                    <input type="text" id="inspectionReason" th:field="*{inspectionReason}"
-                           placeholder="установлення, дотримання періодичності перевірки, ремонт, заміна трансмісійних агрегатів або пневматичних шин іншого розміру, інші підстави">
+                    <select id="inspectionReason" th:field="*{inspectionReason}"></select>
+                    <button type="button" class="link-btn" data-category="INSPECTION_REASON" data-target="inspectionReason">+ Додати підставу</button>
                 </div>
 
                 <div class="field">
@@ -206,8 +206,19 @@
                 </div>
 
                 <div class="field">
+                    <label for="speedLimiterValue">Спрацювання обмежувача швидкості (км/год)</label>
+                    <input type="text" id="speedLimiterValue" th:field="*{speedLimiterValue}">
+                </div>
+
+                <div class="field-full" style="grid-column:1/-1;margin-top:0.5rem;">
+                    <h2 style="font-size:1.05rem;margin-bottom:0.25rem;">Відхилення</h2>
+                </div>
+
+                <div class="field">
                     <label for="pathDeviationAfterInstall">Відхилення шляху — після встановлення (%)</label>
-                    <input type="text" id="pathDeviationAfterInstall" th:field="*{pathDeviationAfterInstall}">
+                    <input type="text" id="pathDeviationAfterInstall" th:field="*{pathDeviationAfterInstall}"
+                           inputmode="decimal" pattern="[+\-]?[0-9]+([.,][0-9]+)?" title="Введіть число, напр. 0.5 або -1,2"
+                           placeholder="число, напр. 0.5">
                 </div>
 
                 <div class="field">
@@ -235,24 +246,19 @@
                     <input type="text" id="timeDeviationInService" th:field="*{timeDeviationInService}">
                 </div>
 
-                <div class="field">
-                    <label for="speedLimiterValue">Спрацювання обмежувача швидкості (км/год)</label>
-                    <input type="text" id="speedLimiterValue" th:field="*{speedLimiterValue}">
+                <div class="field-full" style="grid-column:1/-1;margin-top:0.5rem;">
+                    <h2 style="font-size:1.05rem;margin-bottom:0.25rem;">Реєстрування факту</h2>
                 </div>
 
-                <div class="field">
-                    <label for="coverOpeningRegistered">Відкриття кришки зареєстровано</label>
-                    <input type="text" id="coverOpeningRegistered" th:field="*{coverOpeningRegistered}" placeholder="Так / Ні">
-                </div>
-
-                <div class="field">
-                    <label for="powerCutoffRegistered">Вимкнення живлення зареєстровано</label>
-                    <input type="text" id="powerCutoffRegistered" th:field="*{powerCutoffRegistered}" placeholder="Так / Ні">
-                </div>
-
-                <div class="field">
-                    <label for="pulseSensorInterruptionRegistered">Перерва давача імпульсів зареєстрована</label>
-                    <input type="text" id="pulseSensorInterruptionRegistered" th:field="*{pulseSensorInterruptionRegistered}" placeholder="Так / Ні">
+                <!-- Перші три друкуються в п. 11–13 бланку як "Так"; решта лише зберігаються в протоколі -->
+                <div class="fact-checks field-full">
+                    <label class="fact-check"><input type="checkbox" id="powerCutoffRegistered" th:field="*{powerCutoffRegistered}" value="Так"> Вимкнення живлення</label>
+                    <label class="fact-check"><input type="checkbox" id="pulseSensorInterruptionRegistered" th:field="*{pulseSensorInterruptionRegistered}" value="Так"> Перерви з'єднання</label>
+                    <label class="fact-check"><input type="checkbox" id="coverOpeningRegistered" th:field="*{coverOpeningRegistered}" value="Так"> Відкриття кришки (аналоговий)</label>
+                    <label class="fact-check"><input type="checkbox" id="verificationPlatePresent" th:field="*{verificationPlatePresent}"> Табличка перевірки</label>
+                    <label class="fact-check"><input type="checkbox" id="markPresent" th:field="*{markPresent}"> Наявність знака</label>
+                    <label class="fact-check"><input type="checkbox" id="noManipulationDevices" th:field="*{noManipulationDevices}"> Відсутність маніпуляційних пристроїв</label>
+                    <label class="fact-check"><input type="checkbox" id="sealsIntact" th:field="*{sealsIntact}"> Цілісність пломб</label>
                 </div>
 
                 <!-- Field removed from the form; kept hidden so editing doesn't wipe previously saved values -->
@@ -387,6 +393,7 @@
         var initialTachographId = /*[[${protocol.tachographId}]]*/ null;
         var initialTachographSerialNumber = /*[[${protocol.tachographSerialNumber}]]*/ '';
         var initialTachographManufactureYear = /*[[${protocol.tachographManufactureYear}]]*/ '';
+        var initialInspectionReason = /*[[${protocol.inspectionReason}]]*/ '';
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -493,15 +500,18 @@
             // sharing one modal (attributeModalOverlay) parameterized by category/target. ---
             var attributeCache = {};
             var attributeLabels = {
-                BRAND: 'марку', MODEL: 'модель', TYPE: 'тип', MANUFACTURER: 'виробника'
+                BRAND: 'марку', MODEL: 'модель', TYPE: 'тип', MANUFACTURER: 'виробника',
+                INSPECTION_REASON: 'підставу'
             };
             var attributeTitles = {
                 BRAND: 'Нова марка тахографа', MODEL: 'Нова модель тахографа',
-                TYPE: 'Новий тип тахографа', MANUFACTURER: 'Новий виробник тахографа'
+                TYPE: 'Новий тип тахографа', MANUFACTURER: 'Новий виробник тахографа',
+                INSPECTION_REASON: 'Нова підстава для перевірки'
             };
             var attributeInitial = {
                 tachographBrand: initialTachographBrand, tachographModel: initialTachographModel,
-                tachographType: initialTachographType, tachographManufacturer: initialTachographManufacturer
+                tachographType: initialTachographType, tachographManufacturer: initialTachographManufacturer,
+                inspectionReason: initialInspectionReason
             };
 
             function populateAttributeSelect(selectId, category, selectName) {
@@ -544,6 +554,7 @@
             loadAttributeCategory('MODEL', ['tachographModel']);
             loadAttributeCategory('TYPE', ['tachographType']);
             loadAttributeCategory('MANUFACTURER', ['tachographManufacturer']);
+            loadAttributeCategory('INSPECTION_REASON', ['inspectionReason']);
 
             var attributeModalOverlay = document.getElementById('attributeModalOverlay');
             var attributeModalTitle = document.getElementById('attributeModalTitle');
@@ -863,11 +874,12 @@
                     'pathDeviationInService', 'speedDeviationAfterInstall', 'speedDeviationInService',
                     'timeDeviationAfterInstall', 'timeDeviationInService', 'speedLimiterValue',
                     'coverOpeningRegistered', 'powerCutoffRegistered', 'pulseSensorInterruptionRegistered',
+                    'verificationPlatePresent', 'markPresent', 'noManipulationDevices', 'sealsIntact',
                     'sealNumbers', 'executorPosition', 'executorName',
                     'loadType', 'extGnss', 'gnssSerialNumber', 'dsrcSerialNumber']
                     // Smart-sticker fields exist only on a Smart 1/Smart 2 form.
                     .filter(function (id) { return document.getElementById(id); });
-                var selectFieldIds = ['tachographBrand', 'tachographModel', 'tachographType', 'tachographManufacturer'];
+                var selectFieldIds = ['tachographBrand', 'tachographModel', 'tachographType', 'tachographManufacturer', 'inspectionReason'];
 
                 function computeDraftLabel() {
                     var vehicle = document.getElementById('vehicleName').value.trim();
@@ -878,7 +890,8 @@
                 function captureSnapshot() {
                     var snapshot = {};
                     fieldIds.forEach(function (id) {
-                        snapshot[id] = document.getElementById(id).value;
+                        var el = document.getElementById(id);
+                        snapshot[id] = el.type === 'checkbox' ? el.checked : el.value;
                     });
                     return snapshot;
                 }
@@ -887,7 +900,13 @@
                     if (!snapshot) return;
                     fieldIds.forEach(function (id) {
                         if (snapshot[id] !== undefined) {
-                            document.getElementById(id).value = snapshot[id];
+                            var el = document.getElementById(id);
+                            if (el.type === 'checkbox') {
+                                // Old drafts stored the "зареєстровано" fields as free text ("Так"/"Ні")
+                                el.checked = snapshot[id] === true || snapshot[id] === 'Так';
+                                return;
+                            }
+                            el.value = snapshot[id];
                             if (selectFieldIds.indexOf(id) !== -1) {
                                 // The four tachograph <select> fields are populated asynchronously
                                 // (see loadAttributeCategory above) — stash the value so it wins

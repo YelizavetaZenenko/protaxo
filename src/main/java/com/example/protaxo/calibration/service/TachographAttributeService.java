@@ -43,6 +43,7 @@ public class TachographAttributeService {
                     case MODEL -> "Модель тахографа";
                     case TYPE -> "Тип тахографа";
                     case MANUFACTURER -> "Виробник тахографа";
+                    case INSPECTION_REASON -> "Підстава для перевірки";
                 })
                 .add("Значення", saved.getName())));
         return new TachographAttributeResponse(saved.getId(), saved.getName());

@@ -135,6 +135,20 @@ public class CalibrationProtocol extends BaseEntity {
     @Column(name = "pulse_sensor_interruption_registered")
     private String pulseSensorInterruptionRegistered;
 
+    // Підтема "Реєстрування факту" — лише галочки у формі, на бланку протоколу їх немає.
+
+    @Column(name = "verification_plate_present", nullable = false)
+    private boolean verificationPlatePresent;
+
+    @Column(name = "mark_present", nullable = false)
+    private boolean markPresent;
+
+    @Column(name = "no_manipulation_devices", nullable = false)
+    private boolean noManipulationDevices;
+
+    @Column(name = "seals_intact", nullable = false)
+    private boolean sealsIntact;
+
     @Column(name = "executor_position")
     private String executorPosition;
 

@@ -70,13 +70,14 @@ public class CalibrationProtocolFormData {
 
     private String pathDeviationInService;
 
-    private String speedDeviationAfterInstall;
+    // Типові значення — стоять у новому протоколі одразу, їх можна змінити
+    private String speedDeviationAfterInstall = "0.1";
 
     private String speedDeviationInService;
 
-    private String timeDeviationAfterInstall;
+    private String timeDeviationAfterInstall = "0.1 хвилин за добу";
 
-    private String timeDeviationInService;
+    private String timeDeviationInService = "0.7 хвилин за 7 діб";
 
     private String speedLimiterValue;
 
@@ -85,6 +86,14 @@ public class CalibrationProtocolFormData {
     private String powerCutoffRegistered;
 
     private String pulseSensorInterruptionRegistered;
+
+    private boolean verificationPlatePresent;
+
+    private boolean markPresent;
+
+    private boolean noManipulationDevices;
+
+    private boolean sealsIntact;
 
     private String executorPosition;
 

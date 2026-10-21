@@ -264,7 +264,8 @@ public class CalibrationProtocolPageController {
                 form.getCoverOpeningRegistered(), form.getPowerCutoffRegistered(),
                 form.getPulseSensorInterruptionRegistered(), form.getExecutorPosition(), form.getExecutorName(),
                 form.getInvoiceId(), form.getSealNumbers(), form.getLoadType(), form.getExtGnss(),
-                form.getGnssSerialNumber(), form.getDsrcSerialNumber());
+                form.getGnssSerialNumber(), form.getDsrcSerialNumber(),
+                form.isVerificationPlatePresent(), form.isMarkPresent(), form.isNoManipulationDevices(), form.isSealsIntact());
     }
 
     private CalibrationProtocolFormData toFormData(CalibrationProtocolResponse response) {
@@ -312,6 +313,10 @@ public class CalibrationProtocolPageController {
         form.setExtGnss(response.extGnss());
         form.setGnssSerialNumber(response.gnssSerialNumber());
         form.setDsrcSerialNumber(response.dsrcSerialNumber());
+        form.setVerificationPlatePresent(response.verificationPlatePresent());
+        form.setMarkPresent(response.markPresent());
+        form.setNoManipulationDevices(response.noManipulationDevices());
+        form.setSealsIntact(response.sealsIntact());
         return form;
     }
 }
