@@ -255,11 +255,8 @@
                     <input type="text" id="pulseSensorInterruptionRegistered" th:field="*{pulseSensorInterruptionRegistered}" placeholder="Так / Ні">
                 </div>
 
-                <div class="field">
-                    <label for="sealNumbers">Номери пломб</label>
-                    <input type="text" id="sealNumbers" th:field="*{sealNumbers}" placeholder="напр. 123456, 123457">
-                    <div class="muted">Для наклейки на тахограф — на бланку протоколу не друкується</div>
-                </div>
+                <!-- Field removed from the form; kept hidden so editing doesn't wipe previously saved values -->
+                <input type="hidden" id="sealNumbers" th:field="*{sealNumbers}">
 
                 <th:block th:if="${labelType.smart}">
                     <div class="field-full" style="grid-column:1/-1;margin-top:0.5rem;">
