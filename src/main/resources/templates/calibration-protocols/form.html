@@ -62,10 +62,18 @@
                     <div class="field-error" th:if="${#fields.hasErrors('clientId')}" th:errors="*{clientId}"></div>
                 </div>
 
-                <div class="field">
+                <!-- Протокол з наряд-заказу: авто бере сервер з наряду. Без наряду — список усіх авто контрагента
+                     (вибір підставляє VRN і VIN), але назву можна й вписати вручну. -->
+                <div class="field combobox-field">
                     <label for="vehicleName">Транспортний засіб</label>
-                    <input type="text" id="vehicleName" th:field="*{vehicleName}" list="vehicleNameList" autocomplete="off"
-                           th:readonly="${editId} != null or ${protocol.invoiceId} != null">
+                    <div class="combobox">
+                        <input type="text" id="vehicleName" th:field="*{vehicleName}" list="vehicleNameList" autocomplete="off"
+                               th:readonly="${protocol.invoiceId} != null"
+                               th:placeholder="${protocol.invoiceId} == null ? '— оберіть авто або впишіть —' : ''">
+                        <div class="combobox-dropdown" id="vehicleDropdown" hidden>
+                            <div class="combobox-options" id="vehicleOptions"></div>
+                        </div>
+                    </div>
                     <datalist id="vehicleNameList">
                         <option th:each="v : ${vehicleSuggestions}" th:value="${v}"></option>
                     </datalist>
@@ -463,14 +471,15 @@
                 prevDateInput.dispatchEvent(new Event('change', { bubbles: true }));
             });
 
-            // --- "Транспортний засіб": автомобілі обраного контрагента з /api/clients/{id}/vehicles.
-            // Підказки поля = авто контрагента; вибір авто підставляє VRN і VIN. Назва — у тому ж
-            // форматі, що й у наряд-заказі ("AA1234BB (DAF XF)"). ---
+            // --- "Транспортний засіб": усі авто обраного контрагента з /api/clients/{id}/vehicles у
+            // випадаючому списку під полем; вибір підставляє VRN і VIN. Назва — у тому ж форматі,
+            // що й у наряд-заказі ("AA1234BB (DAF XF)"). Лише для протоколу без наряд-заказу. ---
             var vehicleNameInput = document.getElementById('vehicleName');
-            var vehicleNameList = document.getElementById('vehicleNameList');
+            var vehicleDropdown = document.getElementById('vehicleDropdown');
+            var vehicleOptions = document.getElementById('vehicleOptions');
             var vehicleVrnInput = document.getElementById('vehicleVrn');
             var vehicleVinInput = document.getElementById('vehicleVin');
-            var defaultVehicleOptions = vehicleNameList.innerHTML;
+            var vehicleClientSelect = document.getElementById('clientId');
             var clientVehicles = [];
 
             function clientVehicleLabel(v) {
@@ -482,28 +491,51 @@
                 vehicleNameInput.value = clientVehicleLabel(v);
                 vehicleVrnInput.value = v.registrationNumber || '';
                 vehicleVinInput.value = v.vin || '';
+                vehicleDropdown.hidden = true;
+            }
+
+            function renderVehicleOptions() {
+                vehicleOptions.innerHTML = '';
+                if (!vehicleClientSelect.value) {
+                    var hint = document.createElement('div');
+                    hint.className = 'combobox-empty';
+                    hint.textContent = 'Спершу оберіть контрагента';
+                    vehicleOptions.appendChild(hint);
+                    return;
+                }
+                if (clientVehicles.length === 0) {
+                    var empty = document.createElement('div');
+                    empty.className = 'combobox-empty';
+                    empty.textContent = 'У контрагента немає авто в довіднику — впишіть вручну';
+                    vehicleOptions.appendChild(empty);
+                    return;
+                }
+                clientVehicles.forEach(function (v) {
+                    var opt = document.createElement('div');
+                    opt.className = 'combobox-option';
+                    opt.textContent = clientVehicleLabel(v) + (v.vin ? ' — VIN ' + v.vin : '');
+                    opt.addEventListener('click', function () { applyClientVehicle(v); });
+                    vehicleOptions.appendChild(opt);
+                });
             }
 
             function loadClientVehicles(clientId, autoFill) {
                 clientVehicles = [];
                 if (!clientId) {
-                    vehicleNameList.innerHTML = defaultVehicleOptions;
+                    vehicleNameInput.setAttribute('list', 'vehicleNameList');
                     return;
                 }
                 fetch('/api/clients/' + clientId + '/vehicles', { credentials: 'same-origin' })
                     .then(function (resp) { return resp.ok ? resp.json() : []; })
                     .then(function (vehicles) {
                         clientVehicles = vehicles;
-                        if (vehicles.length === 0) {
-                            vehicleNameList.innerHTML = defaultVehicleOptions;
-                            return;
+                        // Є авто контрагента — показуємо лише наш список, без загальних підказок браузера
+                        if (vehicles.length > 0) {
+                            vehicleNameInput.removeAttribute('list');
+                        } else {
+                            vehicleNameInput.setAttribute('list', 'vehicleNameList');
                         }
-                        vehicleNameList.innerHTML = '';
-                        vehicles.forEach(function (v) {
-                            var opt = document.createElement('option');
-                            opt.value = clientVehicleLabel(v);
-                            vehicleNameList.appendChild(opt);
-                        });
+                        if (!vehicleDropdown.hidden) renderVehicleOptions();
                         // Єдине авто контрагента — одразу в поля, якщо їх ще не заповнили
                         if (autoFill && vehicles.length === 1 && !vehicleNameInput.value.trim()) {
                             applyClientVehicle(vehicles[0]);
@@ -511,16 +543,23 @@
                     });
             }
 
-            vehicleNameInput.addEventListener('input', function () {
-                var match = clientVehicles.filter(function (v) {
-                    return clientVehicleLabel(v) === vehicleNameInput.value.trim();
-                })[0];
-                if (match) applyClientVehicle(match);
-            });
-
-            // Поле авто заблоковане (протокол з наряд-заказу чи редагування) — там дані вже підставив сервер
             if (!vehicleNameInput.readOnly) {
-                var vehicleClientSelect = document.getElementById('clientId');
+                vehicleNameInput.addEventListener('click', function () {
+                    renderVehicleOptions();
+                    vehicleDropdown.hidden = false;
+                });
+                vehicleNameInput.addEventListener('input', function () {
+                    vehicleDropdown.hidden = true;
+                    var match = clientVehicles.filter(function (v) {
+                        return clientVehicleLabel(v) === vehicleNameInput.value.trim();
+                    })[0];
+                    if (match) applyClientVehicle(match);
+                });
+                document.addEventListener('click', function (e) {
+                    if (!vehicleDropdown.contains(e.target) && e.target !== vehicleNameInput) {
+                        vehicleDropdown.hidden = true;
+                    }
+                });
                 vehicleClientSelect.addEventListener('change', function () {
                     vehicleNameInput.value = '';
                     vehicleVrnInput.value = '';
