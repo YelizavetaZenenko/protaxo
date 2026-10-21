@@ -697,6 +697,64 @@ td.actions-cell > * + * {
     grid-column: 1 / -1;
 }
 
+/* Протокол калібрування: плашка з номером, датою і штампом, які ставить система */
+.protocol-meta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin-bottom: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    overflow: hidden;
+}
+
+.protocol-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.75rem 1rem;
+    min-width: 0;
+}
+
+.protocol-meta-item + .protocol-meta-item {
+    border-left: 1px solid var(--border);
+}
+
+.protocol-meta-label {
+    color: var(--muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.protocol-meta-value {
+    color: var(--text);
+    font-size: 1.05rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.protocol-meta-auto {
+    align-self: flex-start;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(47, 111, 79, 0.1);
+    color: var(--accent-dark);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+@media (max-width: 560px) {
+    .protocol-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .protocol-meta-item + .protocol-meta-item {
+        border-left: none;
+        border-top: 1px solid var(--border);
+    }
+}
+
 .form-section {
     margin: 0.75rem 0 0.5rem;
     padding-top: 0.75rem;

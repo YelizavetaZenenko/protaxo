@@ -22,16 +22,22 @@
 
                 <input type="hidden" th:field="*{invoiceId}">
 
-                <div class="field">
-                    <label>Номер</label>
-                    <div th:if="${protocolNumber} != null" th:text="${protocolNumber}"></div>
-                    <div th:if="${protocolNumber} == null" class="muted">буде присвоєно автоматично</div>
-                </div>
-
-                <div class="field">
-                    <label>Дата та час</label>
-                    <div th:if="${protocolDate} != null" th:text="${#temporals.format(protocolDate, 'dd.MM.yyyy HH:mm')}"></div>
-                    <div th:if="${protocolDate} == null" class="muted">буде проставлено автоматично при збереженні</div>
+                <!-- Номер, дата й штамп система ставить сама — показуємо їх плашкою, а не полями форми -->
+                <div class="protocol-meta field-full">
+                    <div class="protocol-meta-item">
+                        <span class="protocol-meta-label">Номер протоколу</span>
+                        <span th:if="${protocolNumber} != null" class="protocol-meta-value" th:text="${protocolNumber}"></span>
+                        <span th:if="${protocolNumber} == null" class="protocol-meta-auto">присвоїться автоматично</span>
+                    </div>
+                    <div class="protocol-meta-item">
+                        <span class="protocol-meta-label">Дата та час</span>
+                        <span th:if="${protocolDate} != null" class="protocol-meta-value" th:text="${#temporals.format(protocolDate, 'dd.MM.yyyy HH:mm')}"></span>
+                        <span th:if="${protocolDate} == null" class="protocol-meta-auto">при збереженні</span>
+                    </div>
+                    <div class="protocol-meta-item">
+                        <span class="protocol-meta-label">Номер штампу</span>
+                        <span class="protocol-meta-value">UA-508</span>
+                    </div>
                 </div>
 
                 <div class="field">
@@ -39,11 +45,6 @@
                     <input type="text" id="internalNumber" th:field="*{internalNumber}" th:readonly="${editId} != null or ${protocol.invoiceId} != null">
                     <div class="muted" th:if="${protocol.invoiceId} != null">Прив'язаний до номера наряд-заказу — не редагується окремо</div>
                     <div class="field-error" th:if="${#fields.hasErrors('internalNumber')}" th:errors="*{internalNumber}"></div>
-                </div>
-
-                <div class="field">
-                    <label>Номер штампу</label>
-                    <div>UA-508</div>
                 </div>
 
                 <div class="field">
