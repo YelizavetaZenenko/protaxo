@@ -76,10 +76,12 @@
                     <input type="text" id="vehicleVin" th:field="*{vehicleVin}">
                 </div>
 
-                <div class="field field-full">
-                    <label>Наряд</label>
-                    <div th:if="${orderLabel} != null" th:text="${orderLabel}"></div>
-                    <div th:if="${orderLabel} == null" class="muted">Наряд-заказ та внутрішній номер з датою та часом — з'явиться після збереження</div>
+                <div class="protocol-meta protocol-meta-single field-full">
+                    <div class="protocol-meta-item">
+                        <span class="protocol-meta-label">Наряд</span>
+                        <span th:if="${orderLabel} != null" class="protocol-meta-value" th:text="${orderLabel}"></span>
+                        <span th:if="${orderLabel} == null" class="protocol-meta-auto">з'явиться після збереження</span>
+                    </div>
                 </div>
 
                 <div class="field combobox-field">

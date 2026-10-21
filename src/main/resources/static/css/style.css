@@ -712,7 +712,7 @@ td.actions-cell > * + * {
    тож позначки «автоматично» і звичайні значення стоять на одній лінії */
 .protocol-meta-item {
     display: grid;
-    grid-template-rows: auto 3rem;
+    grid-template-rows: auto minmax(3rem, auto);
     min-width: 0;
 }
 
@@ -753,6 +753,18 @@ td.actions-cell > * + * {
     color: var(--accent-dark);
     font-size: 0.8rem;
     font-weight: 500;
+}
+
+/* Одна колонка (рядок «Наряд») — довгий текст переноситься, а не вилазить за край */
+.protocol-meta-single {
+    grid-template-columns: 1fr;
+}
+
+.protocol-meta-single .protocol-meta-value {
+    padding: 0.4rem 1rem;
+    white-space: normal;
+    text-align: center;
+    font-size: 0.95rem;
 }
 
 @media (max-width: 560px) {
