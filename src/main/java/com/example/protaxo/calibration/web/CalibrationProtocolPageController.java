@@ -213,6 +213,14 @@ public class CalibrationProtocolPageController {
         return "redirect:/calibration-protocols/" + id;
     }
 
+    @PostMapping("/{id}/comment")
+    public String updateComment(@PathVariable Long id, @RequestParam(required = false) String internalComment,
+                                RedirectAttributes redirectAttributes) {
+        calibrationProtocolService.updateInternalComment(id, internalComment);
+        redirectAttributes.addFlashAttribute("commentSaved", true);
+        return "redirect:/calibration-protocols/" + id;
+    }
+
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id) {
         calibrationProtocolService.softDelete(id);

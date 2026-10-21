@@ -31,6 +31,21 @@
                 Print Agent зараз не підключений до сервера — друк наклейки буде недоступний, поки агент не запуститься.
             </div>
 
+            <!-- Внутрішній коментар: лише для обліку в сервісі, ніде не друкується -->
+            <form class="internal-comment" th:action="@{/calibration-protocols/{id}/comment(id=${protocol.id})}" method="post">
+                <div class="internal-comment-head">
+                    <label for="internalComment">Внутрішній коментар</label>
+                    <span class="muted">Лише для внутрішнього обліку — не друкується в протоколі й на наклейці</span>
+                </div>
+                <textarea id="internalComment" name="internalComment" rows="3"
+                          placeholder="Напр. клієнт просив передзвонити, пломбу замінено повторно…"
+                          th:text="${protocol.internalComment}"></textarea>
+                <div class="internal-comment-actions">
+                    <button type="submit" class="btn-outline">Зберегти коментар</button>
+                    <span class="internal-comment-saved" th:if="${commentSaved}">Збережено</span>
+                </div>
+            </form>
+
             <div class="view-meta">
                 <div class="field">
                     <label>Дата та час</label>
@@ -54,7 +69,8 @@
                 </div>
                 <div class="field field-full">
                     <label>Наряд</label>
-                    <div th:text="${protocol.orderLabel}"></div>
+                    <div th:if="${protocol.invoiceId} != null" th:text="${protocol.orderLabel}"></div>
+                    <div th:if="${protocol.invoiceId} == null"><span class="badge badge-standalone">Створено без наряд-заказу</span></div>
                 </div>
                 <div class="field">
                     <label>Номер картки</label>

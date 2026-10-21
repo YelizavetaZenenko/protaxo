@@ -190,6 +190,22 @@ public class CalibrationProtocolService {
                 .add("DSRC S/N", p.getDsrcSerialNumber());
     }
 
+    /**
+     * Внутрішній коментар зберігається окремо від форми протоколу (applyFields його не чіпає),
+     * тож редагування протоколу ніколи не затирає коментар.
+     */
+    public CalibrationProtocolResponse updateInternalComment(Long id, String comment) {
+        CalibrationProtocol protocol = getOrThrow(id);
+        String before = protocol.getInternalComment();
+        String trimmed = comment == null || comment.isBlank() ? null : comment.strip();
+        protocol.setInternalComment(trimmed);
+        CalibrationProtocol saved = calibrationProtocolRepository.save(protocol);
+        auditLogService.record(AuditAction.UPDATE, "CalibrationProtocol", saved.getId(), FieldDiff.between(
+                FieldDiff.snapshot().add("Внутрішній коментар", before),
+                FieldDiff.snapshot().add("Внутрішній коментар", trimmed)));
+        return calibrationProtocolMapper.toResponse(saved);
+    }
+
     public void softDelete(Long id) {
         CalibrationProtocol protocol = getOrThrow(id);
         protocol.setDeletedAt(Instant.now());

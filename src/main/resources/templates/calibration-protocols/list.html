@@ -35,6 +35,11 @@
                 </div>
             </form>
 
+            <div class="protocol-legend">
+                <span class="protocol-legend-swatch"></span> Протокол створено без наряд-заказу
+                <span class="protocol-legend-comment" aria-hidden="true">💬</span> є внутрішній коментар
+            </div>
+
             <table class="clean-table">
                 <thead>
                 <tr>
@@ -47,10 +52,19 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="p : ${protocols}" class="clickable-row" th:attr="data-href=@{/calibration-protocols/{id}(id=${p.id})}">
-                    <td th:text="${#strings.replace(p.protocolNumber, '№', '')}"></td>
+                <tr th:each="p : ${protocols}" class="clickable-row"
+                    th:classappend="${p.invoiceId == null} ? 'protocol-row-standalone'"
+                    th:attr="data-href=@{/calibration-protocols/{id}(id=${p.id})}">
+                    <td>
+                        <span th:text="${#strings.replace(p.protocolNumber, '№', '')}"></span>
+                        <span class="protocol-comment-icon" th:if="${not #strings.isEmpty(p.internalComment)}"
+                              th:title="${p.internalComment}" aria-label="Є внутрішній коментар">💬</span>
+                    </td>
                     <td th:text="${#temporals.format(p.protocolDate, 'dd.MM.yyyy HH:mm')}"></td>
-                    <td th:text="${p.internalNumber}"></td>
+                    <td>
+                        <span th:text="${p.internalNumber}"></span>
+                        <span class="badge badge-standalone" th:if="${p.invoiceId == null}">без наряду</span>
+                    </td>
                     <td th:text="${clientNames[p.clientId]}"></td>
                     <td th:text="${p.cardNumber}"></td>
                     <td class="actions-cell">

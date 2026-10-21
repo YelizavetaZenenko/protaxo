@@ -78,6 +78,46 @@ class CalibrationProtocolFormPageTest {
     }
 
     @Test
+    void internalCommentIsSavedSeparatelyAndStandaloneProtocolIsHighlighted() throws Exception {
+        Client client = clientRepository.save(Client.builder().name("Коментар клієнт " + UUID.randomUUID()).build());
+        String internalNumber = "C-" + UUID.randomUUID();
+        mvc.perform(post("/calibration-protocols").with(authentication(admin)).with(csrf())
+                        .param("internalNumber", internalNumber)
+                        .param("clientId", client.getId().toString())
+                        .param("cardNumber", "ABC123456789012"))
+                .andExpect(status().is3xxRedirection());
+        CalibrationProtocol saved = calibrationProtocolRepository.findAll().stream()
+                .filter(p -> internalNumber.equals(p.getInternalNumber())).findFirst().orElseThrow();
+
+        mvc.perform(post("/calibration-protocols/" + saved.getId() + "/comment").with(authentication(admin)).with(csrf())
+                        .param("internalComment", "  Клієнт просив передзвонити  "))
+                .andExpect(status().is3xxRedirection());
+        assertThat(calibrationProtocolRepository.findById(saved.getId()).orElseThrow().getInternalComment())
+                .isEqualTo("Клієнт просив передзвонити");
+
+        // Редагування протоколу коментар не затирає
+        mvc.perform(post("/calibration-protocols/" + saved.getId() + "/edit").with(authentication(admin)).with(csrf())
+                        .param("internalNumber", internalNumber)
+                        .param("clientId", client.getId().toString())
+                        .param("cardNumber", "ABC123456789012"))
+                .andExpect(status().is3xxRedirection());
+        assertThat(calibrationProtocolRepository.findById(saved.getId()).orElseThrow().getInternalComment())
+                .isEqualTo("Клієнт просив передзвонити");
+
+        String view = mvc.perform(get("/calibration-protocols/" + saved.getId()).with(authentication(admin)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(view).contains("Внутрішній коментар", "Клієнт просив передзвонити", "Створено без наряд-заказу");
+
+        String list = mvc.perform(get("/calibration-protocols").with(authentication(admin)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        Files.writeString(Path.of("target", "calibration-protocol-view-test.html"), view);
+        Files.writeString(Path.of("target", "calibration-protocol-list-test.html"), list);
+        String row = list.substring(list.lastIndexOf("<tr", list.indexOf(internalNumber)));
+        row = row.substring(0, row.indexOf("</tr>"));
+        assertThat(row).contains("protocol-row-standalone", "без наряду", "title=\"Клієнт просив передзвонити\"");
+    }
+
+    @Test
     void factChecksAreSavedAndPrinted() throws Exception {
         Client client = clientRepository.save(Client.builder().name("Протокол клієнт " + UUID.randomUUID()).build());
         String internalNumber = "T-" + UUID.randomUUID();

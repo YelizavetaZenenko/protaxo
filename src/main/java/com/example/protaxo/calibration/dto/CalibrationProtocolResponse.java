@@ -57,6 +57,7 @@ public record CalibrationProtocolResponse(
         boolean verificationPlatePresent,
         boolean markPresent,
         boolean noManipulationDevices,
-        boolean sealsIntact
+        boolean sealsIntact,
+        String internalComment
 ) {
 }

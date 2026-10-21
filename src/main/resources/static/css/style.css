@@ -1703,6 +1703,101 @@ th.money {
     width: auto;
 }
 
+/* Протоколи калібрування без наряд-заказу — виділені у списку теплим тоном */
+.clean-table tr.protocol-row-standalone > td {
+    background: #fff6e0;
+}
+
+.clean-table tr.protocol-row-standalone > td:first-child {
+    box-shadow: inset 4px 0 0 #e0a526;
+}
+
+.clean-table tr.protocol-row-standalone:hover > td {
+    background: #ffefc7;
+}
+
+.badge-standalone {
+    margin-left: 0.4rem;
+    background: #fbe3a8;
+    color: #7a5200;
+    white-space: nowrap;
+}
+
+.protocol-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0 0 0.75rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.protocol-legend-swatch {
+    display: inline-block;
+    width: 1.1rem;
+    height: 0.8rem;
+    border-radius: 3px;
+    background: #fff6e0;
+    box-shadow: inset 3px 0 0 #e0a526, 0 0 0 1px #f0d48a;
+}
+
+.protocol-legend-comment {
+    margin-left: 1rem;
+}
+
+.protocol-comment-icon {
+    margin-left: 0.3rem;
+    font-size: 0.85rem;
+    cursor: help;
+}
+
+/* Внутрішній коментар на сторінці протоколу */
+.internal-comment {
+    margin-bottom: 1.25rem;
+    padding: 0.9rem 1rem;
+    border: 1px dashed #d9c58f;
+    border-radius: 10px;
+    background: #fffbf0;
+}
+
+.internal-comment-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.internal-comment-head label {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.internal-comment textarea {
+    width: 100%;
+    min-height: 4.5rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.internal-comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.internal-comment-saved {
+    color: var(--accent);
+    font-size: 0.85rem;
+}
+
 /* Поле дати з ручним введенням дд.мм.рррр і кнопкою-календариком праворуч */
 .date-input {
     position: relative;

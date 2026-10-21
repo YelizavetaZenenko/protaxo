@@ -149,6 +149,10 @@ public class CalibrationProtocol extends BaseEntity {
     @Column(name = "seals_intact", nullable = false)
     private boolean sealsIntact;
 
+    /** Внутрішній коментар — лише для обліку в сервісі, ніде не друкується. Змінюється окремо від форми протоколу. */
+    @Column(name = "internal_comment")
+    private String internalComment;
+
     @Column(name = "executor_position")
     private String executorPosition;
 
