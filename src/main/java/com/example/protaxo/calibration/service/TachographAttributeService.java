@@ -44,6 +44,7 @@ public class TachographAttributeService {
                     case TYPE -> "Тип тахографа";
                     case MANUFACTURER -> "Виробник тахографа";
                     case INSPECTION_REASON -> "Підстава для перевірки";
+                    case TIRE_SIZE -> "Розмір пневматичних шин";
                 })
                 .add("Значення", saved.getName())));
         return new TachographAttributeResponse(saved.getId(), saved.getName());

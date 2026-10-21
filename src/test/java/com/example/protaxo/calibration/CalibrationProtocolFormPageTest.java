@@ -57,7 +57,7 @@ class CalibrationProtocolFormPageTest {
         String html = mvc.perform(get("/calibration-protocols/new").with(authentication(admin))).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         assertThat(html).contains("Рік виготовлення", "Відхилення</h2>", "Реєстрування факту</h2>",
-                "data-category=\"INSPECTION_REASON\"", "value=\"0.1\"", "value=\"0.1 хвилин за добу\"",
+                "data-category=\"INSPECTION_REASON\"", "data-category=\"TIRE_SIZE\"", "value=\"0.1\"", "value=\"0.1 хвилин за добу\"",
                 "value=\"0.7 хвилин за 7 діб\"", "Цілісність пломб", "Табличка перевірки");
         Files.writeString(Path.of("target", "calibration-protocol-form-test.html"), html);
         // Відхилення шляху/швидкості "в експлуатації" на сайті не вводяться — у бланку завжди "-"
@@ -76,6 +76,7 @@ class CalibrationProtocolFormPageTest {
                         .param("cardNumber", "ABC123456789012")
                         .param("inspectionReason", "ремонт")
                         .param("previousInspectionDate", "05.03.2025")
+                        .param("tireSize", "315/70 R22,5")
                         .param("pathDeviationAfterInstall", "0.5")
                         .param("powerCutoffRegistered", "Так").param("_powerCutoffRegistered", "on")
                         .param("_pulseSensorInterruptionRegistered", "on")
@@ -88,6 +89,7 @@ class CalibrationProtocolFormPageTest {
         CalibrationProtocol saved = calibrationProtocolRepository.findAll().stream()
                 .filter(p -> internalNumber.equals(p.getInternalNumber())).findFirst().orElseThrow();
         assertThat(saved.getInspectionReason()).isEqualTo("ремонт");
+        assertThat(saved.getTireSize()).isEqualTo("315/70 R22,5");
         assertThat(saved.getPreviousInspectionDate()).isEqualTo(LocalDate.of(2025, 3, 5));
         assertThat(saved.getPowerCutoffRegistered()).isEqualTo("Так");
         assertThat(saved.getPulseSensorInterruptionRegistered()).isNull();

@@ -194,7 +194,8 @@
 
                 <div class="field">
                     <label for="tireSize">Розмір пневматичних шин</label>
-                    <input type="text" id="tireSize" th:field="*{tireSize}" placeholder="напр. 315/70 R22,5">
+                    <select id="tireSize" th:field="*{tireSize}"></select>
+                    <button type="button" class="link-btn" data-category="TIRE_SIZE" data-target="tireSize">+ Додати розмір</button>
                 </div>
 
                 <div class="field">
@@ -396,6 +397,7 @@
         var initialTachographSerialNumber = /*[[${protocol.tachographSerialNumber}]]*/ '';
         var initialTachographManufactureYear = /*[[${protocol.tachographManufactureYear}]]*/ '';
         var initialInspectionReason = /*[[${protocol.inspectionReason}]]*/ '';
+        var initialTireSize = /*[[${protocol.tireSize}]]*/ '';
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -554,17 +556,17 @@
             var attributeCache = {};
             var attributeLabels = {
                 BRAND: 'марку', MODEL: 'модель', TYPE: 'тип', MANUFACTURER: 'виробника',
-                INSPECTION_REASON: 'підставу'
+                INSPECTION_REASON: 'підставу', TIRE_SIZE: 'розмір'
             };
             var attributeTitles = {
                 BRAND: 'Нова марка тахографа', MODEL: 'Нова модель тахографа',
                 TYPE: 'Новий тип тахографа', MANUFACTURER: 'Новий виробник тахографа',
-                INSPECTION_REASON: 'Нова підстава для перевірки'
+                INSPECTION_REASON: 'Нова підстава для перевірки', TIRE_SIZE: 'Новий розмір пневматичних шин'
             };
             var attributeInitial = {
                 tachographBrand: initialTachographBrand, tachographModel: initialTachographModel,
                 tachographType: initialTachographType, tachographManufacturer: initialTachographManufacturer,
-                inspectionReason: initialInspectionReason
+                inspectionReason: initialInspectionReason, tireSize: initialTireSize
             };
 
             function populateAttributeSelect(selectId, category, selectName) {
@@ -608,6 +610,7 @@
             loadAttributeCategory('TYPE', ['tachographType']);
             loadAttributeCategory('MANUFACTURER', ['tachographManufacturer']);
             loadAttributeCategory('INSPECTION_REASON', ['inspectionReason']);
+            loadAttributeCategory('TIRE_SIZE', ['tireSize']);
 
             var attributeModalOverlay = document.getElementById('attributeModalOverlay');
             var attributeModalTitle = document.getElementById('attributeModalTitle');
@@ -932,7 +935,7 @@
                     'loadType', 'extGnss', 'gnssSerialNumber', 'dsrcSerialNumber']
                     // Smart-sticker fields exist only on a Smart 1/Smart 2 form.
                     .filter(function (id) { return document.getElementById(id); });
-                var selectFieldIds = ['tachographBrand', 'tachographModel', 'tachographType', 'tachographManufacturer', 'inspectionReason'];
+                var selectFieldIds = ['tachographBrand', 'tachographModel', 'tachographType', 'tachographManufacturer', 'inspectionReason', 'tireSize'];
 
                 function computeDraftLabel() {
                     var vehicle = document.getElementById('vehicleName').value.trim();
