@@ -704,15 +704,15 @@ td.actions-cell > * + * {
     margin-bottom: 1.25rem;
     border: 1px solid var(--border);
     border-radius: 10px;
-    background: var(--bg);
+    background: var(--surface);
     overflow: hidden;
 }
 
+/* Кожна колонка — заголовок + значення; рядок значень однакової висоти,
+   тож позначки «автоматично» і звичайні значення стоять на одній лінії */
 .protocol-meta-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    padding: 0.75rem 1rem;
+    display: grid;
+    grid-template-rows: auto 3rem;
     min-width: 0;
 }
 
@@ -721,10 +721,22 @@ td.actions-cell > * + * {
 }
 
 .protocol-meta-label {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
     color: var(--muted);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
+    text-align: center;
+}
+
+.protocol-meta-value,
+.protocol-meta-auto {
+    align-self: center;
+    justify-self: center;
+    white-space: nowrap;
 }
 
 .protocol-meta-value {
@@ -735,8 +747,7 @@ td.actions-cell > * + * {
 }
 
 .protocol-meta-auto {
-    align-self: flex-start;
-    padding: 0.15rem 0.55rem;
+    padding: 0.2rem 0.65rem;
     border-radius: 999px;
     background: rgba(47, 111, 79, 0.1);
     color: var(--accent-dark);
@@ -749,9 +760,29 @@ td.actions-cell > * + * {
         grid-template-columns: 1fr;
     }
 
+    .protocol-meta-item {
+        grid-template-rows: none;
+        grid-template-columns: 9.5rem 1fr;
+        min-height: 2.75rem;
+    }
+
     .protocol-meta-item + .protocol-meta-item {
         border-left: none;
         border-top: 1px solid var(--border);
+    }
+
+    .protocol-meta-label {
+        display: flex;
+        align-items: center;
+        border-bottom: none;
+        border-right: 1px solid var(--border);
+        text-align: left;
+    }
+
+    .protocol-meta-value,
+    .protocol-meta-auto {
+        justify-self: start;
+        margin-left: 1rem;
     }
 }
 
