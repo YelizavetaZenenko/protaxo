@@ -58,6 +58,7 @@ class CalibrationProtocolFormPageTest {
         assertThat(html).contains("Рік виготовлення", "Відхилення</h2>", "Реєстрування факту</h2>",
                 "data-category=\"INSPECTION_REASON\"", "value=\"0.1\"", "value=\"0.1 хвилин за добу\"",
                 "value=\"0.7 хвилин за 7 діб\"", "Цілісність пломб", "Табличка перевірки");
+        Files.writeString(Path.of("target", "calibration-protocol-form-test.html"), html);
         // Відхилення шляху/швидкості "в експлуатації" на сайті не вводяться — у бланку завжди "-"
         assertThat(html).doesNotContain("id=\"pathDeviationInService\"", "id=\"speedDeviationInService\"");
         // Форма закривається лише після кнопок — поля не випадають за її межі

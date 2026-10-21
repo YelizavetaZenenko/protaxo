@@ -18,7 +18,7 @@
 
             <form th:object="${protocol}"
                   th:action="${editId} != null ? @{/calibration-protocols/{id}/edit(id=${editId})} : @{/calibration-protocols}"
-                  method="post" class="form-grid">
+                  method="post" class="form-grid protocol-form">
 
                 <input type="hidden" th:field="*{invoiceId}">
 
@@ -103,8 +103,8 @@
                     </datalist>
                 </div>
 
-                <div class="field-full" style="grid-column:1/-1;margin-top:0.5rem;">
-                    <h2 style="font-size:1.05rem;margin-bottom:0.25rem;">Дані тахографа</h2>
+                <div class="field-full protocol-section">
+                    <h2>Дані тахографа</h2>
                 </div>
 
                 <input type="hidden" id="tachographId" th:field="*{tachographId}">
@@ -166,8 +166,8 @@
                     <input type="date" id="previousInspectionDate" th:field="*{previousInspectionDate}">
                 </div>
 
-                <div class="field-full" style="grid-column:1/-1;margin-top:0.5rem;">
-                    <h2 style="font-size:1.05rem;margin-bottom:0.25rem;">Результати перевірки та адаптації тахографа</h2>
+                <div class="field-full protocol-section">
+                    <h2>Результати перевірки та адаптації тахографа</h2>
                 </div>
 
                 <div class="field">
@@ -210,34 +210,34 @@
                     <input type="text" id="speedLimiterValue" th:field="*{speedLimiterValue}">
                 </div>
 
-                <div class="field-full" style="grid-column:1/-1;margin-top:0.5rem;">
-                    <h2 style="font-size:1.05rem;margin-bottom:0.25rem;">Відхилення</h2>
+                <div class="field-full protocol-section">
+                    <h2>Відхилення</h2>
                 </div>
 
                 <div class="field">
-                    <label for="pathDeviationAfterInstall">Відхилення шляху — після встановлення (%)</label>
+                    <label for="pathDeviationAfterInstall">Шлях — після встановлення (%)</label>
                     <input type="text" id="pathDeviationAfterInstall" th:field="*{pathDeviationAfterInstall}"
                            inputmode="decimal" pattern="[+\-]?[0-9]+([.,][0-9]+)?" title="Введіть число, напр. 0.5 або -1,2"
                            placeholder="число, напр. 0.5">
                 </div>
 
                 <div class="field">
-                    <label for="speedDeviationAfterInstall">Відхилення швидкості — після встановлення (км/год)</label>
+                    <label for="speedDeviationAfterInstall">Швидкість — після встановлення (км/год)</label>
                     <input type="text" id="speedDeviationAfterInstall" th:field="*{speedDeviationAfterInstall}">
                 </div>
 
                 <div class="field">
-                    <label for="timeDeviationAfterInstall">Відхилення часу — після встановлення</label>
+                    <label for="timeDeviationAfterInstall">Час — після встановлення</label>
                     <input type="text" id="timeDeviationAfterInstall" th:field="*{timeDeviationAfterInstall}">
                 </div>
 
                 <div class="field">
-                    <label for="timeDeviationInService">Відхилення часу — в експлуатації</label>
+                    <label for="timeDeviationInService">Час — в експлуатації</label>
                     <input type="text" id="timeDeviationInService" th:field="*{timeDeviationInService}">
                 </div>
 
-                <div class="field-full" style="grid-column:1/-1;margin-top:0.5rem;">
-                    <h2 style="font-size:1.05rem;margin-bottom:0.25rem;">Реєстрування факту</h2>
+                <div class="field-full protocol-section">
+                    <h2>Реєстрування факту</h2>
                 </div>
 
                 <!-- Перші три друкуються в п. 11–13 бланку як "Так"; решта лише зберігаються в протоколі -->
@@ -255,8 +255,8 @@
                 <input type="hidden" id="sealNumbers" th:field="*{sealNumbers}">
 
                 <th:block th:if="${labelType.smart}">
-                    <div class="field-full" style="grid-column:1/-1;margin-top:0.5rem;">
-                        <h2 style="font-size:1.05rem;margin-bottom:0.25rem;"
+                    <div class="field-full protocol-section">
+                        <h2
                             th:text="${labelType.name() == 'SMART_2'} ? 'Наклейка Smart 2' : 'Наклейка Smart 1'"></h2>
                         <div class="muted">Лише для наклейки смарт-тахографа — на бланку протоколу не друкується</div>
                     </div>
@@ -290,8 +290,8 @@
                     </div>
                 </th:block>
 
-                <div class="field-full" style="grid-column:1/-1;margin-top:0.5rem;">
-                    <h2 style="font-size:1.05rem;margin-bottom:0.25rem;">Роботи виконав</h2>
+                <div class="field-full protocol-section">
+                    <h2>Роботи виконав</h2>
                 </div>
 
                 <div class="field combobox-field">

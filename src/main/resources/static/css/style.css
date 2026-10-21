@@ -681,7 +681,7 @@ td.actions-cell > * + * {
 /* Сторінки додавання/редагування (контрагент, авто, тахограф, договір, профіль, фінансові дії…):
    біла картка вужча — під ширину форми, а не на всю ширину екрана, як у списків.
    Наряд-заказ і витрати (.invoice-form, .form-grid-wide) лишаються широкими. */
-.container:has(> .card > .form-grid:not(.invoice-form, .form-grid-wide)) {
+.container:has(> .card > .form-grid:not(.invoice-form, .form-grid-wide, .protocol-form)) {
     --container-max: 760px;
 }
 
@@ -695,6 +695,56 @@ td.actions-cell > * + * {
 
 .form-grid .field-full {
     grid-column: 1 / -1;
+}
+
+/* Форма протоколу калібрування: ширша за звичайну форму (довгі назви полів не переносяться),
+   однакові відступи між усіма полями — їх задає gap сітки, а не margin кожного поля */
+.container:has(> .card > .protocol-form) {
+    --container-max: 980px;
+}
+
+.form-grid.protocol-form {
+    max-width: 860px;
+    gap: 1.25rem 2rem;
+}
+
+.protocol-form > .field,
+.protocol-form > .protocol-meta,
+.protocol-form > .fact-checks {
+    margin-bottom: 0;
+}
+
+.protocol-form .field label {
+    min-height: 1.15rem;
+}
+
+.protocol-form .field .link-btn {
+    margin-top: 0.4rem;
+}
+
+/* Заголовки підтем: однаковий відступ зверху і лінія-розділювач */
+.protocol-form .protocol-section {
+    margin-top: 0.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+
+.protocol-form .protocol-section h2 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.protocol-form .protocol-section .muted {
+    margin-top: 0.25rem;
+}
+
+.protocol-form .fact-checks {
+    grid-auto-rows: 1fr;
+    gap: 0.75rem 2rem;
+}
+
+.protocol-form .form-actions {
+    margin-top: 0.75rem;
 }
 
 /* Протокол калібрування: плашка з номером, датою і штампом, які ставить система */
