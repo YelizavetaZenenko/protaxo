@@ -14,6 +14,7 @@ import com.example.protaxo.client.repository.ClientRepository;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -74,6 +75,7 @@ class CalibrationProtocolFormPageTest {
                         .param("clientId", client.getId().toString())
                         .param("cardNumber", "ABC123456789012")
                         .param("inspectionReason", "ремонт")
+                        .param("previousInspectionDate", "05.03.2025")
                         .param("pathDeviationAfterInstall", "0.5")
                         .param("powerCutoffRegistered", "Так").param("_powerCutoffRegistered", "on")
                         .param("_pulseSensorInterruptionRegistered", "on")
@@ -86,6 +88,7 @@ class CalibrationProtocolFormPageTest {
         CalibrationProtocol saved = calibrationProtocolRepository.findAll().stream()
                 .filter(p -> internalNumber.equals(p.getInternalNumber())).findFirst().orElseThrow();
         assertThat(saved.getInspectionReason()).isEqualTo("ремонт");
+        assertThat(saved.getPreviousInspectionDate()).isEqualTo(LocalDate.of(2025, 3, 5));
         assertThat(saved.getPowerCutoffRegistered()).isEqualTo("Так");
         assertThat(saved.getPulseSensorInterruptionRegistered()).isNull();
         assertThat(saved.isSealsIntact()).isTrue();
@@ -94,6 +97,7 @@ class CalibrationProtocolFormPageTest {
         String edit = mvc.perform(get("/calibration-protocols/" + saved.getId() + "/edit").with(authentication(admin)))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         assertThat(edit).containsPattern("id=\"sealsIntact\"[^>]*checked");
+        assertThat(edit).contains("value=\"05.03.2025\"");
         assertThat(edit).containsPattern("id=\"powerCutoffRegistered\"[^>]*checked");
 
         // Бланк з п. 14–17 рендериться; копія — в target/ для перегляду очима

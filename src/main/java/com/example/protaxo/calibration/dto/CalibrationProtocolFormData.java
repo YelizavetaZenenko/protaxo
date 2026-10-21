@@ -36,8 +36,9 @@ public class CalibrationProtocolFormData {
 
     private String tachographManufacturer;
 
-    // Without ISO formatting the value is rendered locale-style (3/9/85) and <input type="date"> drops it.
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    // Поле вводиться текстом як дд.мм.рррр; ISO (рррр-мм-дд) приймається теж — так збережені
+    // старі чернетки, коли тут був <input type="date">.
+    @DateTimeFormat(pattern = "dd.MM.yyyy", fallbackPatterns = "yyyy-MM-dd")
     private LocalDate previousInspectionDate;
 
     private String vehicleVrn;

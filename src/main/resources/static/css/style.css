@@ -1703,6 +1703,51 @@ th.money {
     width: auto;
 }
 
+/* Поле дати з ручним введенням дд.мм.рррр і кнопкою-календариком праворуч */
+.date-input {
+    position: relative;
+}
+
+.date-input input[type="text"] {
+    padding-right: 2.75rem;
+}
+
+.date-input-btn {
+    position: absolute;
+    top: 50%;
+    right: 0.4rem;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.date-input-btn:hover {
+    background: var(--bg);
+    color: var(--accent);
+}
+
+/* Справжній календар браузера: невидимий, лише щоб відкрити його кнопкою під полем */
+.date-input-native {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
 /* Протокол калібрування, "Реєстрування факту": галочки плитками по дві в рядок */
 .fact-checks {
     display: grid;

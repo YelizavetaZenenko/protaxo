@@ -35,15 +35,15 @@ public class PdfRenderService {
      */
     private static final String TIMES_FONT_FAMILY = "Times New Roman";
 
-    private static final double WATERMARK_OPACITY = 0.16;
+    private static final double WATERMARK_OPACITY = 0.06;
     private static final double WATERMARK_ANGLE = Math.toRadians(-30);
-    /** Watermark covers the protocol's content area (A4 minus 1.5 cm margins, minus 1.35 cm top/bottom). */
-    private static final double WATERMARK_PAGE_WIDTH_CM = 18;
-    private static final double WATERMARK_PAGE_HEIGHT_CM = 24;
+    /** Watermark covers the whole A4 sheet, margins included. */
+    private static final double WATERMARK_PAGE_WIDTH_CM = 21;
+    private static final double WATERMARK_PAGE_HEIGHT_CM = 29.7;
     private static final double WATERMARK_LOGO_WIDTH_CM = 4;
     /** Logos per full row; shifted rows carry one less. */
-    private static final int WATERMARK_COLUMNS = 3;
-    private static final int WATERMARK_ROWS = 5;
+    private static final int WATERMARK_COLUMNS = 4;
+    private static final int WATERMARK_ROWS = 6;
     private static final int WATERMARK_DPI = 150;
 
     private final TemplateEngine pdfTemplateEngine;
