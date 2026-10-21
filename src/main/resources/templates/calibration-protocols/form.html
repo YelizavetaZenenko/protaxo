@@ -463,6 +463,73 @@
                 prevDateInput.dispatchEvent(new Event('change', { bubbles: true }));
             });
 
+            // --- "Транспортний засіб": автомобілі обраного контрагента з /api/clients/{id}/vehicles.
+            // Підказки поля = авто контрагента; вибір авто підставляє VRN і VIN. Назва — у тому ж
+            // форматі, що й у наряд-заказі ("AA1234BB (DAF XF)"). ---
+            var vehicleNameInput = document.getElementById('vehicleName');
+            var vehicleNameList = document.getElementById('vehicleNameList');
+            var vehicleVrnInput = document.getElementById('vehicleVrn');
+            var vehicleVinInput = document.getElementById('vehicleVin');
+            var defaultVehicleOptions = vehicleNameList.innerHTML;
+            var clientVehicles = [];
+
+            function clientVehicleLabel(v) {
+                var makeModel = [v.make, v.model].filter(function (s) { return s && s.trim(); }).join(' ');
+                return makeModel ? v.registrationNumber + ' (' + makeModel + ')' : v.registrationNumber;
+            }
+
+            function applyClientVehicle(v) {
+                vehicleNameInput.value = clientVehicleLabel(v);
+                vehicleVrnInput.value = v.registrationNumber || '';
+                vehicleVinInput.value = v.vin || '';
+            }
+
+            function loadClientVehicles(clientId, autoFill) {
+                clientVehicles = [];
+                if (!clientId) {
+                    vehicleNameList.innerHTML = defaultVehicleOptions;
+                    return;
+                }
+                fetch('/api/clients/' + clientId + '/vehicles', { credentials: 'same-origin' })
+                    .then(function (resp) { return resp.ok ? resp.json() : []; })
+                    .then(function (vehicles) {
+                        clientVehicles = vehicles;
+                        if (vehicles.length === 0) {
+                            vehicleNameList.innerHTML = defaultVehicleOptions;
+                            return;
+                        }
+                        vehicleNameList.innerHTML = '';
+                        vehicles.forEach(function (v) {
+                            var opt = document.createElement('option');
+                            opt.value = clientVehicleLabel(v);
+                            vehicleNameList.appendChild(opt);
+                        });
+                        // Єдине авто контрагента — одразу в поля, якщо їх ще не заповнили
+                        if (autoFill && vehicles.length === 1 && !vehicleNameInput.value.trim()) {
+                            applyClientVehicle(vehicles[0]);
+                        }
+                    });
+            }
+
+            vehicleNameInput.addEventListener('input', function () {
+                var match = clientVehicles.filter(function (v) {
+                    return clientVehicleLabel(v) === vehicleNameInput.value.trim();
+                })[0];
+                if (match) applyClientVehicle(match);
+            });
+
+            // Поле авто заблоковане (протокол з наряд-заказу чи редагування) — там дані вже підставив сервер
+            if (!vehicleNameInput.readOnly) {
+                var vehicleClientSelect = document.getElementById('clientId');
+                vehicleClientSelect.addEventListener('change', function () {
+                    vehicleNameInput.value = '';
+                    vehicleVrnInput.value = '';
+                    vehicleVinInput.value = '';
+                    loadClientVehicles(vehicleClientSelect.value, true);
+                });
+                loadClientVehicles(vehicleClientSelect.value, false);
+            }
+
             // --- "Номер картки": readonly combobox picker backed by /api/master-cards ---
             var masterCards = [];
             var cardNumberInput = document.getElementById('cardNumber');
