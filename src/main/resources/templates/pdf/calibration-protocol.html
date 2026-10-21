@@ -26,11 +26,11 @@
         table.results { width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 5pt; }
         table.results thead { display: table-header-group; }
         table.results tr { page-break-inside: avoid; }
-        table.results th, table.results td { border: 1px solid #333333; padding: 2pt 4pt; font-size: 8pt; vertical-align: middle; }
+        table.results th, table.results td { border: 1px solid #333333; padding: 1.5pt 4pt; font-size: 8pt; vertical-align: middle; }
         table.results th { background-color: #eeeeee; text-align: center; }
         table.results td.center { text-align: center; }
         table.results td.stack-cell { padding: 0; }
-        table.results td.stack-cell div { padding: 2pt 4pt; }
+        table.results td.stack-cell div { padding: 1.5pt 4pt; }
         table.results td.stack-cell div + div { border-top: 1px solid #333333; }
         .footnote { font-size: 9pt; color: #333333; margin-top: 10pt; }
         .conclusion { margin-top: 10pt; page-break-inside: avoid; }
@@ -151,8 +151,8 @@
             <col style="width:27%"/>
             <col style="width:14%"/>
             <col style="width:16%"/>
-            <col style="width:17%"/>
             <col style="width:21%"/>
+            <col style="width:17%"/>
         </colgroup>
         <thead>
         <tr>
@@ -227,7 +227,7 @@
             </td>
             <td class="center stack-cell">
                 <div th:text="${protocol.pathDeviationAfterInstall}"></div>
-                <div th:text="${protocol.pathDeviationInService}"></div>
+                <div>-</div>
             </td>
         </tr>
         <tr>
@@ -244,7 +244,7 @@
             </td>
             <td class="center stack-cell">
                 <div th:text="${protocol.speedDeviationAfterInstall}"></div>
-                <div th:text="${protocol.speedDeviationInService}"></div>
+                <div>-</div>
             </td>
         </tr>
         <tr>
@@ -291,6 +291,34 @@
             <td class="center">—</td>
             <td class="center">Має бути зареєстровано тахографом</td>
             <td class="center" th:text="${protocol.pulseSensorInterruptionRegistered}"></td>
+        </tr>
+        <tr>
+            <td class="center">14</td>
+            <td colspan="2">Наявність знака затвердження типу на тахографі</td>
+            <td class="center">—</td>
+            <td class="center">Знак наявний</td>
+            <td class="center" th:text="${protocol.markPresent} ? 'Так' : ''"></td>
+        </tr>
+        <tr>
+            <td class="center">15</td>
+            <td colspan="2">Наявність таблички перевірки та адаптації тахографа до транспортного засобу</td>
+            <td class="center">—</td>
+            <td class="center">Табличка наявна</td>
+            <td class="center" th:text="${protocol.verificationPlatePresent} ? 'Так' : ''"></td>
+        </tr>
+        <tr>
+            <td class="center">16</td>
+            <td colspan="2">Цілісність та надійність пломб, накладених на складові тахографа</td>
+            <td class="center">—</td>
+            <td class="center">Пломби не пошкоджені та надійні</td>
+            <td class="center" th:text="${protocol.sealsIntact} ? 'Так' : ''"></td>
+        </tr>
+        <tr>
+            <td class="center">17</td>
+            <td colspan="2">Відсутність маніпуляційних пристроїв, під'єднаних до тахографа, або ознак використання таких пристроїв</td>
+            <td class="center">—</td>
+            <td class="center">Відсутні</td>
+            <td class="center" th:text="${protocol.noManipulationDevices} ? 'Так' : ''"></td>
         </tr>
         </tbody>
     </table>

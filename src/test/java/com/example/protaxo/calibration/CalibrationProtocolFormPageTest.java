@@ -11,6 +11,9 @@ import com.example.protaxo.calibration.entity.CalibrationProtocol;
 import com.example.protaxo.calibration.repository.CalibrationProtocolRepository;
 import com.example.protaxo.client.entity.Client;
 import com.example.protaxo.client.repository.ClientRepository;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -60,7 +63,7 @@ class CalibrationProtocolFormPageTest {
     }
 
     @Test
-    void factChecksAreSaved() throws Exception {
+    void factChecksAreSavedAndPrinted() throws Exception {
         Client client = clientRepository.save(Client.builder().name("Протокол клієнт " + UUID.randomUUID()).build());
         String internalNumber = "T-" + UUID.randomUUID();
         mvc.perform(post("/calibration-protocols").with(authentication(admin)).with(csrf())
@@ -72,7 +75,9 @@ class CalibrationProtocolFormPageTest {
                         .param("powerCutoffRegistered", "Так").param("_powerCutoffRegistered", "on")
                         .param("_pulseSensorInterruptionRegistered", "on")
                         .param("sealsIntact", "true").param("_sealsIntact", "on")
-                        .param("_markPresent", "on"))
+                        .param("_markPresent", "on")
+                        .param("_verificationPlatePresent", "on")
+                        .param("noManipulationDevices", "true").param("_noManipulationDevices", "on"))
                 .andExpect(status().is3xxRedirection());
 
         CalibrationProtocol saved = calibrationProtocolRepository.findAll().stream()
@@ -87,5 +92,11 @@ class CalibrationProtocolFormPageTest {
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         assertThat(edit).containsPattern("id=\"sealsIntact\"[^>]*checked");
         assertThat(edit).containsPattern("id=\"powerCutoffRegistered\"[^>]*checked");
+
+        // Бланк з п. 14–17 рендериться; копія — в target/ для перегляду очима
+        byte[] pdf = mvc.perform(get("/calibration-protocols/" + saved.getId() + "/pdf").with(authentication(admin)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
+        assertThat(new String(pdf, 0, 4, StandardCharsets.US_ASCII)).isEqualTo("%PDF");
+        Files.write(Path.of("target", "calibration-protocol-test.pdf"), pdf);
     }
 }
