@@ -20,8 +20,12 @@ import com.example.protaxo.vehicle.service.VehicleService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
@@ -244,6 +248,23 @@ public class CalibrationProtocolPageController {
         model.addAttribute("clients", clientService.findAll());
         model.addAttribute("vehicleSuggestions", fieldSuggestionService.findValues(FieldSuggestionCategory.VEHICLE));
         model.addAttribute("representativeSuggestions", fieldSuggestionService.findValues(FieldSuggestionCategory.REPRESENTATIVE));
+        model.addAttribute("tirePressureOptions", TIRE_PRESSURE_OPTIONS);
+    }
+
+    /**
+     * "Тиск в пневматичних шинах": 0.20…0.95 МПа з кроком 0.05. Значення (ключ) — МПа, саме воно
+     * друкується в протоколі; підпис у списку показує бари (1 бар = 0,1 МПа), як звикли в сервісі.
+     */
+    private static final Map<String, String> TIRE_PRESSURE_OPTIONS = buildTirePressureOptions();
+
+    private static Map<String, String> buildTirePressureOptions() {
+        Map<String, String> options = new LinkedHashMap<>();
+        for (int step = 4; step <= 19; step++) {
+            BigDecimal mpa = BigDecimal.valueOf(step * 5L, 2);
+            String bar = mpa.movePointRight(1).setScale(1, RoundingMode.UNNECESSARY).toPlainString().replace('.', ',');
+            options.put(mpa.toPlainString(), bar + " бар (" + mpa.toPlainString() + " МПа)");
+        }
+        return options;
     }
 
     private static CalibrationLabelType labelTypeOf(InvoiceResponse invoice) {

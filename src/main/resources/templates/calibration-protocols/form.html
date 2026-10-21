@@ -199,8 +199,14 @@
                 </div>
 
                 <div class="field">
-                    <label for="tirePressure">Тиск в пневматичних шинах (МПа)</label>
-                    <input type="text" id="tirePressure" th:field="*{tirePressure}">
+                    <label for="tirePressure">Тиск в пневматичних шинах</label>
+                    <!-- На сайті видно бари, у протокол іде значення в МПа (1 бар = 0,1 МПа) -->
+                    <select id="tirePressure" th:field="*{tirePressure}">
+                        <option value="">— оберіть тиск —</option>
+                        <option th:each="o : ${tirePressureOptions}" th:value="${o.key}" th:text="${o.value}"></option>
+                        <option th:if="${not #strings.isEmpty(protocol.tirePressure) and not tirePressureOptions.containsKey(protocol.tirePressure)}"
+                                th:value="${protocol.tirePressure}" th:text="${protocol.tirePressure} + ' МПа'"></option>
+                    </select>
                 </div>
 
                 <div class="field">

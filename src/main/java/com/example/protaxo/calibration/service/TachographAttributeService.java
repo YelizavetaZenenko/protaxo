@@ -8,7 +8,10 @@ import com.example.protaxo.calibration.entity.TachographAttributeCategory;
 import com.example.protaxo.calibration.repository.TachographAttributeRepository;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.util.FieldDiff;
+import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,9 +26,28 @@ public class TachographAttributeService {
 
     @Transactional(readOnly = true)
     public List<TachographAttributeResponse> findByCategory(TachographAttributeCategory category) {
-        return tachographAttributeRepository.findByCategoryOrderByNameAsc(category).stream()
+        List<TachographAttribute> attributes = tachographAttributeRepository.findByCategoryOrderByNameAsc(category);
+        if (category == TachographAttributeCategory.TIRE_SIZE) {
+            attributes = attributes.stream().sorted(TIRE_SIZE_ORDER).toList();
+        }
+        return attributes.stream()
                 .map(a -> new TachographAttributeResponse(a.getId(), a.getName()))
                 .toList();
+    }
+
+    // "215/65 R15C", "315/70 R22,5", "12.00 R20" → ширина і діаметр диска
+    private static final Pattern TIRE_SIZE = Pattern.compile("^(\\d+(?:[.,]\\d+)?).*?R\\s*(\\d+(?:[.,]\\d+)?)");
+
+    /** Розміри шин — від найменшого диска (R15C) до найбільшого, в межах диска — за шириною. */
+    private static final Comparator<TachographAttribute> TIRE_SIZE_ORDER = Comparator
+            .comparingDouble((TachographAttribute a) -> tireSizePart(a.getName(), 2))
+            .thenComparingDouble(a -> tireSizePart(a.getName(), 1))
+            .thenComparing(TachographAttribute::getName);
+
+    private static double tireSizePart(String name, int group) {
+        Matcher m = TIRE_SIZE.matcher(name.trim());
+        // Нестандартний запис — у кінець списку
+        return m.find() ? Double.parseDouble(m.group(group).replace(',', '.')) : Double.MAX_VALUE;
     }
 
     public TachographAttributeResponse create(TachographAttributeCategory category, String name) {

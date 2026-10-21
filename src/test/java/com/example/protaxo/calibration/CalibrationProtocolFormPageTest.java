@@ -58,12 +58,23 @@ class CalibrationProtocolFormPageTest {
                 .andReturn().getResponse().getContentAsString();
         assertThat(html).contains("Рік виготовлення", "Відхилення</h2>", "Реєстрування факту</h2>",
                 "data-category=\"INSPECTION_REASON\"", "data-category=\"TIRE_SIZE\"", "value=\"0.1\"", "value=\"0.1 хвилин за добу\"",
-                "value=\"0.7 хвилин за 7 діб\"", "Цілісність пломб", "Табличка перевірки");
+                "value=\"0.7 хвилин за 7 діб\"", "Цілісність пломб", "Табличка перевірки",
+                "<option value=\"0.20\">2,0 бар (0.20 МПа)</option>", "<option value=\"0.95\">9,5 бар (0.95 МПа)</option>");
         Files.writeString(Path.of("target", "calibration-protocol-form-test.html"), html);
         // Відхилення шляху/швидкості "в експлуатації" на сайті не вводяться — у бланку завжди "-"
         assertThat(html).doesNotContain("id=\"pathDeviationInService\"", "id=\"speedDeviationInService\"");
         // Форма закривається лише після кнопок — поля не випадають за її межі
         assertThat(html.lastIndexOf("</form>")).isGreaterThan(html.indexOf("id=\"saveProtocolBtn\""));
+    }
+
+    @Test
+    void tireSizesGoFromSmallestRimToBiggest() throws Exception {
+        String json = mvc.perform(get("/api/tachograph-attributes").param("category", "TIRE_SIZE").with(authentication(admin)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(json.indexOf("195/70 R15C")).isLessThan(json.indexOf("185/75 R16C"));
+        assertThat(json.indexOf("185/75 R16C")).isLessThan(json.indexOf("205/75 R17,5"));
+        assertThat(json.indexOf("315/70 R22,5")).isLessThan(json.indexOf("445/65 R22,5"));
+        assertThat(json.indexOf("445/65 R22,5")).isLessThan(json.indexOf("12 R24"));
     }
 
     @Test
@@ -77,6 +88,7 @@ class CalibrationProtocolFormPageTest {
                         .param("inspectionReason", "ремонт")
                         .param("previousInspectionDate", "05.03.2025")
                         .param("tireSize", "315/70 R22,5")
+                        .param("tirePressure", "0.85")
                         .param("pathDeviationAfterInstall", "0.5")
                         .param("powerCutoffRegistered", "Так").param("_powerCutoffRegistered", "on")
                         .param("_pulseSensorInterruptionRegistered", "on")
@@ -90,6 +102,7 @@ class CalibrationProtocolFormPageTest {
                 .filter(p -> internalNumber.equals(p.getInternalNumber())).findFirst().orElseThrow();
         assertThat(saved.getInspectionReason()).isEqualTo("ремонт");
         assertThat(saved.getTireSize()).isEqualTo("315/70 R22,5");
+        assertThat(saved.getTirePressure()).isEqualTo("0.85");
         assertThat(saved.getPreviousInspectionDate()).isEqualTo(LocalDate.of(2025, 3, 5));
         assertThat(saved.getPowerCutoffRegistered()).isEqualTo("Так");
         assertThat(saved.getPulseSensorInterruptionRegistered()).isNull();
@@ -100,6 +113,7 @@ class CalibrationProtocolFormPageTest {
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         assertThat(edit).containsPattern("id=\"sealsIntact\"[^>]*checked");
         assertThat(edit).contains("value=\"05.03.2025\"");
+        assertThat(edit).containsPattern("<option value=\"0.85\" selected=\"selected\">8,5 бар");
         assertThat(edit).containsPattern("id=\"powerCutoffRegistered\"[^>]*checked");
 
         // Бланк з п. 14–17 рендериться; копія — в target/ для перегляду очима
