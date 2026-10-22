@@ -35,11 +35,14 @@
             <form class="internal-comment" th:action="@{/calibration-protocols/{id}/comment(id=${protocol.id})}" method="post">
                 <div class="internal-comment-head">
                     <label for="internalComment">Внутрішній коментар</label>
-                    <span class="muted">Лише для внутрішнього обліку — не друкується в протоколі й на наклейці</span>
                 </div>
                 <textarea id="internalComment" name="internalComment" rows="3"
-                          placeholder="Напр. клієнт просив передзвонити, пломбу замінено повторно…"
                           th:text="${protocol.internalComment}"></textarea>
+                <div class="internal-comment-meta" th:if="${protocol.internalCommentUpdatedAt} != null">
+                    <span th:text="${protocol.internalCommentAuthor}"></span>
+                    <span aria-hidden="true">·</span>
+                    <span th:text="${#temporals.format(protocol.internalCommentUpdatedAt, 'dd.MM.yyyy HH:mm')}"></span>
+                </div>
                 <div class="internal-comment-actions">
                     <button type="submit" class="btn-outline">Зберегти коментар</button>
                     <span class="internal-comment-saved" th:if="${commentSaved}">Збережено</span>

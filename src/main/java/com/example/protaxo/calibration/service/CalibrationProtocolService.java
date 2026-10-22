@@ -14,6 +14,8 @@ import com.example.protaxo.common.exception.NotFoundException;
 import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.invoice.entity.Invoice;
 import com.example.protaxo.invoice.repository.InvoiceRepository;
+import com.example.protaxo.security.entity.User;
+import com.example.protaxo.security.repository.UserRepository;
 import com.example.protaxo.suggestion.entity.FieldSuggestionCategory;
 import com.example.protaxo.suggestion.service.FieldSuggestionService;
 import com.example.protaxo.tachograph.entity.Tachograph;
@@ -26,6 +28,8 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,6 +61,7 @@ public class CalibrationProtocolService {
     private final CalibrationProtocolMapper calibrationProtocolMapper;
     private final FieldSuggestionService fieldSuggestionService;
     private final AuditLogService auditLogService;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<CalibrationProtocolResponse> findAll() {
@@ -199,11 +204,25 @@ public class CalibrationProtocolService {
         String before = protocol.getInternalComment();
         String trimmed = comment == null || comment.isBlank() ? null : comment.strip();
         protocol.setInternalComment(trimmed);
+        protocol.setInternalCommentAuthor(trimmed == null ? null : currentUserDisplayName());
+        protocol.setInternalCommentUpdatedAt(trimmed == null ? null : LocalDateTime.now());
         CalibrationProtocol saved = calibrationProtocolRepository.save(protocol);
         auditLogService.record(AuditAction.UPDATE, "CalibrationProtocol", saved.getId(), FieldDiff.between(
                 FieldDiff.snapshot().add("Внутрішній коментар", before),
                 FieldDiff.snapshot().add("Внутрішній коментар", trimmed)));
         return calibrationProtocolMapper.toResponse(saved);
+    }
+
+    private String currentUserDisplayName() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return null;
+        }
+        String email = authentication.getName();
+        return userRepository.findByEmail(email)
+                .map(User::getFullName)
+                .filter(name -> !name.isBlank())
+                .orElse(email);
     }
 
     public void softDelete(Long id) {

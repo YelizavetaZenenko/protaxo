@@ -58,7 +58,7 @@
                     <td>
                         <span th:text="${#strings.replace(p.protocolNumber, '№', '')}"></span>
                         <span class="protocol-comment-icon" th:if="${not #strings.isEmpty(p.internalComment)}"
-                              th:title="${p.internalComment}" aria-label="Є внутрішній коментар">💬</span>
+                              th:title="${p.internalComment} + (${p.internalCommentUpdatedAt} != null ? ' — ' + ${p.internalCommentAuthor} + ', ' + ${#temporals.format(p.internalCommentUpdatedAt, 'dd.MM.yyyy HH:mm')} : '')" aria-label="Є внутрішній коментар">💬</span>
                     </td>
                     <td th:text="${#temporals.format(p.protocolDate, 'dd.MM.yyyy HH:mm')}"></td>
                     <td>

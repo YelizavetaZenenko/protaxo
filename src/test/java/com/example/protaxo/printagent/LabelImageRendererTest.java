@@ -72,7 +72,7 @@ class LabelImageRendererTest {
                 null, null, null, null, null,
                 null, null, null, "0123456789abcdef0123456789abcdef", null,
                 null, null, null, null, CalibrationLabelType.STANDARD,
-                false, false, false, false, null);
+                false, false, false, false, null, null, null);
     }
 
     private static CalibrationProtocolResponse smartProtocol(CalibrationLabelType type) {
@@ -87,6 +87,6 @@ class LabelImageRendererTest {
                 "90", null, null, null, null,
                 null, null, "BPL 0526749", "0123456789abcdef0123456789abcdef", null,
                 "Goods", "Not available", null, "020303554", type,
-                false, false, false, false, null);
+                false, false, false, false, null, null, null);
     }
 }

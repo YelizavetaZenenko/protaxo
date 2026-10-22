@@ -1786,6 +1786,14 @@ th.money {
     resize: vertical;
 }
 
+.internal-comment-meta {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.35rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+
 .internal-comment-actions {
     display: flex;
     align-items: center;

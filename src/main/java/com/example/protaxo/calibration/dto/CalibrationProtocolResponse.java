@@ -58,6 +58,8 @@ public record CalibrationProtocolResponse(
         boolean markPresent,
         boolean noManipulationDevices,
         boolean sealsIntact,
-        String internalComment
+        String internalComment,
+        String internalCommentAuthor,
+        LocalDateTime internalCommentUpdatedAt
 ) {
 }

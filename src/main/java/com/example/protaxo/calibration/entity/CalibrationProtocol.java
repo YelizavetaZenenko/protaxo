@@ -153,6 +153,13 @@ public class CalibrationProtocol extends BaseEntity {
     @Column(name = "internal_comment")
     private String internalComment;
 
+    /** ПІБ (або email, якщо ПІБ не вказано) того, хто востаннє змінив коментар. */
+    @Column(name = "internal_comment_author")
+    private String internalCommentAuthor;
+
+    @Column(name = "internal_comment_updated_at")
+    private LocalDateTime internalCommentUpdatedAt;
+
     @Column(name = "executor_position")
     private String executorPosition;
 

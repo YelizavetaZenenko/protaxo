@@ -106,7 +106,13 @@ class CalibrationProtocolFormPageTest {
 
         String view = mvc.perform(get("/calibration-protocols/" + saved.getId()).with(authentication(admin)))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        assertThat(view).contains("Внутрішній коментар", "Клієнт просив передзвонити", "Створено без наряд-заказу");
+        // Автор — ПІБ з профілю (або email, якщо користувача/ПІБ немає)
+        CalibrationProtocol commented = calibrationProtocolRepository.findById(saved.getId()).orElseThrow();
+        String author = commented.getInternalCommentAuthor();
+        assertThat(author).isNotBlank();
+        assertThat(commented.getInternalCommentUpdatedAt()).isNotNull();
+        assertThat(view).contains("Внутрішній коментар", "Клієнт просив передзвонити", "Створено без наряд-заказу",
+                author, java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy")));
 
         String list = mvc.perform(get("/calibration-protocols").with(authentication(admin)))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
@@ -114,7 +120,7 @@ class CalibrationProtocolFormPageTest {
         Files.writeString(Path.of("target", "calibration-protocol-list-test.html"), list);
         String row = list.substring(list.lastIndexOf("<tr", list.indexOf(internalNumber)));
         row = row.substring(0, row.indexOf("</tr>"));
-        assertThat(row).contains("protocol-row-standalone", "без наряду", "title=\"Клієнт просив передзвонити\"");
+        assertThat(row).contains("protocol-row-standalone", "без наряду", "title=\"Клієнт просив передзвонити — " + author + ", ");
     }
 
     @Test
