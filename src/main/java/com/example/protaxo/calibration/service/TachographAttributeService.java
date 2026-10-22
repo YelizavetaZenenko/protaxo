@@ -29,6 +29,8 @@ public class TachographAttributeService {
         List<TachographAttribute> attributes = tachographAttributeRepository.findByCategoryOrderByNameAsc(category);
         if (category == TachographAttributeCategory.TIRE_SIZE) {
             attributes = attributes.stream().sorted(TIRE_SIZE_ORDER).toList();
+        } else if (category == TachographAttributeCategory.INSPECTION_REASON) {
+            attributes = attributes.stream().sorted(INSPECTION_REASON_ORDER).toList();
         }
         return attributes.stream()
                 .map(a -> new TachographAttributeResponse(a.getId(), a.getName()))
@@ -48,6 +50,24 @@ public class TachographAttributeService {
         Matcher m = TIRE_SIZE.matcher(name.trim());
         // Нестандартний запис — у кінець списку
         return m.find() ? Double.parseDouble(m.group(group).replace(',', '.')) : Double.MAX_VALUE;
+    }
+
+    private static final List<String> INSPECTION_REASONS = List.of(
+            "Встановлення", "Заміна несправного тахографа", "Заміна пневматичних шин", "Зміна реєстрації ТЗ",
+            "Первинна реєстрація ТЗ", "Періодичність", "Ремонт");
+    private static final String OTHER_INSPECTION_REASON = "Інші підстави";
+
+    /** Підстави — в погодженому порядку, додані вручну — після них за алфавітом, "Інші підстави" — завжди останні. */
+    private static final Comparator<TachographAttribute> INSPECTION_REASON_ORDER = Comparator
+            .comparingInt((TachographAttribute a) -> inspectionReasonRank(a.getName()))
+            .thenComparing(TachographAttribute::getName);
+
+    private static int inspectionReasonRank(String name) {
+        if (OTHER_INSPECTION_REASON.equalsIgnoreCase(name.trim())) {
+            return Integer.MAX_VALUE;
+        }
+        int index = INSPECTION_REASONS.indexOf(name.trim());
+        return index >= 0 ? index : INSPECTION_REASONS.size();
     }
 
     public TachographAttributeResponse create(TachographAttributeCategory category, String name) {
