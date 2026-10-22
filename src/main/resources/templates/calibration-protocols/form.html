@@ -741,6 +741,24 @@
                     var loadType = document.getElementById('loadType');
                     if (type === 'SMART_2' && !loadType.value) loadType.value = 'Goods';
                 });
+
+                // Тип наклейки — за моделлю тахографа: DTCO 4.1/4.1a → Smart 2, DTCO 4.0/4.0e → Smart 1,
+                // решта — звичайна. Лише коли модель обрано/змінено (не при відкритті збереженого
+                // протоколу); після цього тип можна змінити вручну.
+                function labelTypeForModel(model) {
+                    var m = (model || '').toLowerCase();
+                    // "4.1" окремим числом, щоб "1324.1" не рахувалось
+                    if (/smart\s*2|(^|[^\d.])4\.1/.test(m)) return 'SMART_2';
+                    if (/smart\s*1|(^|[^\d.])4\.0/.test(m)) return 'SMART_1';
+                    return 'STANDARD';
+                }
+                document.getElementById('tachographModel').addEventListener('change', function () {
+                    var type = labelTypeForModel(this.value);
+                    if (labelTypeSelect.value !== type) {
+                        labelTypeSelect.value = type;
+                        labelTypeSelect.dispatchEvent(new Event('change'));
+                    }
+                });
             })();
 
             loadAttributeCategory('BRAND', ['tachographBrand']);
@@ -793,6 +811,7 @@
                     list.push(created);
                     attributeCache[attributeTargetCategory] = list;
                     populateAttributeSelect(attributeTargetSelectId, attributeTargetCategory, created.name);
+                    document.getElementById(attributeTargetSelectId).dispatchEvent(new Event('change'));
                     attributeModalOverlay.hidden = true;
                 }).catch(function (err) {
                     attributeModalError.textContent = err.message;
@@ -860,6 +879,7 @@
             function lockTachographFields(t) {
                 if (t) {
                     setSelectValueEnsureOption(tachographModelSelect, t.model);
+                    tachographModelSelect.dispatchEvent(new Event('change'));
                     setSelectValueEnsureOption(tachographManufacturerSelect, t.manufacturer);
                     tachographSerialNumberInput.value = t.serialNumber || '';
                     tachographManufactureYearInput.value = t.productionDate ? t.productionDate.slice(0, 4) : '';
