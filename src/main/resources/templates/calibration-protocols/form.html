@@ -139,6 +139,7 @@
                     <label for="tachographModel">Модель</label>
                     <select id="tachographModel" th:field="*{tachographModel}"></select>
                     <button type="button" class="link-btn" data-category="MODEL" data-target="tachographModel">+ Додати модель</button>
+                    <button type="button" class="link-btn" id="editModelLabelTypeBtn" hidden>Змінити тип моделі</button>
                 </div>
 
                 <div class="field">
@@ -374,6 +375,26 @@
             <div class="form-actions">
                 <button type="button" class="btn" id="saveCardBtn">Зберегти</button>
                 <button type="button" class="btn-outline" id="cancelCardBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Тип наклейки вже доданої моделі тахографа (зберігається в довіднику моделей) -->
+    <div class="modal-overlay" id="modelLabelTypeModalOverlay" hidden>
+        <div class="modal">
+            <h2 id="modelLabelTypeModalTitle">Тип моделі</h2>
+            <div class="alert alert-error" id="modelLabelTypeModalError" hidden></div>
+            <div class="field field-full">
+                <label for="modelLabelTypeSelect">Тип тахографа (наклейка)</label>
+                <select id="modelLabelTypeSelect">
+                    <option value="STANDARD">Аналоговий / цифровий — звичайна наклейка</option>
+                    <option value="SMART_1">Smart 1</option>
+                    <option value="SMART_2">Smart 2</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveModelLabelTypeBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="cancelModelLabelTypeBtn">Скасувати</button>
             </div>
         </div>
     </div>
@@ -733,13 +754,13 @@
                         selects.forEach(function (selectId) {
                             populateAttributeSelect(selectId, category, pendingSelectValues[selectId] || attributeInitial[selectId]);
                         });
+                        if (category === 'MODEL' && window.refreshEditModelBtn) window.refreshEditModelBtn();
                     });
             }
 
             (function () {
                 var labelTypeSelect = document.getElementById('labelType');
-                if (!labelTypeSelect) return;
-                labelTypeSelect.addEventListener('change', function () {
+                if (labelTypeSelect) labelTypeSelect.addEventListener('change', function () {
                     var type = labelTypeSelect.value;
                     var smart = type === 'SMART_1' || type === 'SMART_2';
                     document.querySelectorAll('[data-smart]').forEach(function (el) { el.style.display = smart ? '' : 'none'; });
@@ -767,7 +788,56 @@
                     if (/dtco/.test(m) && /(^|[^\d.])4\.0/.test(m)) return 'SMART_1';
                     return 'STANDARD';
                 }
+                // "Змінити тип моделі" — видно, коли обрано модель з довідника
+                var modelSelect = document.getElementById('tachographModel');
+                var editModelBtn = document.getElementById('editModelLabelTypeBtn');
+                var modelTypeOverlay = document.getElementById('modelLabelTypeModalOverlay');
+                var modelTypeSelect = document.getElementById('modelLabelTypeSelect');
+                var modelTypeError = document.getElementById('modelLabelTypeModalError');
+                function selectedModelAttribute() {
+                    return (attributeCache.MODEL || []).filter(function (a) { return a.name === modelSelect.value; })[0];
+                }
+                function refreshEditModelBtn() {
+                    editModelBtn.hidden = !selectedModelAttribute();
+                }
+                window.refreshEditModelBtn = refreshEditModelBtn;
+                modelSelect.addEventListener('change', refreshEditModelBtn);
+                editModelBtn.addEventListener('click', function () {
+                    var attr = selectedModelAttribute();
+                    if (!attr) return;
+                    document.getElementById('modelLabelTypeModalTitle').textContent = 'Тип моделі «' + attr.name + '»';
+                    modelTypeSelect.value = attr.labelType || 'STANDARD';
+                    modelTypeError.hidden = true;
+                    modelTypeOverlay.hidden = false;
+                });
+                document.getElementById('cancelModelLabelTypeBtn').addEventListener('click', function () {
+                    modelTypeOverlay.hidden = true;
+                });
+                document.getElementById('saveModelLabelTypeBtn').addEventListener('click', function () {
+                    var attr = selectedModelAttribute();
+                    if (!attr) return;
+                    fetch('/api/tachograph-attributes/' + attr.id + '/label-type?labelType=' + modelTypeSelect.value, {
+                        method: 'PUT',
+                        credentials: 'same-origin'
+                    }).then(function (resp) {
+                        if (!resp.ok) {
+                            return resp.json().then(function (body) { throw new Error(body.message || 'Не вдалося зберегти тип'); });
+                        }
+                        return resp.json();
+                    }).then(function (updated) {
+                        attr.labelType = updated.labelType;
+                        modelTypeOverlay.hidden = true;
+                        // Новий тип моделі одразу застосовується до цього протоколу
+                        modelSelect.dispatchEvent(new Event('change'));
+                    }).catch(function (err) {
+                        modelTypeError.textContent = err.message;
+                        modelTypeError.hidden = false;
+                    });
+                });
+
                 document.getElementById('tachographModel').addEventListener('change', function () {
+                    // З наряду тип визначає послуга — модель його не змінює
+                    if (!labelTypeSelect) return;
                     var type = labelTypeForModel(this.value);
                     if (labelTypeSelect.value !== type) {
                         labelTypeSelect.value = type;

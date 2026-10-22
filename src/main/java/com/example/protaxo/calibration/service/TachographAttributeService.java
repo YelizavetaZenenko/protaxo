@@ -8,6 +8,7 @@ import com.example.protaxo.calibration.entity.TachographAttribute;
 import com.example.protaxo.calibration.entity.TachographAttributeCategory;
 import com.example.protaxo.calibration.repository.TachographAttributeRepository;
 import com.example.protaxo.common.exception.BusinessRuleException;
+import com.example.protaxo.common.exception.NotFoundException;
 import com.example.protaxo.common.util.FieldDiff;
 import java.util.Comparator;
 import java.util.List;
@@ -93,6 +94,26 @@ public class TachographAttributeService {
                 })
                 .add("Значення", saved.getName())
                 .add("Тип наклейки", saved.getLabelType() == null ? null : saved.getLabelType().name())));
+        return new TachographAttributeResponse(saved.getId(), saved.getName(), saved.getLabelType());
+    }
+
+    /** Тип наклейки моделі тахографа — можна змінити вже після додавання моделі. */
+    public TachographAttributeResponse updateLabelType(Long id, CalibrationLabelType labelType) {
+        TachographAttribute attribute = tachographAttributeRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("TachographAttribute %d not found".formatted(id)));
+        if (attribute.getCategory() != TachographAttributeCategory.MODEL) {
+            throw new BusinessRuleException("Тип наклейки задається лише для моделі тахографа");
+        }
+        CalibrationLabelType before = attribute.getLabelType();
+        // Звичайна наклейка зберігається як NULL — так само, як у моделей без типу
+        CalibrationLabelType after = labelType == CalibrationLabelType.STANDARD ? null : labelType;
+        attribute.setLabelType(after);
+        TachographAttribute saved = tachographAttributeRepository.save(attribute);
+        auditLogService.record(AuditAction.UPDATE, "TachographAttribute", saved.getId(), FieldDiff.between(
+                FieldDiff.snapshot().add("Модель тахографа", saved.getName())
+                        .add("Тип наклейки", before == null ? null : before.name()),
+                FieldDiff.snapshot().add("Модель тахографа", saved.getName())
+                        .add("Тип наклейки", after == null ? null : after.name())));
         return new TachographAttributeResponse(saved.getId(), saved.getName(), saved.getLabelType());
     }
 }
