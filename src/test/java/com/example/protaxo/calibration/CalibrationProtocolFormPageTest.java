@@ -11,12 +11,18 @@ import com.example.protaxo.calibration.entity.CalibrationProtocol;
 import com.example.protaxo.calibration.repository.CalibrationProtocolRepository;
 import com.example.protaxo.client.entity.Client;
 import com.example.protaxo.client.repository.ClientRepository;
+import com.example.protaxo.vehicle.entity.Vehicle;
+import com.example.protaxo.vehicle.repository.VehicleRepository;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import javax.imageio.ImageIO;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +44,7 @@ class CalibrationProtocolFormPageTest {
     @Autowired MockMvc mvc;
     @Autowired ClientRepository clientRepository;
     @Autowired CalibrationProtocolRepository calibrationProtocolRepository;
+    @Autowired VehicleRepository vehicleRepository;
 
     UsernamePasswordAuthenticationToken admin = new UsernamePasswordAuthenticationToken(
             "admin@protaxo.local", null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
@@ -125,12 +132,24 @@ class CalibrationProtocolFormPageTest {
 
     @Test
     void factChecksAreSavedAndPrinted() throws Exception {
-        Client client = clientRepository.save(Client.builder().name("Протокол клієнт " + UUID.randomUUID()).build());
+        Client client = clientRepository.save(Client.builder().name("Транском Альянс ПП").edrpou("40048708").build());
+        vehicleRepository.save(Vehicle.builder().client(client).registrationNumber("AC6400ET")
+                .vin("WMA06XZZ7LP145804").make("MAN").model("TGX 18.510").year(2020).build());
         String internalNumber = "T-" + UUID.randomUUID();
         mvc.perform(post("/calibration-protocols").with(authentication(admin)).with(csrf())
                         .param("internalNumber", internalNumber)
                         .param("clientId", client.getId().toString())
-                        .param("cardNumber", "ABC123456789012")
+                        .param("cardNumber", "UAM000000069200")
+                        .param("executorPosition", "Директор").param("executorName", "Горбатюк В.В.")
+                        .param("representativeName", "Пацюк О. О.")
+                        .param("vehicleName", "AC6400ET (MAN TGX 18.510)")
+                        .param("vehicleVrn", "AC6400ET").param("vehicleVin", "WMA06XZZ7LP145804")
+                        .param("tachographBrand", "Siemens").param("tachographModel", "1381")
+                        .param("tachographType", "1381.1511043002").param("tachographManufacturer", "Continental Automotive")
+                        .param("tachographSerialNumber", "0010350139").param("tachographManufactureYear", "2020")
+                        .param("mileageBefore", "608 220").param("mileageAfter", "608 220")
+                        .param("tireCircumferenceL", "3 110").param("coefficientW", "8140").param("constantK", "8140")
+                        .param("speedLimiterValue", "90")
                         .param("inspectionReason", "ремонт")
                         .param("previousInspectionDate", "05.03.2025")
                         .param("tireSize", "315/70 R22,5")
@@ -167,5 +186,16 @@ class CalibrationProtocolFormPageTest {
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
         assertThat(new String(pdf, 0, 4, StandardCharsets.US_ASCII)).isEqualTo("%PDF");
         Files.write(Path.of("target", "calibration-protocol-test.pdf"), pdf);
+        try (PDDocument doc = PDDocument.load(pdf)) {
+            String text = new PDFTextStripper().getText(doc).replaceAll("\s+", " ");
+            // п. 7 — ЄДРПОУ контрагента, п. 9.2/9.3 — марка, модель і рік з довідника авто контрагента
+            assertThat(text).contains("40048708", "MAN TGX 18.510", "2020р.", "Siemens 1381",
+                    "Директор Горбатюк В.В.", "14. Підтверджую, що я", "0,85");
+            PDFRenderer renderer = new PDFRenderer(doc);
+            for (int i = 0; i < doc.getNumberOfPages(); i++) {
+                ImageIO.write(renderer.renderImageWithDPI(i, 110), "png",
+                        Path.of("target", "calibration-protocol-page-" + (i + 1) + ".png").toFile());
+            }
+        }
     }
 }

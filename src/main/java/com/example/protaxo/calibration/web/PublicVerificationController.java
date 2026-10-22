@@ -2,8 +2,6 @@ package com.example.protaxo.calibration.web;
 
 import com.example.protaxo.calibration.dto.CalibrationProtocolResponse;
 import com.example.protaxo.calibration.service.CalibrationProtocolService;
-import com.example.protaxo.client.service.ClientService;
-import com.example.protaxo.pdf.service.PdfRenderService;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +10,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.thymeleaf.context.Context;
 
 /**
  * The public counterpart of {@link CalibrationProtocolPageController#printPdf} — reachable by
@@ -29,20 +26,12 @@ import org.thymeleaf.context.Context;
 public class PublicVerificationController {
 
     private final CalibrationProtocolService calibrationProtocolService;
-    private final ClientService clientService;
-    private final PdfRenderService pdfRenderService;
+    private final CalibrationProtocolPdfRenderer calibrationProtocolPdfRenderer;
 
     @GetMapping("/{qrHash}/pdf")
     public void pdf(@PathVariable String qrHash, HttpServletResponse response) throws IOException {
         CalibrationProtocolResponse protocol = calibrationProtocolService.findByQrHash(qrHash);
-        String clientName = clientService.findById(protocol.clientId()).name();
-
-        Context context = new Context();
-        context.setVariable("protocol", protocol);
-        context.setVariable("clientName", clientName);
-        context.setVariable("logoDataUri", pdfRenderService.classpathImageDataUri("images/logo.png", "image/png"));
-        context.setVariable("watermarkDataUri", pdfRenderService.watermarkPageDataUri("images/logo.png"));
-        byte[] pdf = pdfRenderService.render("calibration-protocol", context);
+        byte[] pdf = calibrationProtocolPdfRenderer.render(protocol);
 
         response.setContentType(MediaType.APPLICATION_PDF_VALUE);
         response.setHeader("Content-Disposition", "inline; filename=\"protocol-" + protocol.id() + ".pdf\"");
