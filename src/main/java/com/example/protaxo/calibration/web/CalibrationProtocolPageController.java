@@ -10,6 +10,7 @@ import com.example.protaxo.client.service.ClientService;
 import com.example.protaxo.invoice.dto.InvoiceItemResponse;
 import com.example.protaxo.invoice.dto.InvoiceResponse;
 import com.example.protaxo.invoice.service.InvoiceService;
+import com.example.protaxo.pdf.service.PdfRenderService;
 import com.example.protaxo.printagent.PrintAgentSessionRegistry;
 import com.example.protaxo.printagent.LabelImageRenderer;
 import com.example.protaxo.suggestion.entity.FieldSuggestionCategory;
@@ -40,6 +41,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.thymeleaf.context.Context;
 
 @Controller
 @RequestMapping("/calibration-protocols")
@@ -51,7 +53,7 @@ public class CalibrationProtocolPageController {
     private final InvoiceService invoiceService;
     private final VehicleService vehicleService;
     private final FieldSuggestionService fieldSuggestionService;
-    private final CalibrationProtocolPdfRenderer calibrationProtocolPdfRenderer;
+    private final PdfRenderService pdfRenderService;
     private final PrintAgentSessionRegistry printAgentSessionRegistry;
     private final LabelImageRenderer labelImageRenderer;
 
@@ -228,7 +230,14 @@ public class CalibrationProtocolPageController {
     @GetMapping("/{id}/pdf")
     public void printPdf(@PathVariable Long id, HttpServletResponse response) throws IOException {
         CalibrationProtocolResponse protocol = calibrationProtocolService.findById(id);
-        byte[] pdf = calibrationProtocolPdfRenderer.render(protocol);
+        String clientName = clientService.findById(protocol.clientId()).name();
+
+        Context context = new Context();
+        context.setVariable("protocol", protocol);
+        context.setVariable("clientName", clientName);
+        context.setVariable("logoDataUri", pdfRenderService.classpathImageDataUri("images/logo.png", "image/png"));
+        context.setVariable("watermarkDataUri", pdfRenderService.watermarkPageDataUri("images/logo.png"));
+        byte[] pdf = pdfRenderService.render("calibration-protocol", context);
 
         response.setContentType(MediaType.APPLICATION_PDF_VALUE);
         response.setHeader("Content-Disposition", "inline; filename=\"protocol-" + id + ".pdf\"");
