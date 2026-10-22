@@ -76,9 +76,9 @@ public class CalibrationProtocolFormData {
 
     private String speedDeviationInService;
 
-    private String timeDeviationAfterInstall = "0.1 хвилин за добу";
+    private String timeDeviationAfterInstall = "+0.01 та +0.07";
 
-    private String timeDeviationInService = "0.7 хвилин за 7 діб";
+    private String timeDeviationInService;
 
     private String speedLimiterValue;
 

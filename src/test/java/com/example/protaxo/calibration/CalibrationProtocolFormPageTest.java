@@ -57,12 +57,12 @@ class CalibrationProtocolFormPageTest {
         String html = mvc.perform(get("/calibration-protocols/new").with(authentication(admin))).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         assertThat(html).contains("Рік виготовлення", "Відхилення</h2>", "Реєстрування факту</h2>",
-                "data-category=\"INSPECTION_REASON\"", "data-category=\"TIRE_SIZE\"", "value=\"0.1\"", "value=\"0.1 хвилин за добу\"",
+                "data-category=\"INSPECTION_REASON\"", "data-category=\"TIRE_SIZE\"", "value=\"0.1\"", "value=\"+0.01 та +0.07\"",
                 "value=\"0.7 хвилин за 7 діб\"", "Цілісність пломб", "Табличка перевірки",
                 "<option value=\"0.20\">2,0 бар (0.20 МПа)</option>", "<option value=\"0.95\">9,5 бар (0.95 МПа)</option>");
         Files.writeString(Path.of("target", "calibration-protocol-form-test.html"), html);
         // Відхилення шляху/швидкості "в експлуатації" на сайті не вводяться — у бланку завжди "-"
-        assertThat(html).doesNotContain("id=\"pathDeviationInService\"", "id=\"speedDeviationInService\"");
+        assertThat(html).doesNotContain("id=\"pathDeviationInService\"", "id=\"speedDeviationInService\"", "id=\"timeDeviationInService\"");
         // Форма закривається лише після кнопок — поля не випадають за її межі
         assertThat(html.lastIndexOf("</form>")).isGreaterThan(html.indexOf("id=\"saveProtocolBtn\""));
     }
