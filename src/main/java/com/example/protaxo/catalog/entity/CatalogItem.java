@@ -47,4 +47,10 @@ public class CatalogItem extends BaseEntity {
     @Column(name = "vat_rate", nullable = false)
     @Builder.Default
     private VatRate vatRate = VatRate.VAT_20;
+
+    /** Одиниця виміру товару (шт / м); ціна й залишок — у цих одиницях. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private CatalogUnit unit = CatalogUnit.PIECE;
 }

@@ -6,6 +6,7 @@ import com.example.protaxo.catalog.dto.CatalogItemRequest;
 import com.example.protaxo.catalog.dto.CatalogItemResponse;
 import com.example.protaxo.catalog.entity.CatalogItem;
 import com.example.protaxo.catalog.entity.CatalogItemType;
+import com.example.protaxo.catalog.entity.CatalogUnit;
 import com.example.protaxo.catalog.mapper.CatalogItemMapper;
 import com.example.protaxo.catalog.repository.CatalogItemRepository;
 import com.example.protaxo.common.exception.BusinessRuleException;
@@ -58,7 +59,8 @@ public class CatalogItemService {
             // Бухгалтер змінює лише ціну, залишок і ПДВ — тип і назву бере з наявного запису,
             // навіть якщо форму підмінили.
             request = new CatalogItemRequest(catalogItem.getType(), catalogItem.getName(),
-                    request.basePrice(), request.stockQuantity(), request.vatRate(), request.purchasePrice());
+                    request.basePrice(), request.stockQuantity(), request.vatRate(), request.purchasePrice(),
+                    catalogItem.getUnit());
         }
         FieldDiff.Snapshot before = snapshot(catalogItem);
         catalogItemMapper.updateEntity(request, catalogItem);
@@ -68,10 +70,16 @@ public class CatalogItemService {
         return catalogItemMapper.toResponse(saved);
     }
 
-    /** Послуги не мають фізичного залишку — поле ігнорується на сервері, а не лише ховається в UI. */
+    /**
+     * Послуги не мають фізичного залишку й одиниці виміру — поля ігноруються на сервері, а не лише
+     * ховаються в UI. Товар без одиниці — штуки.
+     */
     private void clearStockForServices(CatalogItem catalogItem) {
         if (catalogItem.getType() == CatalogItemType.SERVICE) {
             catalogItem.setStockQuantity(null);
+            catalogItem.setUnit(CatalogUnit.PIECE);
+        } else if (catalogItem.getUnit() == null) {
+            catalogItem.setUnit(CatalogUnit.PIECE);
         }
     }
 
@@ -90,7 +98,8 @@ public class CatalogItemService {
                 .add("Базова ціна", c.getBasePrice())
                 .add("Ціна закупівлі", c.getPurchasePrice())
                 .add("Залишок", c.getStockQuantity())
-                .add("Ставка ПДВ", c.getVatRate() == null ? null : c.getVatRate().getLabel());
+                .add("Ставка ПДВ", c.getVatRate() == null ? null : c.getVatRate().getLabel())
+                .add("Одиниця", c.getType() == CatalogItemType.SERVICE || c.getUnit() == null ? null : c.getUnit().getLabel());
     }
 
     private CatalogItem getOrThrow(Long id) {

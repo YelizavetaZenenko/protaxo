@@ -32,6 +32,15 @@
                     <div class="field-error" th:if="${#fields.hasErrors('type')}" th:errors="*{type}"></div>
                 </div>
 
+                <div class="field" id="unitField">
+                    <label for="unit">Одиниця виміру *</label>
+                    <select id="unit" th:field="*{unit}" th:disabled="${#authorization.expression('hasRole(''ACCOUNTANT'')')}">
+                        <option th:each="u : ${units}" th:value="${u}"
+                                th:text="${u.name() == 'METER'} ? 'Метри (м)' : 'Штуки (шт)'"></option>
+                    </select>
+                    <div class="muted">Ціна й залишок — за одну одиницю: 1 шт або 1 м</div>
+                </div>
+
                 <div class="field">
                     <label for="basePrice">Базова ціна (з ПДВ) *</label>
                     <input type="number" step="0.01" min="0" id="basePrice" th:field="*{basePrice}">
@@ -97,6 +106,8 @@
                 var isService = typeSelect.value === 'SERVICE';
                 stockInput.disabled = isService;
                 if (isService) stockInput.value = '';
+                // У послуги одиниці виміру немає (у документах — «послуга»)
+                document.getElementById('unitField').style.display = isService ? 'none' : '';
             }
 
             typeSelect.addEventListener('change', updateStockAvailability);

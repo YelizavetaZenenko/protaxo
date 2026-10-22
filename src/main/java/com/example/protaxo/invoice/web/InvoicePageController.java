@@ -337,7 +337,7 @@ public class InvoicePageController {
 
     private BillItemRow toBillItemRow(InvoiceItemResponse item) {
         boolean service = item.catalogItemType() == CatalogItemType.SERVICE;
-        String unit = service ? "послуга" : "шт";
+        String unit = service ? "послуга" : item.unitLabel();
         // ПДВ рахується й зберігається під час збереження наряду (InvoiceService.applyItems) —
         // PDF лише показує збережені суми, щоб документ збігався з обліком. Ціна в наряді — з ПДВ,
         // документи ж показують ціну без ПДВ; без знижки сума до знижки = збережена сума без ПДВ.

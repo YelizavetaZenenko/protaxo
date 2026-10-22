@@ -1,5 +1,6 @@
 package com.example.protaxo.catalog.dto;
 
+import com.example.protaxo.catalog.entity.CatalogUnit;
 import com.example.protaxo.catalog.entity.CatalogItemType;
 import com.example.protaxo.common.vat.VatRate;
 import jakarta.validation.constraints.DecimalMin;
@@ -13,6 +14,7 @@ public record CatalogItemRequest(
         @NotNull @DecimalMin("0.00") BigDecimal basePrice,
         @DecimalMin("0.000") BigDecimal stockQuantity,
         @NotNull VatRate vatRate,
-        @DecimalMin("0.00") BigDecimal purchasePrice
+        @DecimalMin("0.00") BigDecimal purchasePrice,
+        CatalogUnit unit
 ) {
 }

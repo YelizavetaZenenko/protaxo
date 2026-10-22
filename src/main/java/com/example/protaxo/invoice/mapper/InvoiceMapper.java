@@ -24,6 +24,7 @@ public interface InvoiceMapper {
 
     @Mapping(source = "catalogItem.id", target = "catalogItemId")
     @Mapping(source = "catalogItem.type", target = "catalogItemType")
+    @Mapping(source = "catalogItem.unit", target = "catalogItemUnit")
     InvoiceItemResponse toItemResponse(InvoiceItem item);
 
     default String buildBuyerOrderLabel(Invoice invoice) {

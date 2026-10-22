@@ -1125,6 +1125,11 @@ td.actions-cell > * + * {
     min-width: 4.5rem;
 }
 
+/* Одиниця товару (шт / м) поруч із кількістю — у тому ж рядку, поле звужується лише коли вона є */
+.items-table .unit-label:empty { display: none; }
+.items-table .unit-label { display: inline-block; width: 1.4rem; }
+.items-table td:has(> .unit-label:not(:empty)) .qty-input { width: calc(100% - 1.8rem); }
+
 .items-table .price-input {
     min-width: 7rem;
 }

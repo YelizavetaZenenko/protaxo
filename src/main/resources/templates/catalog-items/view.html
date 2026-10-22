@@ -34,7 +34,7 @@
                 </div>
                 <div class="field">
                     <label>Ціна продажу</label>
-                    <div th:text="${#numbers.formatDecimal(catalogItem.basePrice, 1, 2)}"></div>
+                    <div th:text="${#numbers.formatDecimal(catalogItem.basePrice, 1, 2)} + (${catalogItem.unitLabel()} == '' ? '' : ' за 1 ' + ${catalogItem.unitLabel()})"></div>
                 </div>
                 <div class="field">
                     <label>Ставка ПДВ</label>
@@ -42,7 +42,7 @@
                 </div>
                 <div class="field" th:if="${catalogItem.type.name() == 'MATERIAL'}">
                     <label>Залишок</label>
-                    <div th:text="${catalogItem.stockQuantity != null ? catalogItem.stockQuantityDisplay() : '—'}"></div>
+                    <div th:text="${catalogItem.stockQuantity != null ? catalogItem.stockQuantityDisplay() + ' ' + catalogItem.unitLabel() : '—'}"></div>
                 </div>
             </div>
         </div>

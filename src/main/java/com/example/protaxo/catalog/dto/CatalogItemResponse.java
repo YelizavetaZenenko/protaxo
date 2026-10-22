@@ -1,5 +1,6 @@
 package com.example.protaxo.catalog.dto;
 
+import com.example.protaxo.catalog.entity.CatalogUnit;
 import com.example.protaxo.catalog.entity.CatalogItemType;
 import com.example.protaxo.common.vat.VatRate;
 import java.math.BigDecimal;
@@ -11,8 +12,14 @@ public record CatalogItemResponse(
         BigDecimal basePrice,
         BigDecimal stockQuantity,
         VatRate vatRate,
-        BigDecimal purchasePrice
+        BigDecimal purchasePrice,
+        CatalogUnit unit
 ) {
+
+    /** "шт" / "м"; у послуг одиниці немає. */
+    public String unitLabel() {
+        return type == CatalogItemType.SERVICE || unit == null ? "" : unit.getLabel();
+    }
 
     /** "5" instead of "5.000", "2.5" instead of "2.500" — same pattern as BillItemRow#quantityDisplay. */
     public String stockQuantityDisplay() {

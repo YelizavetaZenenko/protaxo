@@ -148,10 +148,10 @@
                                     <select th:field="*{items[__${idx}__].catalogItemId}" class="catalog-select">
                                         <option value="">— оберіть товар —</option>
                                         <option th:each="ci : ${materialCatalogItems}" th:value="${ci.id}"
-                                                th:attr="data-price=${ci.basePrice},data-vat=${ci.vatRate != null ? ci.vatRate.percent : 20}" th:text="${ci.name}"></option>
+                                                th:attr="data-price=${ci.basePrice},data-vat=${ci.vatRate != null ? ci.vatRate.percent : 20},data-unit=${ci.unitLabel()}" th:text="${ci.name}"></option>
                                     </select>
                                 </td>
-                                <td><input type="number" step="0.001" min="0" th:field="*{items[__${idx}__].quantity}" class="qty-input"></td>
+                                <td><input type="number" step="0.001" min="0" th:field="*{items[__${idx}__].quantity}" class="qty-input"> <span class="muted unit-label"></span></td>
                                 <td><input type="number" step="0.01" min="0" th:field="*{items[__${idx}__].price}" class="price-input"></td>
                                 <td><input type="number" step="0.01" min="0" max="100" th:field="*{items[__${idx}__].discountPercent}" class="discount-input" placeholder="0"></td>
                                 <td class="amount-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
@@ -197,7 +197,7 @@
                                                 th:attr="data-price=${ci.basePrice},data-vat=${ci.vatRate != null ? ci.vatRate.percent : 20}" th:text="${ci.name}"></option>
                                     </select>
                                 </td>
-                                <td><input type="number" step="0.001" min="0" th:field="*{items[__${idx}__].quantity}" class="qty-input"></td>
+                                <td><input type="number" step="0.001" min="0" th:field="*{items[__${idx}__].quantity}" class="qty-input"> <span class="muted unit-label"></span></td>
                                 <td><input type="number" step="0.01" min="0" th:field="*{items[__${idx}__].price}" class="price-input"></td>
                                 <td><input type="number" step="0.01" min="0" max="100" th:field="*{items[__${idx}__].discountPercent}" class="discount-input" placeholder="0"></td>
                                 <td class="amount-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
@@ -407,10 +407,10 @@
                 <select name="items[__INDEX__].catalogItemId" class="catalog-select">
                     <option value="">— оберіть товар —</option>
                     <option th:each="ci : ${materialCatalogItems}" th:value="${ci.id}"
-                            th:attr="data-price=${ci.basePrice},data-vat=${ci.vatRate != null ? ci.vatRate.percent : 20}" th:text="${ci.name}"></option>
+                            th:attr="data-price=${ci.basePrice},data-vat=${ci.vatRate != null ? ci.vatRate.percent : 20},data-unit=${ci.unitLabel()}" th:text="${ci.name}"></option>
                 </select>
             </td>
-            <td><input type="number" step="0.001" min="0" name="items[__INDEX__].quantity" class="qty-input"></td>
+            <td><input type="number" step="0.001" min="0" name="items[__INDEX__].quantity" class="qty-input"> <span class="muted unit-label"></span></td>
             <td><input type="number" step="0.01" min="0" name="items[__INDEX__].price" class="price-input"></td>
             <td><input type="number" step="0.01" min="0" max="100" name="items[__INDEX__].discountPercent" class="discount-input" placeholder="0"></td>
             <td class="amount-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
@@ -429,7 +429,7 @@
                             th:attr="data-price=${ci.basePrice},data-vat=${ci.vatRate != null ? ci.vatRate.percent : 20}" th:text="${ci.name}"></option>
                 </select>
             </td>
-            <td><input type="number" step="0.001" min="0" name="items[__INDEX__].quantity" class="qty-input"></td>
+            <td><input type="number" step="0.001" min="0" name="items[__INDEX__].quantity" class="qty-input"> <span class="muted unit-label"></span></td>
             <td><input type="number" step="0.01" min="0" name="items[__INDEX__].price" class="price-input"></td>
             <td><input type="number" step="0.01" min="0" max="100" name="items[__INDEX__].discountPercent" class="discount-input" placeholder="0"></td>
             <td class="amount-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
@@ -480,6 +480,8 @@
                     row.querySelector('.amount-display').textContent = amount.toFixed(2);
                     row.querySelector('.vat-display').textContent = vat.toFixed(2);
                     row.querySelector('.vat-rate-label').textContent = hasItem ? vatPercent + '%' : '';
+                    // Одиниця товару (шт / м) біля кількості: 5 м × 100 грн/м = 500 грн
+                    row.querySelector('.unit-label').textContent = hasItem && option.dataset.unit ? option.dataset.unit : '';
                     total += amount;
                     totalVat += vat;
                 });

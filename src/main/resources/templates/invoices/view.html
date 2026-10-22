@@ -96,7 +96,7 @@
                     <td th:text="${item.lineNumber}"></td>
                     <td th:text="${item.itemName}"></td>
                     <td th:text="${item.catalogItemType == T(com.example.protaxo.catalog.entity.CatalogItemType).SERVICE ? 'Послуга' : 'Товар'}"></td>
-                    <td class="num" th:text="${#numbers.formatDecimal(item.quantity, 1, 3)}"></td>
+                    <td class="num" th:text="${item.quantity.stripTrailingZeros().toPlainString()} + (${item.unitLabel()} == '' ? '' : ' ' + ${item.unitLabel()})"></td>
                     <td class="num" th:text="${#numbers.formatDecimal(item.price, 1, 2)}"></td>
                     <td class="num" th:text="${item.discountPercent == null or item.discountPercent.signum() == 0 ? '—' : item.discountPercent.stripTrailingZeros().toPlainString() + '%'}"></td>
                     <td class="num" th:text="${#numbers.formatDecimal(item.amountWithoutVat, 1, 2)}"></td>

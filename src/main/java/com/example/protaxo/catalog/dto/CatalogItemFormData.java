@@ -1,5 +1,6 @@
 package com.example.protaxo.catalog.dto;
 
+import com.example.protaxo.catalog.entity.CatalogUnit;
 import com.example.protaxo.catalog.entity.CatalogItemType;
 import com.example.protaxo.common.vat.VatRate;
 import jakarta.validation.constraints.DecimalMin;
@@ -28,4 +29,6 @@ public class CatalogItemFormData {
 
     @NotNull(message = "Оберіть ставку ПДВ")
     private VatRate vatRate = VatRate.VAT_20;
+
+    private CatalogUnit unit = CatalogUnit.PIECE;
 }
