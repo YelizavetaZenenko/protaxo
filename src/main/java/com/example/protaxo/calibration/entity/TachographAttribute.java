@@ -1,5 +1,6 @@
 package com.example.protaxo.calibration.entity;
 
+import com.example.protaxo.calibration.dto.CalibrationLabelType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -39,4 +40,9 @@ public class TachographAttribute {
 
     @Column(nullable = false)
     private String name;
+
+    /** Лише для моделі (MODEL): яку наклейку друкує протокол без наряду з цією моделлю; NULL — звичайну. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "label_type")
+    private CalibrationLabelType labelType;
 }

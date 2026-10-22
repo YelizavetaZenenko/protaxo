@@ -1,5 +1,6 @@
 package com.example.protaxo.calibration.controller;
 
+import com.example.protaxo.calibration.dto.CalibrationLabelType;
 import com.example.protaxo.calibration.dto.TachographAttributeResponse;
 import com.example.protaxo.calibration.entity.TachographAttributeCategory;
 import com.example.protaxo.calibration.service.TachographAttributeService;
@@ -31,7 +32,8 @@ public class TachographAttributeController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TachographAttributeResponse create(@RequestParam TachographAttributeCategory category,
+                                               @RequestParam(required = false) CalibrationLabelType labelType,
                                                @Valid @RequestBody CatalogNameRequest request) {
-        return tachographAttributeService.create(category, request.name());
+        return tachographAttributeService.create(category, request.name(), labelType);
     }
 }

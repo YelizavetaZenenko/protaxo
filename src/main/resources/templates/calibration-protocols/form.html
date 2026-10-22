@@ -386,6 +386,15 @@
                 <label for="newAttributeName">Назва *</label>
                 <input type="text" id="newAttributeName">
             </div>
+            <!-- Лише для моделі тахографа: тип наклейки, який протокол підставлятиме для цієї моделі -->
+            <div class="field field-full" id="newAttributeLabelTypeField" hidden>
+                <label for="newAttributeLabelType">Тип тахографа (наклейка)</label>
+                <select id="newAttributeLabelType">
+                    <option value="STANDARD">Аналоговий / цифровий — звичайна наклейка</option>
+                    <option value="SMART_1">Smart 1</option>
+                    <option value="SMART_2">Smart 2</option>
+                </select>
+            </div>
             <div class="form-actions">
                 <button type="button" class="btn" id="saveAttributeBtn">Зберегти</button>
                 <button type="button" class="btn-outline" id="cancelAttributeBtn">Скасувати</button>
@@ -742,10 +751,14 @@
                     if (type === 'SMART_2' && !loadType.value) loadType.value = 'Goods';
                 });
 
-                // Тип наклейки — за моделлю тахографа: DTCO 4.1/4.1a і "... Smart 2" → Smart 2,
-                // DTCO 4.0/4.0e і "... Smart" → Smart 1, решта — звичайна. Лише коли модель обрано/змінено
-                // (не при відкритті збереженого протоколу); після цього тип можна змінити вручну.
+                // Тип наклейки — за моделлю тахографа: тип, збережений у довіднику моделей (задається
+                // при "+ Додати модель"); модель не з довідника (напр. з прив'язаного тахографа) —
+                // за назвою: DTCO 4.1/4.1a і "... Smart 2" → Smart 2, DTCO 4.0/4.0e і "... Smart" → Smart 1,
+                // решта — звичайна. Лише коли модель обрано/змінено (не при відкритті збереженого
+                // протоколу); після цього тип можна змінити вручну.
                 function labelTypeForModel(model) {
+                    var known = (attributeCache.MODEL || []).filter(function (a) { return a.name === model; })[0];
+                    if (known) return known.labelType || 'STANDARD';
                     var m = (model || '').toLowerCase();
                     if (/smart\s*2/.test(m)) return 'SMART_2';
                     if (/smart/.test(m)) return 'SMART_1';
@@ -784,6 +797,9 @@
                     attributeModalTitle.textContent = attributeTitles[attributeTargetCategory];
                     attributeModalError.hidden = true;
                     newAttributeName.value = '';
+                    var newLabelTypeField = document.getElementById('newAttributeLabelTypeField');
+                    newLabelTypeField.hidden = attributeTargetCategory !== 'MODEL';
+                    document.getElementById('newAttributeLabelType').value = 'STANDARD';
                     attributeModalOverlay.hidden = false;
                     newAttributeName.focus();
                 });
@@ -798,7 +814,12 @@
                     attributeModalError.hidden = false;
                     return;
                 }
-                fetch('/api/tachograph-attributes?category=' + attributeTargetCategory, {
+                var createUrl = '/api/tachograph-attributes?category=' + attributeTargetCategory;
+                var newLabelType = document.getElementById('newAttributeLabelType').value;
+                if (attributeTargetCategory === 'MODEL' && newLabelType !== 'STANDARD') {
+                    createUrl += '&labelType=' + newLabelType;
+                }
+                fetch(createUrl, {
                     method: 'POST',
                     credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json' },

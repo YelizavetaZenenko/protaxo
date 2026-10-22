@@ -2,6 +2,7 @@ package com.example.protaxo.calibration.service;
 
 import com.example.protaxo.audit.entity.AuditAction;
 import com.example.protaxo.audit.service.AuditLogService;
+import com.example.protaxo.calibration.dto.CalibrationLabelType;
 import com.example.protaxo.calibration.dto.TachographAttributeResponse;
 import com.example.protaxo.calibration.entity.TachographAttribute;
 import com.example.protaxo.calibration.entity.TachographAttributeCategory;
@@ -33,7 +34,7 @@ public class TachographAttributeService {
             attributes = attributes.stream().sorted(INSPECTION_REASON_ORDER).toList();
         }
         return attributes.stream()
-                .map(a -> new TachographAttributeResponse(a.getId(), a.getName()))
+                .map(a -> new TachographAttributeResponse(a.getId(), a.getName(), a.getLabelType()))
                 .toList();
     }
 
@@ -70,7 +71,7 @@ public class TachographAttributeService {
         return index >= 0 ? index : INSPECTION_REASONS.size();
     }
 
-    public TachographAttributeResponse create(TachographAttributeCategory category, String name) {
+    public TachographAttributeResponse create(TachographAttributeCategory category, String name, CalibrationLabelType labelType) {
         String trimmed = name.trim();
         if (tachographAttributeRepository.existsByCategoryAndNameIgnoreCase(category, trimmed)) {
             throw new BusinessRuleException("Це значення вже є у довіднику");
@@ -78,6 +79,8 @@ public class TachographAttributeService {
         TachographAttribute saved = tachographAttributeRepository.save(TachographAttribute.builder()
                 .category(category)
                 .name(trimmed)
+                // Тип наклейки має сенс лише для моделі тахографа
+                .labelType(category == TachographAttributeCategory.MODEL ? labelType : null)
                 .build());
         auditLogService.record(AuditAction.CREATE, "TachographAttribute", saved.getId(), FieldDiff.created(FieldDiff.snapshot()
                 .add("Довідник", switch (category) {
@@ -88,7 +91,8 @@ public class TachographAttributeService {
                     case INSPECTION_REASON -> "Підстава для перевірки";
                     case TIRE_SIZE -> "Розмір пневматичних шин";
                 })
-                .add("Значення", saved.getName())));
-        return new TachographAttributeResponse(saved.getId(), saved.getName());
+                .add("Значення", saved.getName())
+                .add("Тип наклейки", saved.getLabelType() == null ? null : saved.getLabelType().name())));
+        return new TachographAttributeResponse(saved.getId(), saved.getName(), saved.getLabelType());
     }
 }
