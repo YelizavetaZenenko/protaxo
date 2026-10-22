@@ -1,11 +1,14 @@
 package com.example.protaxo.calibration.entity;
 
+import com.example.protaxo.calibration.dto.CalibrationLabelType;
 import com.example.protaxo.client.entity.Client;
 import com.example.protaxo.common.entity.BaseEntity;
 import com.example.protaxo.invoice.entity.Invoice;
 import com.example.protaxo.tachograph.entity.Tachograph;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -218,4 +221,9 @@ public class CalibrationProtocol extends BaseEntity {
 
     @Column(name = "dsrc_serial_number")
     private String dsrcSerialNumber;
+
+    /** Тип наклейки, обраний вручну — лише для протоколу без наряд-заказу (з наряду — за послугою). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "label_type")
+    private CalibrationLabelType labelType;
 }

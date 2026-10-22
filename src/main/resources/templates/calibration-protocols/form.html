@@ -273,44 +273,59 @@
                     <label class="fact-check"><input type="checkbox" id="sealsIntact" th:field="*{sealsIntact}"> Цілісність пломб</label>
                 </div>
 
-                <!-- Field removed from the form; kept hidden so editing doesn't wipe previously saved values -->
-                <input type="hidden" id="sealNumbers" th:field="*{sealNumbers}">
+                <div class="field-full protocol-section">
+                    <h2>Наклейка</h2>
+                    <div class="muted">Лише для наклейки — на бланку протоколу не друкується</div>
+                </div>
 
-                <th:block th:if="${labelType.smart}">
-                    <div class="field-full protocol-section">
-                        <h2
-                            th:text="${labelType.name() == 'SMART_2'} ? 'Наклейка Smart 2' : 'Наклейка Smart 1'"></h2>
-                        <div class="muted">Лише для наклейки смарт-тахографа — на бланку протоколу не друкується</div>
-                    </div>
+                <!-- Без наряд-заказу тип наклейки обирається тут; з наряду — за послугою калібрування в ньому -->
+                <div class="field" th:if="${protocol.invoiceId == null}">
+                    <label for="labelType">Тип наклейки</label>
+                    <select id="labelType" th:field="*{labelType}">
+                        <option value="STANDARD">Звичайна (з QR-кодом)</option>
+                        <option value="SMART_1">Smart 1</option>
+                        <option value="SMART_2">Smart 2</option>
+                    </select>
+                </div>
+                <div class="field" th:if="${protocol.invoiceId != null}">
+                    <label>Тип наклейки</label>
+                    <div th:text="${labelType.name() == 'SMART_2'} ? 'Smart 2' : (${labelType.name() == 'SMART_1'} ? 'Smart 1' : 'Звичайна (з QR-кодом)')"></div>
+                    <div class="muted">За послугою калібрування в наряд-заказі</div>
+                </div>
 
-                    <div class="field" th:if="${labelType.name() == 'SMART_2'}">
-                        <label for="loadType">Load type (тип перевезень)</label>
-                        <select id="loadType" th:field="*{loadType}">
-                            <option value="">—</option>
-                            <option value="Goods">Goods (вантажі)</option>
-                            <option value="Passengers">Passengers (пасажири)</option>
-                        </select>
-                    </div>
+                <!-- Поля смарт-наклейки приховані (але надсилаються), поки тип не Smart -->
+                <div class="field" data-smart th:style="${labelType.smart} ? '' : 'display:none'">
+                    <label for="sealNumbers">Номери пломб</label>
+                    <input type="text" id="sealNumbers" th:field="*{sealNumbers}">
+                </div>
 
-                    <div class="field">
-                        <label for="extGnss">Ext. GNSS (зовнішній GNSS)</label>
-                        <select id="extGnss" th:field="*{extGnss}">
-                            <option value="">—</option>
-                            <option value="Not available">Not available</option>
-                            <option value="Available">Available</option>
-                        </select>
-                    </div>
+                <div class="field" data-smart2 th:style="${labelType.name() == 'SMART_2'} ? '' : 'display:none'">
+                    <label for="loadType">Load type (тип вантажу)</label>
+                    <select id="loadType" th:field="*{loadType}">
+                        <option value="">—</option>
+                        <option value="Goods">Goods (вантажі)</option>
+                        <option value="Passengers">Passengers (пасажири)</option>
+                    </select>
+                </div>
 
-                    <div class="field">
-                        <label for="gnssSerialNumber">GNSS S/N</label>
-                        <input type="text" id="gnssSerialNumber" th:field="*{gnssSerialNumber}">
-                    </div>
+                <div class="field" data-smart th:style="${labelType.smart} ? '' : 'display:none'">
+                    <label for="extGnss">Ext. GNSS (зовнішній GNSS)</label>
+                    <select id="extGnss" th:field="*{extGnss}">
+                        <option value="">—</option>
+                        <option value="Not available">Not available</option>
+                        <option value="Available">Available</option>
+                    </select>
+                </div>
 
-                    <div class="field">
-                        <label for="dsrcSerialNumber">DSRC S/N</label>
-                        <input type="text" id="dsrcSerialNumber" th:field="*{dsrcSerialNumber}">
-                    </div>
-                </th:block>
+                <div class="field" data-smart th:style="${labelType.smart} ? '' : 'display:none'">
+                    <label for="gnssSerialNumber">GNSS S/N</label>
+                    <input type="text" id="gnssSerialNumber" th:field="*{gnssSerialNumber}">
+                </div>
+
+                <div class="field" data-smart th:style="${labelType.smart} ? '' : 'display:none'">
+                    <label for="dsrcSerialNumber">DSRC S/N</label>
+                    <input type="text" id="dsrcSerialNumber" th:field="*{dsrcSerialNumber}">
+                </div>
 
                 <div class="field-full protocol-section">
                     <h2>Роботи виконав</h2>
@@ -712,6 +727,22 @@
                     });
             }
 
+            (function () {
+                var labelTypeSelect = document.getElementById('labelType');
+                if (!labelTypeSelect) return;
+                labelTypeSelect.addEventListener('change', function () {
+                    var type = labelTypeSelect.value;
+                    var smart = type === 'SMART_1' || type === 'SMART_2';
+                    document.querySelectorAll('[data-smart]').forEach(function (el) { el.style.display = smart ? '' : 'none'; });
+                    document.querySelectorAll('[data-smart2]').forEach(function (el) { el.style.display = type === 'SMART_2' ? '' : 'none'; });
+                    // Звичні відповіді на смарт-наклейці, як у протоколі з наряду — їх можна змінити
+                    var extGnss = document.getElementById('extGnss');
+                    if (smart && !extGnss.value) extGnss.value = 'Not available';
+                    var loadType = document.getElementById('loadType');
+                    if (type === 'SMART_2' && !loadType.value) loadType.value = 'Goods';
+                });
+            })();
+
             loadAttributeCategory('BRAND', ['tachographBrand']);
             loadAttributeCategory('MODEL', ['tachographModel']);
             loadAttributeCategory('TYPE', ['tachographType']);
@@ -1039,8 +1070,8 @@
                     'coverOpeningRegistered', 'powerCutoffRegistered', 'pulseSensorInterruptionRegistered',
                     'verificationPlatePresent', 'markPresent', 'noManipulationDevices', 'sealsIntact',
                     'sealNumbers', 'executorPosition', 'executorName',
-                    'loadType', 'extGnss', 'gnssSerialNumber', 'dsrcSerialNumber']
-                    // Smart-sticker fields exist only on a Smart 1/Smart 2 form.
+                    'labelType', 'loadType', 'extGnss', 'gnssSerialNumber', 'dsrcSerialNumber']
+                    // "Тип наклейки" is on the form only for a protocol without a наряд-заказ.
                     .filter(function (id) { return document.getElementById(id); });
                 var selectFieldIds = ['tachographBrand', 'tachographModel', 'tachographType', 'tachographManufacturer', 'inspectionReason', 'tireSize'];
 
@@ -1070,6 +1101,7 @@
                                 return;
                             }
                             el.value = snapshot[id];
+                            if (id === 'labelType') el.dispatchEvent(new Event('change'));
                             var iso = id === 'previousInspectionDate' && /^(\d{4})-(\d{2})-(\d{2})$/.exec(el.value);
                             if (iso) {
                                 // Старі чернетки зберігали дату з <input type="date"> як рррр-мм-дд

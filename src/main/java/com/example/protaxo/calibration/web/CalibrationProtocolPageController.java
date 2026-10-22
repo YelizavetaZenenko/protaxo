@@ -104,7 +104,7 @@ public class CalibrationProtocolPageController {
             }
         }
         model.addAttribute("protocol", form);
-        addReferenceData(model, form.getInvoiceId());
+        addReferenceData(model, form);
         return "calibration-protocols/form";
     }
 
@@ -138,7 +138,7 @@ public class CalibrationProtocolPageController {
     @PostMapping
     public String create(@Valid @ModelAttribute("protocol") CalibrationProtocolFormData form, BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
-            addReferenceData(model, form.getInvoiceId());
+            addReferenceData(model, form);
             return "calibration-protocols/form";
         }
         CalibrationProtocolResponse created = calibrationProtocolService.create(toRequest(form));
@@ -192,12 +192,13 @@ public class CalibrationProtocolPageController {
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
         CalibrationProtocolResponse response = calibrationProtocolService.findById(id);
-        model.addAttribute("protocol", toFormData(response));
+        CalibrationProtocolFormData form = toFormData(response);
+        model.addAttribute("protocol", form);
         model.addAttribute("editId", id);
         model.addAttribute("protocolNumber", response.protocolNumber());
         model.addAttribute("protocolDate", response.protocolDate());
         model.addAttribute("orderLabel", response.orderLabel());
-        addReferenceData(model, response.invoiceId());
+        addReferenceData(model, form);
         return "calibration-protocols/form";
     }
 
@@ -206,7 +207,7 @@ public class CalibrationProtocolPageController {
                           BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("editId", id);
-            addReferenceData(model, form.getInvoiceId());
+            addReferenceData(model, form);
             return "calibration-protocols/form";
         }
         calibrationProtocolService.update(id, toRequest(form));
@@ -248,11 +249,13 @@ public class CalibrationProtocolPageController {
 
     /**
      * {@code labelType} decides whether the form shows the smart-tachograph sticker fields — taken
-     * from the наряд-заказ's calibration service, the same rule the label itself follows.
+     * from the наряд-заказ's calibration service, the same rule the label itself follows; without a
+     * наряд-заказ — the type picked on the form.
      */
-    private void addReferenceData(Model model, Long invoiceId) {
-        model.addAttribute("labelType", invoiceId == null ? CalibrationLabelType.STANDARD
-                : labelTypeOf(invoiceService.findById(invoiceId)));
+    private void addReferenceData(Model model, CalibrationProtocolFormData form) {
+        Long invoiceId = form.getInvoiceId();
+        CalibrationLabelType picked = form.getLabelType() == null ? CalibrationLabelType.STANDARD : form.getLabelType();
+        model.addAttribute("labelType", invoiceId == null ? picked : labelTypeOf(invoiceService.findById(invoiceId)));
         model.addAttribute("clients", clientService.findAll());
         model.addAttribute("vehicleSuggestions", fieldSuggestionService.findValues(FieldSuggestionCategory.VEHICLE));
         model.addAttribute("representativeSuggestions", fieldSuggestionService.findValues(FieldSuggestionCategory.REPRESENTATIVE));
@@ -294,7 +297,8 @@ public class CalibrationProtocolPageController {
                 form.getPulseSensorInterruptionRegistered(), form.getExecutorPosition(), form.getExecutorName(),
                 form.getInvoiceId(), form.getSealNumbers(), form.getLoadType(), form.getExtGnss(),
                 form.getGnssSerialNumber(), form.getDsrcSerialNumber(),
-                form.isVerificationPlatePresent(), form.isMarkPresent(), form.isNoManipulationDevices(), form.isSealsIntact());
+                form.isVerificationPlatePresent(), form.isMarkPresent(), form.isNoManipulationDevices(), form.isSealsIntact(),
+                form.getLabelType());
     }
 
     private CalibrationProtocolFormData toFormData(CalibrationProtocolResponse response) {
@@ -342,6 +346,7 @@ public class CalibrationProtocolPageController {
         form.setExtGnss(response.extGnss());
         form.setGnssSerialNumber(response.gnssSerialNumber());
         form.setDsrcSerialNumber(response.dsrcSerialNumber());
+        form.setLabelType(response.labelType());
         form.setVerificationPlatePresent(response.verificationPlatePresent());
         form.setMarkPresent(response.markPresent());
         form.setNoManipulationDevices(response.noManipulationDevices());

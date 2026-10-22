@@ -53,6 +53,7 @@ public record CalibrationProtocolRequest(
         boolean verificationPlatePresent,
         boolean markPresent,
         boolean noManipulationDevices,
-        boolean sealsIntact
+        boolean sealsIntact,
+        CalibrationLabelType labelType
 ) {
 }

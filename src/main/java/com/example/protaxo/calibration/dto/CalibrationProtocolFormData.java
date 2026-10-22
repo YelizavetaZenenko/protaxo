@@ -111,4 +111,6 @@ public class CalibrationProtocolFormData {
     private String gnssSerialNumber;
 
     private String dsrcSerialNumber;
+
+    private CalibrationLabelType labelType = CalibrationLabelType.STANDARD;
 }

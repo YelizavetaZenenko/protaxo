@@ -48,11 +48,14 @@ public interface CalibrationProtocolMapper {
                 : protocol.getProtocolDate().toLocalDate().plusYears(CALIBRATION_VALIDITY_YEARS);
     }
 
-    /** Which sticker to print — follows the calibration service on the linked наряд-заказ. */
+    /**
+     * Which sticker to print — follows the calibration service on the linked наряд-заказ; a protocol
+     * without one uses the type picked on its form.
+     */
     default CalibrationLabelType buildLabelType(CalibrationProtocol protocol) {
         Invoice invoice = protocol.getInvoice();
         if (invoice == null) {
-            return CalibrationLabelType.STANDARD;
+            return protocol.getLabelType() == null ? CalibrationLabelType.STANDARD : protocol.getLabelType();
         }
         return CalibrationLabelType.fromServiceNames(invoice.getItems().stream().map(InvoiceItem::getItemName).toList());
     }

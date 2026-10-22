@@ -188,6 +188,7 @@ public class CalibrationProtocolService {
                 .add("Цілісність пломб", p.isSealsIntact() ? "Так" : "Ні")
                 .add("Посада виконавця", p.getExecutorPosition())
                 .add("ПІБ виконавця", p.getExecutorName())
+                .add("Тип наклейки", p.getLabelType() == null ? null : p.getLabelType().name())
                 .add("Номери пломб", p.getSealNumbers())
                 .add("Тип вантажу (Load type)", p.getLoadType())
                 .add("Зовнішній GNSS", p.getExtGnss())
@@ -288,6 +289,7 @@ public class CalibrationProtocolService {
         protocol.setExtGnss(request.extGnss());
         protocol.setGnssSerialNumber(request.gnssSerialNumber());
         protocol.setDsrcSerialNumber(request.dsrcSerialNumber());
+        protocol.setLabelType(request.invoiceId() == null ? request.labelType() : null);
 
         fieldSuggestionService.remember(FieldSuggestionCategory.VEHICLE, request.vehicleName());
         fieldSuggestionService.remember(FieldSuggestionCategory.REPRESENTATIVE, request.representativeName());
