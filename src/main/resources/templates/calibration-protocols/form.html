@@ -742,14 +742,16 @@
                     if (type === 'SMART_2' && !loadType.value) loadType.value = 'Goods';
                 });
 
-                // Тип наклейки — за моделлю тахографа: DTCO 4.1/4.1a → Smart 2, DTCO 4.0/4.0e → Smart 1,
-                // решта — звичайна. Лише коли модель обрано/змінено (не при відкритті збереженого
-                // протоколу); після цього тип можна змінити вручну.
+                // Тип наклейки — за моделлю тахографа: DTCO 4.1/4.1a і "... Smart 2" → Smart 2,
+                // DTCO 4.0/4.0e і "... Smart" → Smart 1, решта — звичайна. Лише коли модель обрано/змінено
+                // (не при відкритті збереженого протоколу); після цього тип можна змінити вручну.
                 function labelTypeForModel(model) {
                     var m = (model || '').toLowerCase();
-                    // "4.1" окремим числом, щоб "1324.1" не рахувалось
-                    if (/smart\s*2|(^|[^\d.])4\.1/.test(m)) return 'SMART_2';
-                    if (/smart\s*1|(^|[^\d.])4\.0/.test(m)) return 'SMART_1';
+                    if (/smart\s*2/.test(m)) return 'SMART_2';
+                    if (/smart/.test(m)) return 'SMART_1';
+                    // Лише для DTCO і "4.1" окремим числом — щоб "EFAS-4.0" чи "1324.1" не рахувались
+                    if (/dtco/.test(m) && /(^|[^\d.])4\.1/.test(m)) return 'SMART_2';
+                    if (/dtco/.test(m) && /(^|[^\d.])4\.0/.test(m)) return 'SMART_1';
                     return 'STANDARD';
                 }
                 document.getElementById('tachographModel').addEventListener('change', function () {
