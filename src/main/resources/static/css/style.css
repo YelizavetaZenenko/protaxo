@@ -1477,6 +1477,20 @@ body.has-protocol-drafts-sidebar .container {
     max-width: min(var(--container-max), max(30rem, calc(100% - 2 * (220px + 1rem))));
 }
 
+/* У звуженому вікні (відкрита панель чернеток) довгі коди (VIN, номер кузова) і кнопки дій
+   у списках можуть переноситись — інакше таблиця автомобілів ширша за картку і текст вилазить
+   за її межі. */
+body.has-invoice-drafts-sidebar .cell-value-badged > span.cell-value-truncate:first-child,
+body.has-protocol-drafts-sidebar .cell-value-badged > span.cell-value-truncate:first-child {
+    white-space: normal;
+    word-break: break-all;
+}
+
+body.has-invoice-drafts-sidebar td.actions-cell,
+body.has-protocol-drafts-sidebar td.actions-cell {
+    white-space: normal;
+}
+
 .modal-wide {
     max-width: 920px;
 }
