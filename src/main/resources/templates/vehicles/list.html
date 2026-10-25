@@ -16,6 +16,26 @@
                 <a class="btn" id="tabAddBtn" th:href="@{/vehicles/new}">+ Новий автомобіль</a>
             </div>
 
+            <form th:action="@{/vehicles}" method="get" class="filter-bar">
+                <input type="hidden" id="filterTab" name="tab" th:value="${param.tab}">
+                <div class="field">
+                    <label for="filterClientId">Контрагент</label>
+                    <select id="filterClientId" name="filterClientId">
+                        <option value="">— усі —</option>
+                        <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"
+                                th:selected="${c.id == filterClientId}"></option>
+                    </select>
+                </div>
+                <div class="field filter-actions-field">
+                    <label>&nbsp;</label>
+                    <div class="filter-actions">
+                        <button type="submit" class="btn-outline">Фільтрувати</button>
+                        <a class="link-btn" th:if="${filterClientId != null}"
+                           th:href="@{/vehicles(tab=${param.tab})}">Скинути фільтр</a>
+                    </div>
+                </div>
+            </form>
+
             <div class="doc-tabs">
                 <button type="button" class="doc-tab-btn active" data-tab="tabVehicles" data-add-href="/vehicles/new" data-add-label="+ Новий автомобіль">Автомобілі</button>
                 <button type="button" class="doc-tab-btn" data-tab="tabTachographs" data-add-href="/tachographs/new" data-add-label="+ Новий тахограф">Тахографи</button>
@@ -103,7 +123,7 @@
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(vehicles)}">
-                        <td colspan="9">Автомобілів ще немає</td>
+                        <td colspan="9" th:text="${filterClientId != null} ? 'У цього контрагента автомобілів немає' : 'Автомобілів ще немає'"></td>
                     </tr>
                     </tbody>
                 </table>
@@ -173,7 +193,7 @@
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(tachographs)}">
-                        <td colspan="7">Тахографів ще немає — кожен тахограф прив'язується до конкретного автомобіля</td>
+                        <td colspan="7" th:text="${filterClientId != null} ? 'На автомобілях цього контрагента тахографів немає' : 'Тахографів ще немає — кожен тахограф прив\'язується до конкретного автомобіля'"></td>
                     </tr>
                     </tbody>
                 </table>
@@ -236,6 +256,11 @@
                 document.getElementById(btn.dataset.tab).hidden = false;
                 addBtn.setAttribute('href', btn.dataset.addHref);
                 addBtn.textContent = btn.dataset.addLabel;
+                // Фільтр контрагента (і «Скинути фільтр») повертає на ту саму вкладку.
+                var tab = btn.dataset.tab === 'tabTachographs' ? 'tachographs' : '';
+                document.getElementById('filterTab').value = tab;
+                var resetLink = document.querySelector('.filter-actions a.link-btn');
+                if (resetLink) resetLink.setAttribute('href', '/vehicles' + (tab ? '?tab=' + tab : ''));
             }
 
             tabButtons.forEach(function (btn) {

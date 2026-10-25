@@ -10,6 +10,7 @@ import com.example.protaxo.vehicle.dto.VehicleRequest;
 import com.example.protaxo.vehicle.dto.VehicleResponse;
 import com.example.protaxo.vehicle.service.VehicleService;
 import jakarta.validation.Valid;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -33,14 +34,24 @@ public class VehiclePageController {
     private final AuditLogService auditLogService;
 
     @GetMapping
-    public String list(Model model) {
-        var vehicles = vehicleService.findAll();
-        var tachographs = tachographService.findAll();
+    public String list(@RequestParam(required = false) Long filterClientId, Model model) {
+        var allVehicles = vehicleService.findAll();
+        // Один фільтр на обидві вкладки: тахографи — ті, що стоять на авто вибраного контрагента.
+        var vehicles = allVehicles.stream()
+                .filter(v -> filterClientId == null || filterClientId.equals(v.clientId()))
+                .toList();
+        Set<Long> vehicleIds = vehicles.stream().map(VehicleResponse::id).collect(Collectors.toSet());
+        var tachographs = tachographService.findAll().stream()
+                .filter(t -> filterClientId == null || vehicleIds.contains(t.vehicleId()))
+                .toList();
         model.addAttribute("vehicles", vehicles);
-        model.addAttribute("clientNames", clientService.findAll().stream()
+        var clients = clientService.findAll();
+        model.addAttribute("clients", clients);
+        model.addAttribute("filterClientId", filterClientId);
+        model.addAttribute("clientNames", clients.stream()
                 .collect(Collectors.toMap(c -> c.id(), c -> c.name(), (a, b) -> a)));
         model.addAttribute("tachographs", tachographs);
-        model.addAttribute("vehicleLabels", vehicles.stream()
+        model.addAttribute("vehicleLabels", allVehicles.stream()
                 .collect(Collectors.toMap(VehicleResponse::id, v -> v.vin() + " (" + v.registrationNumber() + ")", (a, b) -> a)));
         model.addAttribute("vehicleChanges", vehicles.stream()
                 .collect(Collectors.toMap(VehicleResponse::id, v -> auditLogService.findLatestChanges("Vehicle", v.id()))));
