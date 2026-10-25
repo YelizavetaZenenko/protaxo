@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.thymeleaf.context.Context;
 
 @Controller
@@ -34,9 +35,14 @@ public class ContractPageController {
     private final PdfRenderService pdfRenderService;
 
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("contracts", contractService.findAll());
-        model.addAttribute("clientNames", clientService.findAll().stream()
+    public String list(@RequestParam(required = false) Long filterClientId, Model model) {
+        model.addAttribute("contracts", contractService.findAll().stream()
+                .filter(c -> filterClientId == null || filterClientId.equals(c.clientId()))
+                .toList());
+        var clients = clientService.findAll();
+        model.addAttribute("clients", clients);
+        model.addAttribute("filterClientId", filterClientId);
+        model.addAttribute("clientNames", clients.stream()
                 .collect(Collectors.toMap(c -> c.id(), c -> c.name(), (a, b) -> a)));
         return "contracts/list";
     }
