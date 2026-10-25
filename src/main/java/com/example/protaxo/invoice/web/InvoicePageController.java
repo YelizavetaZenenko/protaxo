@@ -5,6 +5,7 @@ import com.example.protaxo.calibration.service.CalibrationProtocolService;
 import com.example.protaxo.catalog.dto.CatalogItemResponse;
 import com.example.protaxo.catalog.entity.CatalogItemType;
 import com.example.protaxo.catalog.service.CatalogItemService;
+import com.example.protaxo.client.dto.ClientResponse;
 import com.example.protaxo.client.service.ClientService;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.util.UkrainianAmountWords;
@@ -81,12 +82,17 @@ public class InvoicePageController {
                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate filterDateFrom,
                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate filterDateTo,
                         @RequestParam(required = false) InvoicePaymentType filterPaymentType,
+                        @RequestParam(required = false) Long filterClientId,
                         Model model) {
-        List<InvoiceResponse> invoices = filterInvoices(invoiceService.findAll(), filterDateFrom, filterDateTo, filterPaymentType);
+        List<InvoiceResponse> invoices = filterInvoices(invoiceService.findAll(), filterDateFrom, filterDateTo,
+                filterPaymentType, filterClientId);
         model.addAttribute("invoices", sortInvoices(invoices, sort, dir));
         model.addAttribute("settlements", financeQueryService.settlements(invoices));
-        model.addAttribute("clientNames", clientService.findAll().stream()
+        List<ClientResponse> clients = clientService.findAll();
+        model.addAttribute("clients", clients);
+        model.addAttribute("clientNames", clients.stream()
                 .collect(Collectors.toMap(c -> c.id(), c -> c.name(), (a, b) -> a)));
+        model.addAttribute("filterClientId", filterClientId);
         model.addAttribute("sort", sort);
         model.addAttribute("dir", dir);
         model.addAttribute("filterDateFrom", filterDateFrom);
@@ -149,11 +155,13 @@ public class InvoicePageController {
     }
 
     private List<InvoiceResponse> filterInvoices(List<InvoiceResponse> invoices, LocalDate filterDateFrom,
-                                                  LocalDate filterDateTo, InvoicePaymentType filterPaymentType) {
+                                                  LocalDate filterDateTo, InvoicePaymentType filterPaymentType,
+                                                  Long filterClientId) {
         return invoices.stream()
                 .filter(inv -> filterDateFrom == null || !inv.documentDate().toLocalDate().isBefore(filterDateFrom))
                 .filter(inv -> filterDateTo == null || !inv.documentDate().toLocalDate().isAfter(filterDateTo))
                 .filter(inv -> filterPaymentType == null || inv.paymentType() == filterPaymentType)
+                .filter(inv -> filterClientId == null || filterClientId.equals(inv.clientId()))
                 .toList();
     }
 

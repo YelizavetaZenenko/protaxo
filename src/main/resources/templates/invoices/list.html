@@ -35,11 +35,19 @@
                                 th:selected="${pt == filterPaymentType}"></option>
                     </select>
                 </div>
+                <div class="field">
+                    <label for="filterClientId">Контрагент</label>
+                    <select id="filterClientId" name="filterClientId">
+                        <option value="">— усі —</option>
+                        <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"
+                                th:selected="${c.id == filterClientId}"></option>
+                    </select>
+                </div>
                 <div class="field filter-actions-field">
                     <label>&nbsp;</label>
                     <div class="filter-actions">
                         <button type="submit" class="btn-outline">Фільтрувати</button>
-                        <a class="link-btn" th:if="${filterDateFrom != null or filterDateTo != null or filterPaymentType != null}"
+                        <a class="link-btn" th:if="${filterDateFrom != null or filterDateTo != null or filterPaymentType != null or filterClientId != null}"
                            th:href="@{/invoices(sort=${sort}, dir=${dir})}">Скинути фільтр</a>
                     </div>
                 </div>
@@ -60,14 +68,14 @@
                     <th>№</th>
                     <th>
                         <a class="sort-link" th:classappend="${sort == 'date'} ? 'active'"
-                           th:href="@{/invoices(sort='date', dir=${sort == 'date' && dir == 'asc' ? 'desc' : 'asc'})}">
+                           th:href="@{/invoices(sort='date', dir=${sort == 'date' && dir == 'asc' ? 'desc' : 'asc'}, filterDateFrom=${filterDateFrom}, filterDateTo=${filterDateTo}, filterPaymentType=${filterPaymentType}, filterClientId=${filterClientId})}">
                             Дата
                             <span th:if="${sort == 'date'}" th:text="${dir == 'asc'} ? '▲' : '▼'"></span>
                         </a>
                     </th>
                     <th>
                         <a class="sort-link" th:classappend="${sort == 'paymentType'} ? 'active'"
-                           th:href="@{/invoices(sort='paymentType', dir=${sort == 'paymentType' && dir == 'asc' ? 'desc' : 'asc'})}">
+                           th:href="@{/invoices(sort='paymentType', dir=${sort == 'paymentType' && dir == 'asc' ? 'desc' : 'asc'}, filterDateFrom=${filterDateFrom}, filterDateTo=${filterDateTo}, filterPaymentType=${filterPaymentType}, filterClientId=${filterClientId})}">
                             Тип оплати
                             <span th:if="${sort == 'paymentType'}" th:text="${dir == 'asc'} ? '▲' : '▼'"></span>
                         </a>

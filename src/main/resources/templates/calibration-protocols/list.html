@@ -10,17 +10,27 @@
     <div th:replace="~{fragments/topbar :: topbar(active='calibration')}"></div>
 
     <div class="container">
-        <div class="card">
+        <div class="card" id="protocolsCard">
             <div class="toolbar">
                 <h1>Протоколи калібрування</h1>
                 <a class="btn" th:href="@{/calibration-protocols/new}">+ Новий протокол</a>
             </div>
 
             <form th:action="@{/calibration-protocols}" method="get" class="filter-bar">
+                <input type="hidden" name="dir" th:value="${dir}">
                 <div class="field">
                     <label for="filterDateDisplay">Дата</label>
                     <input type="text" id="filterDateDisplay" class="picker-input" readonly placeholder="Усі дати">
-                    <input type="hidden" id="filterDate" name="filterDate" th:value="${filterDate}">
+                    <input type="hidden" id="filterDateFrom" name="filterDateFrom" th:value="${filterDateFrom}">
+                    <input type="hidden" id="filterDateTo" name="filterDateTo" th:value="${filterDateTo}">
+                </div>
+                <div class="field">
+                    <label for="filterClientId">Контрагент</label>
+                    <select id="filterClientId" name="filterClientId">
+                        <option value="">— усі —</option>
+                        <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"
+                                th:selected="${c.id == filterClientId}"></option>
+                    </select>
                 </div>
                 <div class="field">
                     <label for="filterInternalNumber">Внутрішній номер</label>
@@ -30,7 +40,7 @@
                     <label>&nbsp;</label>
                     <div class="filter-actions">
                         <button type="submit" class="btn-outline">Фільтрувати</button>
-                        <a class="link-btn" th:if="${filterDate != null or filterInternalNumber != null}" th:href="@{/calibration-protocols}">Скинути фільтр</a>
+                        <a class="link-btn" th:if="${filterDateFrom != null or filterDateTo != null or filterClientId != null or filterInternalNumber != null}" th:href="@{/calibration-protocols(dir=${dir})}">Скинути фільтр</a>
                     </div>
                 </div>
             </form>
@@ -44,7 +54,13 @@
                 <thead>
                 <tr>
                     <th>№</th>
-                    <th>Дата</th>
+                    <th>
+                        <a class="sort-link active"
+                           th:href="@{/calibration-protocols(dir=${dir == 'asc' ? 'desc' : 'asc'}, filterDateFrom=${filterDateFrom}, filterDateTo=${filterDateTo}, filterClientId=${filterClientId}, filterInternalNumber=${filterInternalNumber})}">
+                            Дата
+                            <span th:text="${dir == 'asc'} ? '▲' : '▼'"></span>
+                        </a>
+                    </th>
                     <th>Внутр. номер</th>
                     <th>Контрагент</th>
                     <th>Номер картки</th>
@@ -83,23 +99,40 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="dateModalOverlay" hidden>
+    <button type="button" id="scrollTopBtn" class="scroll-top-btn" title="Нагору, до таблиці" hidden>↑ Нагору</button>
+
+    <div class="modal-overlay" id="dateRangeModalOverlay" hidden>
         <div class="modal">
-            <h2>Дата</h2>
+            <h2>Період</h2>
             <div class="field">
-                <label for="dateInput">Дата</label>
-                <input type="date" id="dateInput">
+                <label for="dateRangeFromInput">Дата від</label>
+                <input type="date" id="dateRangeFromInput">
+            </div>
+            <div class="field">
+                <label for="dateRangeToInput">Дата до</label>
+                <input type="date" id="dateRangeToInput">
             </div>
             <div class="form-actions">
-                <button type="button" class="btn" id="applyDateBtn">Застосувати</button>
-                <button type="button" class="btn-outline" id="clearDateBtn">Скинути</button>
-                <button type="button" class="btn-outline" id="cancelDateBtn">Скасувати</button>
+                <button type="button" class="btn" id="applyDateRangeBtn">Застосувати</button>
+                <button type="button" class="btn-outline" id="clearDateRangeBtn">Скинути</button>
+                <button type="button" class="btn-outline" id="cancelDateRangeBtn">Скасувати</button>
             </div>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            var btn = document.getElementById('scrollTopBtn');
+            var card = document.getElementById('protocolsCard');
+
+            window.addEventListener('scroll', function () {
+                btn.hidden = window.scrollY < 200;
+            });
+
+            btn.addEventListener('click', function () {
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+
             document.querySelectorAll('.clickable-row').forEach(function (row) {
                 row.addEventListener('click', function (e) {
                     if (e.target.closest('.actions-cell')) return;
@@ -111,16 +144,18 @@
 
     <script>
         /**
-         * Той самий підхід, що на "Наряд-заказ" (invoices/list.html) — нативний
+         * Той самий фільтр-період, що на "Наряд-заказ" (invoices/list.html) — нативний
          * <input type="date"> показує дату у форматі локалі браузера, тому реальний
-         * picker живе в модалці, а видиме поле фільтра завжди показує dd.mm.yyyy
-         * незалежно від локалі.
+         * picker ("Дата від"/"Дата до") живе в модалці, а видиме поле фільтра завжди
+         * показує dd.mm.yyyy незалежно від локалі.
          */
         document.addEventListener('DOMContentLoaded', function () {
             var display = document.getElementById('filterDateDisplay');
-            var hidden = document.getElementById('filterDate');
-            var overlay = document.getElementById('dateModalOverlay');
-            var dateInput = document.getElementById('dateInput');
+            var fromHidden = document.getElementById('filterDateFrom');
+            var toHidden = document.getElementById('filterDateTo');
+            var overlay = document.getElementById('dateRangeModalOverlay');
+            var fromInput = document.getElementById('dateRangeFromInput');
+            var toInput = document.getElementById('dateRangeToInput');
 
             function formatDisplayDate(iso) {
                 var parts = iso.split('-');
@@ -128,27 +163,40 @@
             }
 
             function updateDisplay() {
-                display.value = hidden.value ? formatDisplayDate(hidden.value) : '';
+                var from = fromHidden.value;
+                var to = toHidden.value;
+                if (from && to) {
+                    display.value = formatDisplayDate(from) + ' – ' + formatDisplayDate(to);
+                } else if (from) {
+                    display.value = 'з ' + formatDisplayDate(from);
+                } else if (to) {
+                    display.value = 'по ' + formatDisplayDate(to);
+                } else {
+                    display.value = '';
+                }
             }
 
             display.addEventListener('click', function () {
-                dateInput.value = hidden.value;
+                fromInput.value = fromHidden.value;
+                toInput.value = toHidden.value;
                 overlay.hidden = false;
             });
 
-            document.getElementById('applyDateBtn').addEventListener('click', function () {
-                hidden.value = dateInput.value;
+            document.getElementById('applyDateRangeBtn').addEventListener('click', function () {
+                fromHidden.value = fromInput.value;
+                toHidden.value = toInput.value;
                 updateDisplay();
                 overlay.hidden = true;
             });
 
-            document.getElementById('clearDateBtn').addEventListener('click', function () {
-                hidden.value = '';
+            document.getElementById('clearDateRangeBtn').addEventListener('click', function () {
+                fromHidden.value = '';
+                toHidden.value = '';
                 updateDisplay();
                 overlay.hidden = true;
             });
 
-            document.getElementById('cancelDateBtn').addEventListener('click', function () {
+            document.getElementById('cancelDateRangeBtn').addEventListener('click', function () {
                 overlay.hidden = true;
             });
 

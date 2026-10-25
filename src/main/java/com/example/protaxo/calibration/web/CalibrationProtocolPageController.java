@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,21 +59,39 @@ public class CalibrationProtocolPageController {
     private final LabelImageRenderer labelImageRenderer;
 
     @GetMapping
-    public String list(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate filterDate,
+    public String list(@RequestParam(defaultValue = "desc") String dir,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate filterDateFrom,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate filterDateTo,
+                        @RequestParam(required = false) Long filterClientId,
                         @RequestParam(required = false) String filterInternalNumber,
                         Model model) {
-        model.addAttribute("protocols", filterProtocols(calibrationProtocolService.findAll(), filterDate, filterInternalNumber));
-        model.addAttribute("filterDate", filterDate);
+        if (filterInternalNumber != null && filterInternalNumber.isBlank()) {
+            filterInternalNumber = null;
+        }
+        Comparator<CalibrationProtocolResponse> byDate = Comparator.comparing(CalibrationProtocolResponse::protocolDate);
+        model.addAttribute("protocols", filterProtocols(calibrationProtocolService.findAll(),
+                filterDateFrom, filterDateTo, filterClientId, filterInternalNumber).stream()
+                .sorted("asc".equals(dir) ? byDate : byDate.reversed())
+                .toList());
+        model.addAttribute("dir", dir);
+        model.addAttribute("filterDateFrom", filterDateFrom);
+        model.addAttribute("filterDateTo", filterDateTo);
+        model.addAttribute("filterClientId", filterClientId);
         model.addAttribute("filterInternalNumber", filterInternalNumber);
-        model.addAttribute("clientNames", clientService.findAll().stream()
+        List<ClientResponse> clients = clientService.findAll();
+        model.addAttribute("clients", clients);
+        model.addAttribute("clientNames", clients.stream()
                 .collect(Collectors.toMap(c -> c.id(), c -> c.name(), (a, b) -> a)));
         return "calibration-protocols/list";
     }
 
     private List<CalibrationProtocolResponse> filterProtocols(List<CalibrationProtocolResponse> protocols,
-                                                                LocalDate filterDate, String filterInternalNumber) {
+                                                                LocalDate filterDateFrom, LocalDate filterDateTo,
+                                                                Long filterClientId, String filterInternalNumber) {
         return protocols.stream()
-                .filter(p -> filterDate == null || p.protocolDate().toLocalDate().equals(filterDate))
+                .filter(p -> filterDateFrom == null || !p.protocolDate().toLocalDate().isBefore(filterDateFrom))
+                .filter(p -> filterDateTo == null || !p.protocolDate().toLocalDate().isAfter(filterDateTo))
+                .filter(p -> filterClientId == null || filterClientId.equals(p.clientId()))
                 .filter(p -> filterInternalNumber == null || filterInternalNumber.isBlank()
                         || p.internalNumber().toLowerCase().contains(filterInternalNumber.toLowerCase()))
                 .toList();
