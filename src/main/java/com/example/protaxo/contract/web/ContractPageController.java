@@ -6,6 +6,7 @@ import com.example.protaxo.contract.dto.ContractFormData;
 import com.example.protaxo.contract.dto.ContractRequest;
 import com.example.protaxo.contract.dto.ContractResponse;
 import com.example.protaxo.contract.service.ContractService;
+import com.example.protaxo.finance.service.FinanceSettingsService;
 import com.example.protaxo.pdf.service.PdfRenderService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -33,6 +34,7 @@ public class ContractPageController {
     private final ContractService contractService;
     private final ClientService clientService;
     private final PdfRenderService pdfRenderService;
+    private final FinanceSettingsService financeSettingsService;
 
     @GetMapping
     public String list(@RequestParam(required = false) Long filterClientId, Model model) {
@@ -111,6 +113,7 @@ public class ContractPageController {
         Context context = new Context(new Locale("uk"));
         context.setVariable("contract", contract);
         context.setVariable("client", client);
+        context.setVariable("settings", financeSettingsService.get());
         byte[] pdf = pdfRenderService.render("contract", context);
 
         response.setContentType(MediaType.APPLICATION_PDF_VALUE);
