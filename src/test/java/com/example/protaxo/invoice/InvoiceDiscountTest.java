@@ -16,6 +16,8 @@ import com.example.protaxo.invoice.dto.InvoiceRequest;
 import com.example.protaxo.invoice.dto.InvoiceResponse;
 import com.example.protaxo.invoice.entity.InvoicePaymentType;
 import com.example.protaxo.invoice.service.InvoiceService;
+import com.example.protaxo.finance.entity.FinanceSettings;
+import com.example.protaxo.finance.repository.FinanceSettingsRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -37,6 +39,7 @@ class InvoiceDiscountTest {
     @Autowired InvoiceService invoiceService;
     @Autowired CatalogItemRepository catalogItemRepository;
     @Autowired ClientRepository clientRepository;
+    @Autowired FinanceSettingsRepository settingsRepository;
 
     CatalogItem service;
     Client client;
@@ -45,6 +48,10 @@ class InvoiceDiscountTest {
     void setUp() {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
                 "admin@protaxo.local", null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))));
+        // ПДВ після знижки має сенс лише для платника ПДВ.
+        FinanceSettings settings = settingsRepository.findById(FinanceSettings.SINGLETON_ID).orElseThrow();
+        settings.setVatPayer(true);
+        settingsRepository.saveAndFlush(settings);
         service = catalogItemRepository.save(CatalogItem.builder().type(CatalogItemType.SERVICE)
                 .name("Послуга " + UUID.randomUUID()).basePrice(new BigDecimal("1200"))
                 .vatRate(VatRate.VAT_20).build());

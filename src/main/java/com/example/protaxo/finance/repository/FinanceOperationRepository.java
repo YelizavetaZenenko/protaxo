@@ -15,6 +15,13 @@ public interface FinanceOperationRepository extends JpaRepository<FinanceOperati
 
     Optional<FinanceOperation> findByRequestKey(String requestKey);
 
+    /** Нескасовані оплати й повернення за нарядами контрагента — для акта звірки взаєморозрахунків. */
+    @Query("SELECT o FROM FinanceOperation o JOIN FETCH o.invoice i WHERE i.client.id = :clientId "
+            + "AND o.cancelledAt IS NULL "
+            + "AND o.type IN (com.example.protaxo.finance.entity.FinanceOperationType.PAYMENT, "
+            + "com.example.protaxo.finance.entity.FinanceOperationType.REFUND)")
+    List<FinanceOperation> findSettlementsByClientId(@Param("clientId") Long clientId);
+
     @Query("SELECT o FROM FinanceOperation o JOIN FETCH o.account LEFT JOIN FETCH o.targetAccount "
             + "LEFT JOIN FETCH o.invoice LEFT JOIN FETCH o.originalOperation WHERE o.id = :id")
     Optional<FinanceOperation> findDetailedById(@Param("id") Long id);

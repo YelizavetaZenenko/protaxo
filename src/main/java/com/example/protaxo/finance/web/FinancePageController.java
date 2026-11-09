@@ -28,6 +28,11 @@ import com.example.protaxo.finance.entity.TaxSystem;
 import com.example.protaxo.finance.service.FinanceQueryService;
 import com.example.protaxo.finance.service.FinanceService;
 import com.example.protaxo.finance.service.FinanceSettingsService;
+import com.example.protaxo.finance.service.SettlementActService;
+import com.example.protaxo.finance.dto.SettlementAct;
+import com.example.protaxo.common.util.UkrainianAmountWords;
+import com.example.protaxo.pdf.service.PdfRenderService;
+import org.thymeleaf.context.Context;
 import com.example.protaxo.invoice.dto.InvoiceResponse;
 import com.example.protaxo.invoice.entity.ActStatus;
 import com.example.protaxo.invoice.service.InvoiceService;
@@ -83,6 +88,8 @@ public class FinancePageController {
     private final InvoiceService invoiceService;
     private final ClientService clientService;
     private final FinanceSettingsService settingsService;
+    private final SettlementActService settlementActService;
+    private final PdfRenderService pdfRenderService;
     private final CatalogUsageService catalogUsageService;
     private final CatalogItemService catalogItemService;
     private final ExpenseItemRepository expenseItemRepository;
@@ -692,6 +699,58 @@ public class FinancePageController {
             redirect.addFlashAttribute("resolve", form);
             return "redirect:/finance/reconciliations/" + id + "/resolve";
         }
+    }
+
+    // ================================================================== акт звірки
+
+    /**
+     * Акт звірки взаєморозрахунків з контрагентом (docs/Фінансовий облік.md, розд. 21): вибір
+     * контрагента й періоду (за замовчуванням — з початку року по сьогодні), попередній перегляд
+     * і PDF у звичному форматі з місцем для даних контрагента та підписів.
+     */
+    @GetMapping("/settlement-act")
+    public String settlementAct(@RequestParam(required = false) Long clientId,
+                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+                                Model model) {
+        LocalDate[] period = settlementPeriod(from, to);
+        model.addAttribute("clients", clientService.findAll().stream()
+                .sorted(Comparator.comparing(ClientResponse::name, String.CASE_INSENSITIVE_ORDER)).toList());
+        model.addAttribute("clientId", clientId);
+        model.addAttribute("from", period[0]);
+        model.addAttribute("to", period[1]);
+        if (clientId != null) {
+            model.addAttribute("act", settlementActService.build(clientId, period[0], period[1]));
+        }
+        model.addAttribute("section", "settlement-act");
+        return "finance/settlement-act";
+    }
+
+    @GetMapping("/settlement-act/pdf")
+    public ResponseEntity<byte[]> settlementActPdf(@RequestParam Long clientId,
+                                                   @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                                                   @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        LocalDate[] period = settlementPeriod(from, to);
+        SettlementAct act = settlementActService.build(clientId, period[0], period[1]);
+        Context context = new Context(new Locale("uk"));
+        context.setVariable("act", act);
+        context.setVariable("closingInWords", UkrainianAmountWords.amountToWords(act.closingAmount()));
+        byte[] pdf = pdfRenderService.render("settlement-act", context);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline()
+                        .filename("akt-zvirky-" + clientId + "-" + period[1] + ".pdf").build().toString())
+                .body(pdf);
+    }
+
+    private static LocalDate[] settlementPeriod(LocalDate from, LocalDate to) {
+        LocalDate today = LocalDate.now();
+        LocalDate periodTo = to != null ? to : today;
+        LocalDate periodFrom = from != null ? from : periodTo.withDayOfYear(1);
+        if (periodTo.isBefore(periodFrom)) {
+            return new LocalDate[] {periodTo, periodFrom};
+        }
+        return new LocalDate[] {periodFrom, periodTo};
     }
 
     // ================================================================== допоміжне

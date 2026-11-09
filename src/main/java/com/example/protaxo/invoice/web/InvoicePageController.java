@@ -27,6 +27,7 @@ import com.example.protaxo.invoice.dto.InvoiceResponse;
 import com.example.protaxo.invoice.dto.VehiclePickerRow;
 import com.example.protaxo.invoice.entity.InvoicePaymentType;
 import com.example.protaxo.invoice.service.InvoiceService;
+import com.example.protaxo.finance.service.FinanceSettingsService;
 import com.example.protaxo.pdf.service.PdfRenderService;
 import com.example.protaxo.vehicle.dto.VehicleResponse;
 import com.example.protaxo.vehicle.service.VehicleService;
@@ -74,6 +75,7 @@ public class InvoicePageController {
     private final CalibrationProtocolService calibrationProtocolService;
     private final ContractService contractService;
     private final PdfRenderService pdfRenderService;
+    private final FinanceSettingsService financeSettingsService;
     private final FinanceQueryService financeQueryService;
 
     @GetMapping
@@ -323,6 +325,8 @@ public class InvoicePageController {
         context.setVariable("totalWithoutVat", invoice.totalWithoutVat());
         context.setVariable("amountInWords", UkrainianAmountWords.amountToWords(invoice.totalAmount()));
         context.setVariable("vatInWords", UkrainianAmountWords.amountToWords(invoice.totalVat()));
+        // Неплатник ПДВ: документи без рядків ПДВ і з позначкою «Без ПДВ».
+        context.setVariable("vatPayer", financeSettingsService.get().isVatPayer());
         context.setVariable("contractNumber", contract == null ? null : contract.contractNumber());
         context.setVariable("contractDate", contract == null ? null : contract.contractDate());
         return context;
@@ -371,6 +375,7 @@ public class InvoicePageController {
 
     private void addReferenceData(Model model) {
         model.addAttribute("paymentDueDate", paymentDueDate((Long) model.getAttribute("editId")));
+        model.addAttribute("vatPayer", financeSettingsService.get().isVatPayer());
         List<CatalogItemResponse> catalogItems = catalogItemService.findAll();
         model.addAttribute("clients", clientService.findAll());
         model.addAttribute("paymentTypes", InvoicePaymentType.values());

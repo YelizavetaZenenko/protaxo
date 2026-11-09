@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Акт звірки</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
+
+    <div class="container container-wide">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Акт звірки взаєморозрахунків</h1>
+            </div>
+            <div th:replace="~{fragments/finance :: nav(section='settlement-act')}"></div>
+
+            <section class="finance-section">
+                <p class="muted">Документ для контрагента: що йому виконано (наряди) і що він оплатив за період,
+                    з сальдо на початок і кінець. Ліву половину заповнює ProTaxo, праву — бухгалтерія контрагента.</p>
+                <form th:action="@{/finance/settlement-act}" method="get" class="payment-form">
+                    <div class="field">
+                        <label for="clientId">Контрагент</label>
+                        <select id="clientId" name="clientId" required>
+                            <option value="">— оберіть —</option>
+                            <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"
+                                    th:selected="${c.id == clientId}"></option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="from">Від</label>
+                        <input type="date" id="from" name="from" th:value="${from}">
+                    </div>
+                    <div class="field">
+                        <label for="to">До</label>
+                        <input type="date" id="to" name="to" th:value="${to}">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Показати</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="finance-section" th:if="${act != null}">
+                <div class="finance-section-head">
+                    <h2 th:text="${act.clientName()} + ' · ' + ${#temporals.format(act.from(), 'dd.MM.yyyy')} + ' – ' + ${#temporals.format(act.to(), 'dd.MM.yyyy')}"></h2>
+                    <a class="btn" target="_blank"
+                       th:href="@{/finance/settlement-act/pdf(clientId=${act.clientId()}, from=${act.from()}, to=${act.to()})}">Друк PDF</a>
+                </div>
+                <div class="table-scroll">
+                    <table class="clean-table">
+                        <thead>
+                        <tr>
+                            <th>Дата</th>
+                            <th>Документ</th>
+                            <th class="money">Дебет</th>
+                            <th class="money">Кредит</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td></td>
+                            <td><strong>Сальдо на початок</strong></td>
+                            <td class="money" th:text="${act.openingDebit().signum() != 0} ? ${@financeFormat.money(act.openingDebit())} : ''"></td>
+                            <td class="money" th:text="${act.openingCredit().signum() != 0} ? ${@financeFormat.money(act.openingCredit())} : ''"></td>
+                        </tr>
+                        <tr th:each="r : ${act.rows()}">
+                            <td th:text="${#temporals.format(r.date(), 'dd.MM.yyyy')}"></td>
+                            <td th:text="${r.document()}"></td>
+                            <td class="money" th:text="${r.debit().signum() != 0} ? ${@financeFormat.money(r.debit())} : ''"></td>
+                            <td class="money" th:text="${r.credit().signum() != 0} ? ${@financeFormat.money(r.credit())} : ''"></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(act.rows())}">
+                            <td colspan="4" class="muted">За період операцій немає</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td><strong>Обороти за період</strong></td>
+                            <td class="money" th:text="${@financeFormat.money(act.debitTurnover())}"></td>
+                            <td class="money" th:text="${@financeFormat.money(act.creditTurnover())}"></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td><strong>Сальдо на кінець</strong></td>
+                            <td class="money" th:text="${act.closingDebit().signum() != 0} ? ${@financeFormat.money(act.closingDebit())} : ''"></td>
+                            <td class="money" th:text="${act.closingCredit().signum() != 0} ? ${@financeFormat.money(act.closingCredit())} : ''"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p>
+                    <th:block th:if="${act.closingBalance().signum() > 0}">Заборгованість контрагента на кінець періоду:
+                        <strong th:text="${@financeFormat.money(act.closingAmount())}"></strong></th:block>
+                    <th:block th:if="${act.closingBalance().signum() < 0}">Переплата контрагента (наш борг перед ним):
+                        <strong th:text="${@financeFormat.money(act.closingAmount())}"></strong></th:block>
+                    <th:block th:if="${act.closingBalance().signum() == 0}">Заборгованості на кінець періоду немає.</th:block>
+                </p>
+            </section>
+        </div>
+    </div>
+</body>
+</html>

@@ -9,13 +9,14 @@
         <a th:href="@{/finance/documents(from=${from}, to=${to})}" th:classappend="${section == 'documents'} ? 'active'">Документи</a>
         <a th:href="@{/finance/expenses(from=${from}, to=${to})}" th:classappend="${section == 'expenses'} ? 'active'">Витрати</a>
         <details class="finance-more"
-                 th:with="inMore=${section == 'cash' or section == 'accounts' or section == 'reconciliations' or section == 'operations' or section == 'settings'}">
+                 th:with="inMore=${section == 'cash' or section == 'accounts' or section == 'reconciliations' or section == 'operations' or section == 'settlement-act' or section == 'settings'}">
             <summary th:classappend="${inMore} ? 'active'">Ще <span class="finance-more-caret">▾</span></summary>
             <div class="finance-more-menu">
                 <a th:href="@{/finance/cash}" th:classappend="${section == 'cash'} ? 'active'">Каса за період</a>
                 <a th:href="@{/finance/accounts}" th:classappend="${section == 'accounts'} ? 'active'">Каси й рахунки</a>
                 <a th:href="@{/finance/reconciliations}" th:classappend="${section == 'reconciliations'} ? 'active'">Звірки</a>
                 <a th:href="@{/finance/operations}" th:classappend="${section == 'operations'} ? 'active'">Історія операцій</a>
+                <a th:href="@{/finance/settlement-act}" th:classappend="${section == 'settlement-act'} ? 'active'">Акт звірки з контрагентом</a>
                 <a th:href="@{/finance/settings}" th:classappend="${section == 'settings'} ? 'active'">Налаштування обліку</a>
             </div>
         </details>

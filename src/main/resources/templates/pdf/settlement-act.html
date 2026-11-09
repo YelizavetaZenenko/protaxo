@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Акт звірки</title>
+    <style>
+        @page { size: A4; margin: 1.5cm 1.3cm; }
+        body { font-family: 'Times New Roman'; font-size: 9.5pt; color: #111111; line-height: 1.3; }
+        h1 { font-size: 13pt; text-align: center; margin: 0 0 2pt 0; }
+        .subtitle { text-align: center; font-size: 10pt; margin: 0 0 3pt 0; }
+        .intro { text-align: justify; margin: 10pt 0 8pt 0; }
+        table.act { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        table.act th, table.act td { border: 1px solid #333333; padding: 2pt 3pt; font-size: 8.5pt; vertical-align: top; }
+        table.act th { background: #eeeeee; font-weight: bold; text-align: center; }
+        table.act td.num { text-align: right; white-space: nowrap; }
+        table.act td.center { text-align: center; }
+        table.act tr.total td { font-weight: bold; }
+        .conclusion { margin: 10pt 0 0 0; text-align: justify; }
+        table.sign { width: 100%; border-collapse: collapse; margin-top: 18pt; }
+        table.sign td { width: 50%; vertical-align: top; padding: 0 8pt 0 0; font-size: 9.5pt; }
+        table.sign td + td { padding: 0 0 0 8pt; }
+        .sign-line { margin-top: 22pt; }
+        .fill-line { display: inline-block; border-bottom: 1px solid #333333; min-width: 150pt; min-height: 10pt; }
+    </style>
+</head>
+<body>
+    <h1>АКТ ЗВІРКИ</h1>
+    <div class="subtitle">взаємних розрахунків</div>
+    <div class="subtitle"
+         th:text="'за період з ' + ${#temporals.format(act.from(), 'dd.MM.yyyy')} + ' р. по ' + ${#temporals.format(act.to(), 'dd.MM.yyyy')} + ' р.'">за період</div>
+    <div class="subtitle">
+        між ФОП Вишивата Діана Олександрівна та <span th:text="${act.clientName()}">Контрагент</span>
+    </div>
+    <div class="subtitle" th:if="${act.contractNumber() != null}"
+         th:text="'за договором № ' + ${act.contractNumber()} + (${act.contractDate() != null} ? ' від ' + ${#temporals.format(act.contractDate(), 'dd.MM.yyyy')} + ' р.' : '')">за договором</div>
+
+    <p class="intro">
+        Ми, що нижче підписалися, ФОП Вишивата Діана Олександрівна, з одного боку, та
+        <span th:text="${act.clientName()}">Контрагент</span>, з іншого боку, склали цей акт звірки про те,
+        що стан взаємних розрахунків за даними обліку є таким:
+    </p>
+
+    <table class="act">
+        <colgroup>
+            <col style="width: 9%" /><col style="width: 21%" /><col style="width: 10%" /><col style="width: 10%" />
+            <col style="width: 9%" /><col style="width: 21%" /><col style="width: 10%" /><col style="width: 10%" />
+        </colgroup>
+        <thead>
+        <tr>
+            <th colspan="4">За даними ФОП Вишивата Д.О., грн</th>
+            <th colspan="4" th:text="'За даними ' + ${act.clientName()} + ', грн'">За даними контрагента</th>
+        </tr>
+        <tr>
+            <th>Дата</th><th>Документ</th><th>Дебет</th><th>Кредит</th>
+            <th>Дата</th><th>Документ</th><th>Дебет</th><th>Кредит</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="total">
+            <td colspan="2" th:text="'Сальдо на ' + ${#temporals.format(act.from(), 'dd.MM.yyyy')}">Сальдо початкове</td>
+            <td class="num" th:text="${act.openingDebit().signum() != 0} ? ${#numbers.formatDecimal(act.openingDebit(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
+            <td class="num" th:text="${act.openingCredit().signum() != 0} ? ${#numbers.formatDecimal(act.openingCredit(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
+            <td colspan="2">Сальдо початкове</td><td></td><td></td>
+        </tr>
+        <tr th:each="r : ${act.rows()}">
+            <td class="center" th:text="${#temporals.format(r.date(), 'dd.MM.yyyy')}">01.01.2026</td>
+            <td th:text="${r.document()}">Документ</td>
+            <td class="num" th:text="${r.debit().signum() != 0} ? ${#numbers.formatDecimal(r.debit(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
+            <td class="num" th:text="${r.credit().signum() != 0} ? ${#numbers.formatDecimal(r.credit(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
+            <td></td><td></td><td></td><td></td>
+        </tr>
+        <tr class="total">
+            <td colspan="2">Обороти за період</td>
+            <td class="num" th:text="${#numbers.formatDecimal(act.debitTurnover(), 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
+            <td class="num" th:text="${#numbers.formatDecimal(act.creditTurnover(), 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
+            <td colspan="2">Обороти за період</td><td></td><td></td>
+        </tr>
+        <tr class="total">
+            <td colspan="2" th:text="'Сальдо на ' + ${#temporals.format(act.to(), 'dd.MM.yyyy')}">Сальдо кінцеве</td>
+            <td class="num" th:text="${act.closingDebit().signum() != 0} ? ${#numbers.formatDecimal(act.closingDebit(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
+            <td class="num" th:text="${act.closingCredit().signum() != 0} ? ${#numbers.formatDecimal(act.closingCredit(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
+            <td colspan="2">Сальдо кінцеве</td><td></td><td></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p class="conclusion">
+        <strong th:text="'За даними ФОП Вишивата Д.О. на ' + ${#temporals.format(act.to(), 'dd.MM.yyyy')} + ' р. '">За даними</strong>
+        <th:block th:if="${act.closingBalance().signum() > 0}">заборгованість на користь ФОП Вишивата Діани Олександрівни становить
+            <strong th:text="${#numbers.formatDecimal(act.closingAmount(), 1, 'WHITESPACE', 2, 'COMMA')} + ' грн'">0,00 грн</strong>
+            (<span th:text="${closingInWords}">сума словами</span>).</th:block>
+        <th:block th:if="${act.closingBalance().signum() < 0}">заборгованість на користь <span th:text="${act.clientName()}">контрагента</span> становить
+            <strong th:text="${#numbers.formatDecimal(act.closingAmount(), 1, 'WHITESPACE', 2, 'COMMA')} + ' грн'">0,00 грн</strong>
+            (<span th:text="${closingInWords}">сума словами</span>).</th:block>
+        <th:block th:if="${act.closingBalance().signum() == 0}">заборгованість між сторонами відсутня.</th:block>
+    </p>
+
+    <table class="sign">
+        <tr>
+            <td>
+                <strong>Від ФОП Вишивата Д.О.</strong>
+                <div class="sign-line">_________________ / Вишивата Д.О.</div>
+                <div>М.П. (за наявності)</div>
+            </td>
+            <td>
+                <strong th:text="'Від ' + ${act.clientName()}">Від контрагента</strong>
+                <div class="sign-line">_________________ / <span class="fill-line"></span></div>
+                <div>М.П. (за наявності)</div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

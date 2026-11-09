@@ -24,6 +24,10 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
     Optional<Invoice> findByNumber(String number);
 
+    /** Усі (невидалені) наряди контрагента з рядками — для акта звірки взаєморозрахунків. */
+    @Query("SELECT DISTINCT i FROM Invoice i LEFT JOIN FETCH i.items WHERE i.client.id = :clientId")
+    List<Invoice> findByClientIdWithItems(@Param("clientId") Long clientId);
+
     /** Блокує рядок наряду на час запису оплати — дві одночасні оплати не перевищать борг. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT i FROM Invoice i WHERE i.id = :id")

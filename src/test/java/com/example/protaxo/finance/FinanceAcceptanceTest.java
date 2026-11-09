@@ -29,6 +29,10 @@ import com.example.protaxo.invoice.dto.InvoiceResponse;
 import com.example.protaxo.invoice.entity.InvoicePaymentType;
 import com.example.protaxo.invoice.service.InvoiceService;
 import java.math.BigDecimal;
+import com.example.protaxo.finance.service.SettlementActService;
+import com.example.protaxo.finance.repository.FinanceSettingsRepository;
+import com.example.protaxo.finance.entity.FinanceSettings;
+import com.example.protaxo.finance.dto.SettlementAct;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -58,6 +62,8 @@ class FinanceAcceptanceTest {
     @Autowired InvoiceService invoiceService;
     @Autowired ClientRepository clientRepository;
     @Autowired CatalogItemRepository catalogItemRepository;
+    @Autowired FinanceSettingsRepository settingsRepository;
+    @Autowired SettlementActService settlementActService;
 
     FinanceAccount cash;
     FinanceAccount bank;
@@ -71,6 +77,7 @@ class FinanceAcceptanceTest {
         cash = account("Тестова каса", FinanceAccountKind.CASH);
         bank = account("Тестовий банк", FinanceAccountKind.BANK);
         card = account("Тестовий термінал", FinanceAccountKind.CARD);
+        vatPayer(true);
         invoice = invoiceFor(new BigDecimal("2450.00"), VatRate.VAT_20);
     }
 
@@ -189,6 +196,44 @@ class FinanceAcceptanceTest {
     }
 
     @Test
+    void nonVatPayerSellsWithoutVatWhateverTheCatalogRate() {
+        vatPayer(false);
+        InvoiceResponse sale = invoiceFor(new BigDecimal("2450.00"), VatRate.VAT_20);
+        assertThat(sale.items().get(0).vatRate()).isEqualTo(VatRate.NO_VAT);
+        assertThat(sale.totalVat()).isEqualByComparingTo("0");
+        assertThat(sale.totalWithoutVat()).isEqualByComparingTo("2450");
+        assertThat(sale.totalAmount()).isEqualByComparingTo("2450");
+    }
+
+    @Test
+    void settlementActShowsInvoicesPaymentsAndBalances() {
+        LocalDate today = LocalDate.now();
+        // Оплата частини боргу: 2450 нараховано, 1000 сплачено, 200 з них повернуто.
+        FinanceOperation paid = financeService.recordPayment(payment(invoice.id(), "1000", PaymentMethod.TRANSFER, bank, null));
+        FinanceForms.Refund refund = new FinanceForms.Refund();
+        refund.setAmount(new BigDecimal("200"));
+        refund.setAccountId(bank.getId());
+        refund.setReason("тест");
+        refund.setRequestKey(UUID.randomUUID().toString());
+        financeService.recordRefund(paid.getId(), refund);
+
+        SettlementAct act = settlementActService.build(invoice.clientId(), today.withDayOfYear(1), today);
+        assertThat(act.openingBalance()).isEqualByComparingTo("0");
+        assertThat(act.rows()).hasSize(3);
+        assertThat(act.rows().get(0).document()).contains("Акт виконаних робіт № " + invoice.number());
+        assertThat(act.debitTurnover()).isEqualByComparingTo("2650");
+        assertThat(act.creditTurnover()).isEqualByComparingTo("1000");
+        assertThat(act.closingBalance()).isEqualByComparingTo("1650");
+        assertThat(act.closingDebit()).isEqualByComparingTo("1650");
+
+        // Період після операцій: усе йде в сальдо на початок, оборотів немає.
+        SettlementAct later = settlementActService.build(invoice.clientId(), today.plusDays(1), today.plusDays(2));
+        assertThat(later.openingBalance()).isEqualByComparingTo("1650");
+        assertThat(later.rows()).isEmpty();
+        assertThat(later.closingBalance()).isEqualByComparingTo("1650");
+    }
+
+    @Test
     void vatTotalsAgreeWithLines() {
         assertThat(invoice.items().get(0).vatAmount()).isEqualByComparingTo("408.33");
         assertThat(invoice.items().get(0).amountWithoutVat()).isEqualByComparingTo("2041.67");
@@ -251,6 +296,12 @@ class FinanceAcceptanceTest {
         form.setName(name);
         form.setKind(kind);
         return financeService.createAccount(form);
+    }
+
+    private void vatPayer(boolean payer) {
+        FinanceSettings settings = settingsRepository.findById(FinanceSettings.SINGLETON_ID).orElseThrow();
+        settings.setVatPayer(payer);
+        settingsRepository.saveAndFlush(settings);
     }
 
     private InvoiceResponse invoiceFor(BigDecimal price, VatRate vatRate) {

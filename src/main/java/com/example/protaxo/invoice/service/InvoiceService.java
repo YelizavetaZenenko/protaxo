@@ -12,6 +12,7 @@ import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.common.vat.VatRate;
 import com.example.protaxo.finance.entity.FinanceOperationType;
 import com.example.protaxo.finance.repository.FinanceOperationRepository;
+import com.example.protaxo.finance.service.FinanceSettingsService;
 import com.example.protaxo.invoice.dto.InvoiceItemRequest;
 import com.example.protaxo.invoice.dto.InvoiceRequest;
 import com.example.protaxo.invoice.dto.InvoiceResponse;
@@ -50,6 +51,7 @@ public class InvoiceService {
     private final FieldSuggestionService fieldSuggestionService;
     private final AuditLogService auditLogService;
     private final FinanceOperationRepository financeOperationRepository;
+    private final FinanceSettingsService financeSettingsService;
 
     @Transactional(readOnly = true)
     public List<InvoiceResponse> findAll() {
@@ -196,6 +198,9 @@ public class InvoiceService {
         if (itemRequests == null) {
             return;
         }
+        // ПДВ виділяє лише платник ПДВ (налаштування обліку); неплатник продає «Без ПДВ» —
+        // ставка позиції каталогу тоді ігнорується, ціна лишається тією самою.
+        boolean vatPayer = financeSettingsService.get().isVatPayer();
         int lineNumber = 1;
         for (InvoiceItemRequest itemRequest : itemRequests) {
             if (itemRequest.catalogItemId() == null) {
@@ -217,7 +222,8 @@ public class InvoiceService {
             BigDecimal amount = itemRequest.quantity().multiply(itemRequest.price())
                     .multiply(ONE_HUNDRED.subtract(discountPercent))
                     .divide(ONE_HUNDRED, 2, RoundingMode.HALF_UP);
-            VatRate vatRate = catalogItem.getVatRate() == null ? VatRate.VAT_20 : catalogItem.getVatRate();
+            VatRate vatRate = !vatPayer ? VatRate.NO_VAT
+                    : catalogItem.getVatRate() == null ? VatRate.VAT_20 : catalogItem.getVatRate();
             BigDecimal vatAmount = vatRate.vatFrom(amount);
             item.setAmount(amount);
             item.setVatRate(vatRate);

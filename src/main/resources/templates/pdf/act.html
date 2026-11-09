@@ -104,8 +104,8 @@
                 <th style="width: 46pt;">Од. вим.</th>
                 <th style="width: 34pt;">К-сть</th>
                 <th th:if="${section.hasDiscount()}" style="width: 40pt;">Знижка</th>
-                <th style="width: 92pt;">Ціна грн., без ПДВ</th>
-                <th style="width: 96pt;">Сума грн., без ПДВ</th>
+                <th style="width: 92pt;" th:text="${vatPayer} ? 'Ціна грн., без ПДВ' : 'Ціна, грн.'">Ціна грн., без ПДВ</th>
+                <th style="width: 96pt;" th:text="${vatPayer} ? 'Сума грн., без ПДВ' : 'Сума, грн.'">Сума грн., без ПДВ</th>
             </tr>
             </thead>
             <tbody>
@@ -128,13 +128,13 @@
                 <td class="blank" th:colspan="${section.hasDiscount()} ? 4 : 3"></td>
                 <td class="num" th:text="${section.hasDiscount()} ? ${#numbers.formatDecimal(section.discount(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
             </tr>
-            <tr>
+            <tr th:if="${vatPayer}">
                 <td class="sum-lbl" colspan="2" th:text="${section.vatLabel()}">ПДВ (20%)</td>
                 <td class="blank" th:colspan="${section.hasDiscount()} ? 4 : 3"></td>
                 <td class="num" th:text="${#numbers.formatDecimal(section.vat(), 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
             </tr>
             <tr>
-                <td class="sum-lbl" colspan="2">Всього з ПДВ</td>
+                <td class="sum-lbl" colspan="2" th:text="${vatPayer} ? 'Всього з ПДВ' : 'Всього, без ПДВ'">Всього з ПДВ</td>
                 <td class="blank" th:colspan="${section.hasDiscount()} ? 4 : 3"></td>
                 <td class="num" th:text="${#numbers.formatDecimal(section.totalWithVat(), 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
             </tr>
