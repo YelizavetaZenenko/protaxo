@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Книга обліку доходів і витрат</title>
+    <style>
+        @page { size: A4 landscape; margin: 1.2cm 1cm; }
+        body { font-family: 'Times New Roman'; font-size: 9pt; color: #111111; line-height: 1.25; }
+        h1 { font-size: 12.5pt; text-align: center; margin: 0 0 2pt 0; }
+        .subtitle { text-align: center; font-size: 9.5pt; margin: 0 0 2pt 0; }
+        table.book { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 8pt; }
+        table.book th, table.book td { border: 1px solid #333333; padding: 2pt 3pt; font-size: 8pt; vertical-align: top; }
+        table.book th { background: #eeeeee; font-weight: bold; text-align: center; vertical-align: middle; }
+        table.book td.num { text-align: right; white-space: nowrap; }
+        table.book td.center { text-align: center; }
+        table.book tr.month td { font-weight: bold; background: #f4f4f4; }
+        table.book tr.total td { font-weight: bold; border-top: 2px solid #111111; }
+        .note { font-size: 8.5pt; margin: 6pt 0 0 0; }
+        .sign { margin-top: 14pt; font-size: 9.5pt; }
+    </style>
+</head>
+<body>
+    <h1>КНИГА ОБЛІКУ ДОХОДІВ І ВИТРАТ</h1>
+    <div class="subtitle">фізичної особи — підприємця на загальній системі оподаткування (Типова форма, наказ Мінфіну від 13.05.2021 № 261)</div>
+    <div class="subtitle">ФОП Вишивата Діана Олександрівна, РНОКПП 3809602220</div>
+    <div class="subtitle"
+         th:text="'за період з ' + ${#temporals.format(book.from(), 'dd.MM.yyyy')} + ' р. по ' + ${#temporals.format(book.to(), 'dd.MM.yyyy')} + ' р., грн'">період</div>
+
+    <table class="book">
+        <colgroup>
+            <col style="width: 7%" /><col style="width: 8%" /><col style="width: 7%" /><col style="width: 8%" />
+            <col style="width: 22%" /><col style="width: 8%" /><col style="width: 7%" /><col style="width: 8%" />
+            <col style="width: 8%" /><col style="width: 7%" /><col style="width: 10%" />
+        </colgroup>
+        <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Дохід</th>
+            <th>Повернення</th>
+            <th>Дохід для декларування (гр. 2 − гр. 3)</th>
+            <th>Документ</th>
+            <th>Витрати на придбання товарів і матеріалів</th>
+            <th>Оплата праці</th>
+            <th>ЄСВ, податки, збори, ліцензії</th>
+            <th>Інші витрати</th>
+            <th>Аморти&#173;зація</th>
+            <th>Чистий оподатковуваний дохід (гр. 4 − гр. 6–10)</th>
+        </tr>
+        <tr>
+            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th>
+        </tr>
+        </thead>
+        <tbody>
+        <th:block th:each="m : ${book.months()}">
+            <tr th:each="r : ${m.rows()}">
+                <td class="center" th:text="${#temporals.format(r.date(), 'dd.MM.yyyy')}">01.01.2026</td>
+                <td class="num" th:text="${r.income().signum() != 0} ? ${#numbers.formatDecimal(r.income(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
+                <td class="num" th:text="${r.refunds().signum() != 0} ? ${#numbers.formatDecimal(r.refunds(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
+                <td class="num" th:text="${r.declared().signum() != 0} ? ${#numbers.formatDecimal(r.declared(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
+                <td th:text="${r.documents()}">документи</td>
+                <td class="num" th:text="${r.goods().signum() != 0} ? ${#numbers.formatDecimal(r.goods(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
+                <td class="num" th:text="${r.salary().signum() != 0} ? ${#numbers.formatDecimal(r.salary(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
+                <td class="num" th:text="${r.taxes().signum() != 0} ? ${#numbers.formatDecimal(r.taxes(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
+                <td class="num" th:text="${r.other().signum() != 0} ? ${#numbers.formatDecimal(r.other(), 1, 'WHITESPACE', 2, 'COMMA')} : ''"></td>
+                <td></td>
+                <td class="num" th:text="${r.net().signum() < 0} ? '—' : ${#numbers.formatDecimal(r.net(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+            </tr>
+            <tr class="month">
+                <td colspan="1" th:text="'Разом ' + ${#temporals.format(m.month().atDay(1), 'MM.yyyy')}">Разом</td>
+                <td class="num" th:text="${#numbers.formatDecimal(m.totals().income(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(m.totals().refunds(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(m.totals().declared(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td></td>
+                <td class="num" th:text="${#numbers.formatDecimal(m.totals().goods(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(m.totals().salary(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(m.totals().taxes(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(m.totals().other(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td></td>
+                <td class="num" th:text="${#numbers.formatDecimal(m.totals().net(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+            </tr>
+        </th:block>
+        <tr th:if="${#lists.isEmpty(book.months())}">
+            <td colspan="11" class="center">За період доходів і витрат немає</td>
+        </tr>
+        <tr class="total">
+            <td>Разом за період</td>
+            <td class="num" th:text="${#numbers.formatDecimal(book.total().income(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+            <td class="num" th:text="${#numbers.formatDecimal(book.total().refunds(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+            <td class="num" th:text="${#numbers.formatDecimal(book.total().declared(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+            <td></td>
+            <td class="num" th:text="${#numbers.formatDecimal(book.total().goods(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+            <td class="num" th:text="${#numbers.formatDecimal(book.total().salary(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+            <td class="num" th:text="${#numbers.formatDecimal(book.total().taxes(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+            <td class="num" th:text="${#numbers.formatDecimal(book.total().other(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+            <td></td>
+            <td class="num" th:text="${#numbers.formatDecimal(book.total().net(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p class="note" th:if="${book.equipment().signum() != 0}"
+       th:text="'Придбано обладнання на ' + ${#numbers.formatDecimal(book.equipment(), 1, 'WHITESPACE', 2, 'COMMA')} + ' грн — у графи 6–9 не включено; списується через амортизацію (графа 10, додаток до форми).'">обладнання</p>
+    <p class="note">Дохід і витрати відображено за датою фактичного надходження / сплати коштів. Від'ємний чистий дохід за день — графу 11 прокреслено («—»).</p>
+    <p class="sign">ФОП Вишивата Д.О. _________________</p>
+</body>
+</html>

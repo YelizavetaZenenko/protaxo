@@ -29,6 +29,8 @@ import com.example.protaxo.finance.service.FinanceQueryService;
 import com.example.protaxo.finance.service.FinanceService;
 import com.example.protaxo.finance.service.FinanceSettingsService;
 import com.example.protaxo.finance.service.SettlementActService;
+import com.example.protaxo.finance.service.IncomeBookService;
+import com.example.protaxo.finance.dto.IncomeBook;
 import com.example.protaxo.finance.dto.SettlementAct;
 import com.example.protaxo.common.util.UkrainianAmountWords;
 import com.example.protaxo.pdf.service.PdfRenderService;
@@ -89,6 +91,7 @@ public class FinancePageController {
     private final ClientService clientService;
     private final FinanceSettingsService settingsService;
     private final SettlementActService settlementActService;
+    private final IncomeBookService incomeBookService;
     private final PdfRenderService pdfRenderService;
     private final CatalogUsageService catalogUsageService;
     private final CatalogItemService catalogItemService;
@@ -751,6 +754,80 @@ public class FinancePageController {
             return new LocalDate[] {periodTo, periodFrom};
         }
         return new LocalDate[] {periodFrom, periodTo};
+    }
+
+    // ================================================================== книга обліку доходів і витрат
+
+    /**
+     * Книга обліку доходів і витрат ФОП на загальній системі (docs/Фінансовий облік.md, розд. 22):
+     * графи Типової форми за днями, підсумки за місяць і період; PDF і CSV для бухгалтерки.
+     * За замовчуванням — з початку року по сьогодні.
+     */
+    @GetMapping("/income-book")
+    public String incomeBook(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+                             Model model) {
+        LocalDate[] period = settlementPeriod(from, to);
+        model.addAttribute("book", incomeBookService.build(period[0], period[1]));
+        model.addAttribute("from", period[0]);
+        model.addAttribute("to", period[1]);
+        model.addAttribute("section", "income-book");
+        return "finance/income-book";
+    }
+
+    @GetMapping("/income-book/pdf")
+    public ResponseEntity<byte[]> incomeBookPdf(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        LocalDate[] period = settlementPeriod(from, to);
+        Context context = new Context(new Locale("uk"));
+        context.setVariable("book", incomeBookService.build(period[0], period[1]));
+        byte[] pdf = pdfRenderService.render("income-book", context);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline()
+                        .filename("knyha-dokhodiv-%s-%s.pdf".formatted(period[0], period[1])).build().toString())
+                .body(pdf);
+    }
+
+    /** Та сама книга в CSV (Excel відкриває завдяки BOM і розділювачу ";"), рядок на день + підсумки місяців. */
+    @GetMapping("/income-book.csv")
+    public ResponseEntity<byte[]> incomeBookCsv(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        LocalDate[] period = settlementPeriod(from, to);
+        IncomeBook book = incomeBookService.build(period[0], period[1]);
+        DateTimeFormatter day = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        StringBuilder csv = new StringBuilder("﻿");
+        csv.append("1. Дата;2. Дохід;3. Повернення;4. Дохід для декларування (2-3);5. Документи;"
+                + "6. Товари й матеріали;7. Оплата праці;8. ЄСВ, податки, збори;9. Інші витрати;10. Амортизація;"
+                + "11. Чистий оподатковуваний дохід\n");
+        for (IncomeBook.Month month : book.months()) {
+            for (IncomeBook.Row r : month.rows()) {
+                csv.append(String.join(";", day.format(r.date()), csvMoney(r.income()), csvMoney(r.refunds()),
+                        csvMoney(r.declared()), csvCell(r.documents()), csvMoney(r.goods()), csvMoney(r.salary()),
+                        csvMoney(r.taxes()), csvMoney(r.other()), "", r.net().signum() < 0 ? "—" : csvMoney(r.net()))).append('\n');
+            }
+            appendCsvTotals(csv, "Разом за " + month.month().format(DateTimeFormatter.ofPattern("MM.yyyy")), month.totals());
+        }
+        appendCsvTotals(csv, "Разом за період", book.total());
+        if (book.equipment().signum() != 0) {
+            csv.append("Придбано обладнання (у графи 6-9 не включено; амортизація - графа 10);")
+                    .append(csvMoney(book.equipment())).append('\n');
+        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                        .filename("knyha-dokhodiv-%s-%s.csv".formatted(period[0], period[1])).build().toString())
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .body(csv.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    private void appendCsvTotals(StringBuilder csv, String label, IncomeBook.Totals t) {
+        csv.append(String.join(";", csvCell(label), csvMoney(t.income()), csvMoney(t.refunds()), csvMoney(t.declared()), "",
+                csvMoney(t.goods()), csvMoney(t.salary()), csvMoney(t.taxes()), csvMoney(t.other()), "",
+                csvMoney(t.net()))).append('\n');
+    }
+
+    private static String csvMoney(BigDecimal value) {
+        return value.signum() == 0 ? "" : value.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString().replace('.', ',');
     }
 
     // ================================================================== допоміжне

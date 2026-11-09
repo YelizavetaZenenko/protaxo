@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Книга доходів і витрат</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        table.income-book th, table.income-book td { font-size: 0.82rem; padding: 0.35rem 0.45rem; }
+        table.income-book th { white-space: normal; vertical-align: bottom; }
+        table.income-book td.docs { max-width: 18rem; }
+        table.income-book tr.month-total td { font-weight: 600; background: var(--surface-muted, #f4f5f7); }
+        table.income-book tr.grand-total td { font-weight: 700; border-top: 2px solid currentColor; }
+        table.income-book td.loss { color: #b42318; }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='finance')}"></div>
+
+    <div class="container container-wide">
+        <div class="card">
+            <div class="toolbar">
+                <h1>Книга обліку доходів і витрат</h1>
+            </div>
+            <div th:replace="~{fragments/finance :: nav(section='income-book')}"></div>
+
+            <section class="finance-section">
+                <p class="muted">ФОП на загальній системі. Графи за Типовою формою (наказ Мінфіну від 13.05.2021 № 261).
+                    Дохід і витрати — за датою, коли гроші фактично надійшли чи були сплачені, з оплат і витрат панелі бухгалтера.
+                    Переміщення між касами, внесення й вилучення власника сюди не входять. Остаточно перевіряє бухгалтерка
+                    перед перенесенням в Електронний кабінет.</p>
+                <form th:action="@{/finance/income-book}" method="get" class="payment-form">
+                    <div class="field">
+                        <label for="from">Від</label>
+                        <input type="date" id="from" name="from" th:value="${from}">
+                    </div>
+                    <div class="field">
+                        <label for="to">До</label>
+                        <input type="date" id="to" name="to" th:value="${to}">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Показати</button>
+                        <a class="btn-outline" target="_blank" th:href="@{/finance/income-book/pdf(from=${from}, to=${to})}">Друк PDF</a>
+                        <a class="btn-outline" th:href="@{/finance/income-book.csv(from=${from}, to=${to})}">Excel (CSV)</a>
+                    </div>
+                </form>
+            </section>
+
+            <section class="finance-section">
+                <div class="table-scroll">
+                    <table class="clean-table income-book">
+                        <thead>
+                        <tr>
+                            <th>1. Дата</th>
+                            <th class="money">2. Дохід</th>
+                            <th class="money">3. Повернення</th>
+                            <th class="money">4. Дохід для декларування</th>
+                            <th>5. Документи</th>
+                            <th class="money">6. Товари й матеріали</th>
+                            <th class="money">7. Оплата праці</th>
+                            <th class="money">8. ЄСВ, податки, збори</th>
+                            <th class="money">9. Інші витрати</th>
+                            <th class="money">10. Аморти&shy;зація</th>
+                            <th class="money">11. Чистий дохід</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <th:block th:each="m : ${book.months()}">
+                            <tr th:each="r : ${m.rows()}">
+                                <td th:text="${#temporals.format(r.date(), 'dd.MM.yyyy')}"></td>
+                                <td class="money" th:text="${r.income().signum() != 0} ? ${@financeFormat.money(r.income())} : ''"></td>
+                                <td class="money" th:text="${r.refunds().signum() != 0} ? ${@financeFormat.money(r.refunds())} : ''"></td>
+                                <td class="money" th:text="${r.declared().signum() != 0} ? ${@financeFormat.money(r.declared())} : ''"></td>
+                                <td class="docs" th:text="${r.documents()}"></td>
+                                <td class="money" th:text="${r.goods().signum() != 0} ? ${@financeFormat.money(r.goods())} : ''"></td>
+                                <td class="money" th:text="${r.salary().signum() != 0} ? ${@financeFormat.money(r.salary())} : ''"></td>
+                                <td class="money" th:text="${r.taxes().signum() != 0} ? ${@financeFormat.money(r.taxes())} : ''"></td>
+                                <td class="money" th:text="${r.other().signum() != 0} ? ${@financeFormat.money(r.other())} : ''"></td>
+                                <td></td>
+                                <td class="money" th:classappend="${r.net().signum() < 0} ? 'loss'"
+                                    th:text="${r.net().signum() < 0} ? '—' : ${@financeFormat.money(r.net())}"></td>
+                            </tr>
+                            <tr class="month-total">
+                                <td th:text="'Разом за ' + ${#temporals.format(m.month().atDay(1), 'LLLL yyyy')}"></td>
+                                <td class="money" th:text="${@financeFormat.money(m.totals().income())}"></td>
+                                <td class="money" th:text="${@financeFormat.money(m.totals().refunds())}"></td>
+                                <td class="money" th:text="${@financeFormat.money(m.totals().declared())}"></td>
+                                <td></td>
+                                <td class="money" th:text="${@financeFormat.money(m.totals().goods())}"></td>
+                                <td class="money" th:text="${@financeFormat.money(m.totals().salary())}"></td>
+                                <td class="money" th:text="${@financeFormat.money(m.totals().taxes())}"></td>
+                                <td class="money" th:text="${@financeFormat.money(m.totals().other())}"></td>
+                                <td></td>
+                                <td class="money" th:classappend="${m.totals().net().signum() < 0} ? 'loss'"
+                                    th:text="${@financeFormat.money(m.totals().net())}"></td>
+                            </tr>
+                        </th:block>
+                        <tr th:if="${#lists.isEmpty(book.months())}">
+                            <td colspan="11" class="muted">За період доходів і витрат немає</td>
+                        </tr>
+                        <tr class="grand-total">
+                            <td>Разом за період</td>
+                            <td class="money" th:text="${@financeFormat.money(book.total().income())}"></td>
+                            <td class="money" th:text="${@financeFormat.money(book.total().refunds())}"></td>
+                            <td class="money" th:text="${@financeFormat.money(book.total().declared())}"></td>
+                            <td></td>
+                            <td class="money" th:text="${@financeFormat.money(book.total().goods())}"></td>
+                            <td class="money" th:text="${@financeFormat.money(book.total().salary())}"></td>
+                            <td class="money" th:text="${@financeFormat.money(book.total().taxes())}"></td>
+                            <td class="money" th:text="${@financeFormat.money(book.total().other())}"></td>
+                            <td></td>
+                            <td class="money" th:classappend="${book.total().net().signum() < 0} ? 'loss'"
+                                th:text="${@financeFormat.money(book.total().net())}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="muted" th:if="${book.equipment().signum() != 0}"
+                   th:text="'Придбано обладнання на ' + ${@financeFormat.money(book.equipment())} + ' — у графи 6–9 не включено: обладнання списується через амортизацію (графа 10), її рахує бухгалтерка.'"></p>
+                <p class="muted">Від'ємний чистий дохід за день — збиток, графу 11 прокреслюють («—»).
+                    Категорії витрат: «Запчастини та матеріали» → графа 6, «Зарплата» → 7, «Податки та збори» → 8, решта (крім обладнання) → 9.</p>
+            </section>
+        </div>
+    </div>
+</body>
+</html>

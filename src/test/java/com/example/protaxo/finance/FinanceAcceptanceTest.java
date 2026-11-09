@@ -29,6 +29,9 @@ import com.example.protaxo.invoice.dto.InvoiceResponse;
 import com.example.protaxo.invoice.entity.InvoicePaymentType;
 import com.example.protaxo.invoice.service.InvoiceService;
 import java.math.BigDecimal;
+import com.example.protaxo.finance.dto.IncomeBook;
+import com.example.protaxo.finance.service.IncomeBookService;
+import com.example.protaxo.finance.entity.ExpenseCategory;
 import com.example.protaxo.finance.service.SettlementActService;
 import com.example.protaxo.finance.repository.FinanceSettingsRepository;
 import com.example.protaxo.finance.entity.FinanceSettings;
@@ -64,6 +67,7 @@ class FinanceAcceptanceTest {
     @Autowired CatalogItemRepository catalogItemRepository;
     @Autowired FinanceSettingsRepository settingsRepository;
     @Autowired SettlementActService settlementActService;
+    @Autowired IncomeBookService incomeBookService;
 
     FinanceAccount cash;
     FinanceAccount bank;
@@ -231,6 +235,59 @@ class FinanceAcceptanceTest {
         assertThat(later.openingBalance()).isEqualByComparingTo("1650");
         assertThat(later.rows()).isEmpty();
         assertThat(later.closingBalance()).isEqualByComparingTo("1650");
+    }
+
+    @Test
+    void incomeBookPutsMoneyIntoTheFormColumns() {
+        LocalDate today = LocalDate.now();
+        IncomeBook.Totals before = incomeBookService.build(today, today).total();
+        BigDecimal equipmentBefore = incomeBookService.build(today, today).equipment();
+
+        FinanceOperation paid = financeService.recordPayment(payment(invoice.id(), "2450", PaymentMethod.TRANSFER, bank, null));
+        FinanceForms.Refund refund = new FinanceForms.Refund();
+        refund.setAmount(new BigDecimal("450"));
+        refund.setAccountId(bank.getId());
+        refund.setReason("тест");
+        refund.setRequestKey(UUID.randomUUID().toString());
+        financeService.recordRefund(paid.getId(), refund);
+        expense(ExpenseCategory.PARTS, "300");
+        expense(ExpenseCategory.SALARY, "500");
+        expense(ExpenseCategory.TAXES, "100");
+        expense(ExpenseCategory.RENT, "200");
+        expense(ExpenseCategory.EQUIPMENT, "700");
+        // Переміщення між рахунками — не дохід і не витрата.
+        FinanceForms.Transfer transfer = new FinanceForms.Transfer();
+        transfer.setFromAccountId(bank.getId());
+        transfer.setToAccountId(cash.getId());
+        transfer.setAmount(new BigDecimal("100"));
+        transfer.setRequestKey(UUID.randomUUID().toString());
+        financeService.recordTransfer(transfer);
+
+        IncomeBook book = incomeBookService.build(today, today);
+        IncomeBook.Totals t = book.total();
+        assertThat(t.income().subtract(before.income())).isEqualByComparingTo("2450");
+        assertThat(t.refunds().subtract(before.refunds())).isEqualByComparingTo("450");
+        assertThat(t.goods().subtract(before.goods())).isEqualByComparingTo("300");
+        assertThat(t.salary().subtract(before.salary())).isEqualByComparingTo("500");
+        assertThat(t.taxes().subtract(before.taxes())).isEqualByComparingTo("100");
+        assertThat(t.other().subtract(before.other())).isEqualByComparingTo("200");
+        assertThat(book.equipment().subtract(equipmentBefore)).isEqualByComparingTo("700");
+        // 2450 − 450 − (300 + 500 + 100 + 200) = 900
+        assertThat(t.net().subtract(before.net())).isEqualByComparingTo("900");
+        assertThat(book.months()).isNotEmpty();
+        assertThat(book.months().get(0).rows().get(0).date()).isEqualTo(today);
+        assertThat(book.months().get(0).rows().get(0).documents())
+                .contains("оплата за наряд № " + invoice.number(), "Тест RENT");
+    }
+
+    private void expense(ExpenseCategory category, String amount) {
+        FinanceForms.Expense form = new FinanceForms.Expense();
+        form.setCategory(category);
+        form.setAmount(new BigDecimal(amount));
+        form.setPurpose("Тест " + category);
+        form.setAccountId(bank.getId());
+        form.setRequestKey(UUID.randomUUID().toString());
+        financeService.recordExpense(form, null);
     }
 
     @Test
