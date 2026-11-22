@@ -7,7 +7,7 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div th:replace="~{fragments/topbar :: topbar(active='users')}"></div>
+    <div th:replace="~{fragments/topbar :: topbar(active='company')}"></div>
 
     <div class="container">
         <div class="card">
@@ -46,7 +46,7 @@
 
                 <div class="form-actions">
                     <button type="submit" class="btn" th:text="${editId} != null ? 'Зберегти' : 'Надіслати запрошення'"></button>
-                    <a class="btn-outline" th:href="@{/users}">Скасувати</a>
+                    <a class="btn-outline" th:href="@{/company}">Скасувати</a>
                 </div>
             </form>
         </div>

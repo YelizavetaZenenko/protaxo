@@ -33,8 +33,6 @@
                    th:classappend="${active == 'profile'} ? 'active'" class="user-menu-item">Мій профіль</a>
                 <a sec:authorize="!hasRole('ACCOUNTANT')" th:href="@{/company}"
                    th:classappend="${active == 'company'} ? 'active'" class="user-menu-item">Основна інформація</a>
-                <a th:if="${canManageUsers}" th:href="@{/users}"
-                   th:classappend="${active == 'users'} ? 'active'" class="user-menu-item">Користувачі</a>
                 <!-- Технічні роботи (docs/Технічні роботи.md): поки увімкнено, сайт бачить лише розробник. -->
                 <form sec:authorize="hasRole('DEVELOPER')" th:action="@{/maintenance/toggle}" method="post">
                     <input type="hidden" name="enabled" th:value="${!maintenanceEnabled}">

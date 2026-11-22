@@ -28,22 +28,16 @@ public class UserPageController {
     private final UserManagementService userManagementService;
     private final PermissionService permissionService;
 
+    /** Список користувачів тепер на сторінці «Основна інформація» (docs/Основна інформація.md). */
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("users", userManagementService.findAll());
-
-        RolePermissionsFormData permissionsForm = new RolePermissionsFormData();
-        permissionsForm.setCanViewAuditLog(permissionService.masterCanViewAuditLog());
-        permissionsForm.setCanManageUsers(permissionService.masterCanManageUsers());
-        model.addAttribute("permissionsForm", permissionsForm);
-
-        return "users/list";
+    public String list() {
+        return "redirect:/company";
     }
 
     @PostMapping("/permissions")
     public String updatePermissions(@ModelAttribute("permissionsForm") RolePermissionsFormData form) {
         permissionService.updateMasterPermissions(form.isCanViewAuditLog(), form.isCanManageUsers());
-        return "redirect:/users";
+        return "redirect:/company";
     }
 
     @GetMapping("/new")
@@ -66,7 +60,7 @@ public class UserPageController {
             model.addAttribute("roles", Role.values());
             return "users/form";
         }
-        return "redirect:/users";
+        return "redirect:/company";
     }
 
     @GetMapping("/{id}/edit")
@@ -98,7 +92,7 @@ public class UserPageController {
             model.addAttribute("roles", Role.values());
             return "users/form";
         }
-        return "redirect:/users";
+        return "redirect:/company";
     }
 
     @PostMapping("/{id}/delete")
@@ -108,6 +102,6 @@ public class UserPageController {
         } catch (BusinessRuleException ex) {
             redirectAttributes.addFlashAttribute("formError", ex.getMessage());
         }
-        return "redirect:/users";
+        return "redirect:/company";
     }
 }

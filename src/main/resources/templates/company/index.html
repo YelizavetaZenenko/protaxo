@@ -11,6 +11,62 @@
 
     <!-- Основна інформація (docs/Основна інформація.md): робітники й картки майстерні. Змінює лише адміністратор. -->
     <div class="container">
+        <!-- Користувачі (перенесено зі сторінки /users) — лише з правом «керувати користувачами». -->
+        <div class="card" id="users" th:if="${canManageUsers}" style="margin-bottom:1.5rem;">
+            <div class="toolbar">
+                <h1>Користувачі</h1>
+                <a class="btn" th:href="@{/users/new}">+ Запросити користувача</a>
+            </div>
+
+            <div class="alert alert-error" th:if="${formError}" th:text="${formError}"></div>
+
+            <table class="clean-table">
+                <colgroup>
+                    <col style="width:20%">
+                    <col style="width:24%">
+                    <col style="width:12%">
+                    <col style="width:16%">
+                    <col style="width:16%">
+                    <col style="width:12%">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th>Ім'я</th>
+                    <th>Email</th>
+                    <th>Роль</th>
+                    <th>Останній вхід</th>
+                    <th>Статус</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="u : ${users}">
+                    <td th:text="${u.fullName}"></td>
+                    <td th:text="${u.email}"></td>
+                    <td><span class="badge" th:text="${u.role.label}"></span></td>
+                    <td>
+                        <span th:if="${u.lastLoginAt} != null" th:text="${#temporals.format(u.lastLoginAt, 'dd.MM.yyyy HH:mm')}"></span>
+                        <span th:if="${u.lastLoginAt} == null" class="muted">Ще не входив(ла)</span>
+                    </td>
+                    <td>
+                        <span th:if="${u.active}" class="badge">Активний</span>
+                        <span th:unless="${u.active}" class="badge" style="background:#fbeceb;color:#b3261e;">Очікує підтвердження</span>
+                    </td>
+                    <td class="actions-cell">
+                        <a class="link-btn" th:href="@{/users/{id}/edit(id=${u.id})}">Редагувати</a>
+                        <form th:if="${canManageUsers}" th:action="@{/users/{id}/delete(id=${u.id})}" method="post" style="display:inline">
+                            <button type="submit" class="link-btn link-btn-danger"
+                                    onclick="return confirm('Видалити користувача?')">Видалити</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(users)}">
+                    <td colspan="6">Користувачів ще немає</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
         <div class="card">
             <div class="toolbar">
                 <h1>Робітники</h1>

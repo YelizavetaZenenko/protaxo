@@ -19,6 +19,12 @@ import com.example.protaxo.security.repository.UserRepository;
 import com.example.protaxo.security.service.DeveloperAccounts;
 import com.example.protaxo.security.service.LoginAttemptService;
 import com.example.protaxo.security.service.PermissionService;
+import com.example.protaxo.security.service.UserManagementService;
+import com.example.protaxo.security.entity.PermissionKey;
+import com.example.protaxo.security.entity.Role;
+import com.example.protaxo.security.dto.UserSummary;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import com.example.protaxo.worker.dto.RepairWorkerDetails;
 import com.example.protaxo.worker.service.RepairWorkerService;
 import java.util.List;
@@ -39,6 +45,7 @@ class CompanyPageTest {
 
     @MockitoBean RepairWorkerService repairWorkerService;
     @MockitoBean MasterCardService masterCardService;
+    @MockitoBean UserManagementService userManagementService;
     @MockitoBean AuditLogService auditLogService;
     @MockitoBean AuthAuditRecorder authAuditRecorder;
     @MockitoBean LoginAttemptService loginAttemptService;
@@ -72,12 +79,30 @@ class CompanyPageTest {
     }
 
     @Test
+    void usersAreShownOnlyWithManageUsersPermission() throws Exception {
+        data();
+        when(permissionService.hasPermission(any(), eq(PermissionKey.CAN_MANAGE_USERS))).thenReturn(true);
+        when(userManagementService.findAll()).thenReturn(List.of(userSummary()));
+        mvc.perform(get("/company").with(user("a@b.c").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(allOf(
+                        containsString("id=\"users\""),
+                        containsString("Запросити користувача"),
+                        containsString("lena@example.com"))));
+    }
+
+    private static UserSummary userSummary() {
+        return new UserSummary(3L, "Олена Коваль", "lena@example.com", Role.MASTER, true, null);
+    }
+
+    @Test
     void masterSeesButCannotEdit() throws Exception {
         data();
         mvc.perform(get("/company").with(user("m@b.c").roles("MASTER")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(allOf(
                         containsString("UAW123456789012"),
+                        not(containsString("id=\"users\"")),
                         not(containsString("class=\"link-btn edit-card-btn\"")),
                         not(containsString("id=\"addCardBtn\"")))));
     }
