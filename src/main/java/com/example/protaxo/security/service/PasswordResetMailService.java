@@ -20,11 +20,11 @@ public class PasswordResetMailService {
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
-        message.setSubject("Відновлення паролю ProTaxo ERP");
+        message.setSubject("Відновлення паролю ProTaxo");
         message.setText("""
                 Вітаємо, %s!
 
-                Хтось (сподіваємось, ви) запросив відновлення паролю до ProTaxo ERP. Щоб встановити новий пароль, перейдіть за посиланням:
+                Хтось (сподіваємось, ви) запросив відновлення паролю до ProTaxo. Щоб встановити новий пароль, перейдіть за посиланням:
                 %s
 
                 Якщо ви не запитували відновлення паролю — просто проігноруйте цей лист, ваш пароль не зміниться.

@@ -66,6 +66,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/repair-workers").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/repair-workers/*").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/master-cards").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/master-cards/*").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/*/*/delete").hasRole("ADMIN")
                         // Фінанси (docs/Фінансовий облік.md): майстер бачить лише підсумки каси
                         // й приймає оплату за нарядом; решта модуля — адміністратор і бухгалтер.

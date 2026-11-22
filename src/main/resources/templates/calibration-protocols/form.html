@@ -96,7 +96,6 @@
                                placeholder="— оберіть картку —">
                         <div class="combobox-dropdown" id="cardNumberDropdown" hidden>
                             <div class="combobox-options" id="cardNumberOptions"></div>
-                            <button type="button" class="combobox-add-btn" id="addCardBtn" sec:authorize="hasRole('ADMIN')">+ Додати картку</button>
                         </div>
                     </div>
                     <div class="field-error" th:if="${#fields.hasErrors('cardNumber')}" th:errors="*{cardNumber}"></div>
@@ -359,26 +358,6 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="cardModalOverlay" hidden>
-        <div class="modal">
-            <h2>Нова картка</h2>
-            <div class="alert alert-error" id="cardModalError" hidden></div>
-            <div class="field field-full">
-                <label for="newCardNumber">Номер картки *</label>
-                <input type="text" id="newCardNumber" placeholder="XXX123456789012" style="text-transform:uppercase">
-                <div class="muted">3 великі латинські літери та 12 цифр</div>
-            </div>
-            <div class="field field-full">
-                <label for="newCardHolderName">Власник картки *</label>
-                <input type="text" id="newCardHolderName" placeholder="Прізвище І.П.">
-            </div>
-            <div class="form-actions">
-                <button type="button" class="btn" id="saveCardBtn">Зберегти</button>
-                <button type="button" class="btn-outline" id="cancelCardBtn">Скасувати</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Тип наклейки вже доданої моделі тахографа (зберігається в довіднику моделей) -->
     <div class="modal-overlay" id="modelLabelTypeModalOverlay" hidden>
         <div class="modal">
@@ -614,14 +593,13 @@
             var cardNumberInput = document.getElementById('cardNumber');
             var cardNumberDropdown = document.getElementById('cardNumberDropdown');
             var cardNumberOptions = document.getElementById('cardNumberOptions');
-            var addCardBtn = document.getElementById('addCardBtn');
 
             function renderCardOptions() {
                 cardNumberOptions.innerHTML = '';
                 if (masterCards.length === 0) {
                     var empty = document.createElement('div');
                     empty.className = 'combobox-empty';
-                    empty.textContent = 'Довідник карток ще порожній';
+                    empty.textContent = 'Карток немає — додайте на сторінці «Основна інформація»';
                     cardNumberOptions.appendChild(empty);
                 }
                 masterCards.forEach(function (c) {
@@ -646,61 +624,14 @@
                 }
             });
 
+            // Картки задаються на сторінці «Основна інформація» (/company); тут лише вибір.
+            // Якщо картка одна, а поле порожнє — підставляється сама.
             fetch('/api/master-cards', { credentials: 'same-origin' })
                 .then(function (resp) { return resp.ok ? resp.json() : []; })
-                .then(function (cards) { masterCards = cards; });
-
-            var cardModalOverlay = document.getElementById('cardModalOverlay');
-            var cardModalError = document.getElementById('cardModalError');
-            var newCardNumber = document.getElementById('newCardNumber');
-            var newCardHolderName = document.getElementById('newCardHolderName');
-
-            newCardNumber.addEventListener('input', function () {
-                var pos = newCardNumber.selectionStart;
-                newCardNumber.value = newCardNumber.value.toUpperCase();
-                newCardNumber.setSelectionRange(pos, pos);
-            });
-
-            if (addCardBtn) {
-                addCardBtn.addEventListener('click', function () {
-                    cardNumberDropdown.hidden = true;
-                    cardModalError.hidden = true;
-                    newCardNumber.value = '';
-                    newCardHolderName.value = '';
-                    cardModalOverlay.hidden = false;
-                    newCardNumber.focus();
+                .then(function (cards) {
+                    masterCards = cards;
+                    if (cards.length === 1 && !cardNumberInput.value) cardNumberInput.value = cards[0].cardNumber;
                 });
-            }
-            document.getElementById('cancelCardBtn').addEventListener('click', function () {
-                cardModalOverlay.hidden = true;
-            });
-            document.getElementById('saveCardBtn').addEventListener('click', function () {
-                var cardNumber = newCardNumber.value.trim();
-                var holderName = newCardHolderName.value.trim();
-                if (!cardNumber || !holderName) {
-                    cardModalError.textContent = "Номер картки і власник обов'язкові";
-                    cardModalError.hidden = false;
-                    return;
-                }
-                fetch('/api/master-cards', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cardNumber: cardNumber, holderName: holderName })
-                }).then(function (resp) {
-                    if (!resp.ok) {
-                        return resp.json().then(function (body) { throw new Error(body.message || 'Не вдалося створити картку'); });
-                    }
-                    return resp.json();
-                }).then(function (created) {
-                    masterCards.push(created);
-                    cardNumberInput.value = created.cardNumber;
-                    cardModalOverlay.hidden = true;
-                }).catch(function (err) {
-                    cardModalError.textContent = err.message;
-                    cardModalError.hidden = false;
-                });
-            });
 
             // --- "Дані тахографа": four independent <select> fields backed by
             // /api/tachograph-attributes?category=X, each with its own "+ Додати" trigger

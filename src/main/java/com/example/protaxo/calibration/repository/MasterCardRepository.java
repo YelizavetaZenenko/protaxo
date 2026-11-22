@@ -9,4 +9,6 @@ public interface MasterCardRepository extends JpaRepository<MasterCard, Long> {
     List<MasterCard> findAllByOrderByCardNumberAsc();
 
     boolean existsByCardNumberIgnoreCase(String cardNumber);
+
+    boolean existsByCardNumberIgnoreCaseAndIdNot(String cardNumber, Long id);
 }

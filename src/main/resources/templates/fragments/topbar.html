@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
     <div class="topbar" th:fragment="topbar(active)">
-        <a class="brand" th:href="@{/}">ProTaxo ERP</a>
+        <a class="brand" th:href="@{/}">ProTaxo</a>
         <!-- Бухгалтер — окремий акаунт "лише бухгалтерія" (docs/Фінансовий облік.md): бачить
              фінанси й каталог, решта розділів для нього закрита і в SecurityConfig. -->
         <nav sec:authorize="hasRole('ACCOUNTANT')">
@@ -31,6 +31,8 @@
                 <div class="user-menu-role" th:if="${currentUser != null}" th:text="${currentUser.roleLabel}"></div>
                 <a th:href="@{/profile}"
                    th:classappend="${active == 'profile'} ? 'active'" class="user-menu-item">Мій профіль</a>
+                <a sec:authorize="!hasRole('ACCOUNTANT')" th:href="@{/company}"
+                   th:classappend="${active == 'company'} ? 'active'" class="user-menu-item">Основна інформація</a>
                 <a th:if="${canManageUsers}" th:href="@{/users}"
                    th:classappend="${active == 'users'} ? 'active'" class="user-menu-item">Користувачі</a>
                 <!-- Технічні роботи (docs/Технічні роботи.md): поки увімкнено, сайт бачить лише розробник. -->

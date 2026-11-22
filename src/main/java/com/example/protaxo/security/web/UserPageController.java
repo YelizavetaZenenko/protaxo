@@ -8,7 +8,6 @@ import com.example.protaxo.security.dto.UserSummary;
 import com.example.protaxo.security.entity.Role;
 import com.example.protaxo.security.service.PermissionService;
 import com.example.protaxo.security.service.UserManagementService;
-import com.example.protaxo.worker.service.RepairWorkerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -27,13 +26,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class UserPageController {
 
     private final UserManagementService userManagementService;
-    private final RepairWorkerService repairWorkerService;
     private final PermissionService permissionService;
 
     @GetMapping
     public String list(Model model) {
         model.addAttribute("users", userManagementService.findAll());
-        model.addAttribute("workers", repairWorkerService.findAllDetails());
 
         RolePermissionsFormData permissionsForm = new RolePermissionsFormData();
         permissionsForm.setCanViewAuditLog(permissionService.masterCanViewAuditLog());

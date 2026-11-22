@@ -20,11 +20,11 @@ public class InvitationMailService {
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
-        message.setSubject("Запрошення до ProTaxo ERP");
+        message.setSubject("Запрошення до ProTaxo");
         message.setText("""
                 Вітаємо, %s!
 
-                Вас запросили до системи ProTaxo ERP. Щоб встановити пароль і активувати акаунт, перейдіть за посиланням:
+                Вас запросили до системи ProTaxo. Щоб встановити пароль і активувати акаунт, перейдіть за посиланням:
                 %s
 
                 Посилання дійсне 24 години.

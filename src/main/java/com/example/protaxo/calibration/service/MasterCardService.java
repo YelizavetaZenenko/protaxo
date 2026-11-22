@@ -6,6 +6,7 @@ import com.example.protaxo.calibration.dto.MasterCardResponse;
 import com.example.protaxo.calibration.entity.MasterCard;
 import com.example.protaxo.calibration.repository.MasterCardRepository;
 import com.example.protaxo.common.exception.BusinessRuleException;
+import com.example.protaxo.common.exception.NotFoundException;
 import com.example.protaxo.common.util.FieldDiff;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,43 @@ public class MasterCardService {
         return masterCardRepository.findAllByOrderByCardNumberAsc().stream()
                 .map(c -> new MasterCardResponse(c.getId(), c.getCardNumber(), c.getHolderName()))
                 .toList();
+    }
+
+    /**
+     * Редагування на сторінці «Основна інформація» (docs/Основна інформація.md). Протоколи
+     * зберігають номер картки текстом, тож уже записані протоколи не змінюються.
+     */
+    public MasterCardResponse update(Long id, String cardNumber, String holderName) {
+        MasterCard card = masterCardRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Картку не знайдено: " + id));
+        String trimmed = cardNumber.trim();
+        if (masterCardRepository.existsByCardNumberIgnoreCaseAndIdNot(trimmed, id)) {
+            throw new BusinessRuleException("Ця картка вже є у довіднику");
+        }
+        FieldDiff.Snapshot before = snapshot(card);
+        card.setCardNumber(trimmed);
+        card.setHolderName(holderName.trim());
+        try {
+            MasterCard saved = masterCardRepository.saveAndFlush(card);
+            auditLogService.record(AuditAction.UPDATE, "MasterCard", id, FieldDiff.between(before, snapshot(saved)));
+            return new MasterCardResponse(saved.getId(), saved.getCardNumber(), saved.getHolderName());
+        } catch (DataIntegrityViolationException ex) {
+            throw new BusinessRuleException("Ця картка вже є у довіднику");
+        }
+    }
+
+    /** Видалення з довідника; у вже записаних протоколах номер картки лишається (він там текстом). */
+    public void delete(Long id) {
+        MasterCard card = masterCardRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Картку не знайдено: " + id));
+        masterCardRepository.delete(card);
+        auditLogService.record(AuditAction.DELETE, "MasterCard", id, FieldDiff.deleted(snapshot(card)));
+    }
+
+    private static FieldDiff.Snapshot snapshot(MasterCard card) {
+        return FieldDiff.snapshot()
+                .add("Номер картки", card.getCardNumber())
+                .add("Власник", card.getHolderName());
     }
 
     public MasterCardResponse create(String cardNumber, String holderName) {
