@@ -5,9 +5,13 @@ import com.example.protaxo.catalog.dto.CatalogItemRequest;
 import com.example.protaxo.catalog.dto.CatalogItemResponse;
 import com.example.protaxo.catalog.entity.CatalogItemType;
 import com.example.protaxo.catalog.entity.CatalogUnit;
+import com.example.protaxo.catalog.service.CatalogCategoryService;
 import com.example.protaxo.catalog.service.CatalogItemService;
 import com.example.protaxo.common.vat.VatRate;
 import jakarta.validation.Valid;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,15 +29,40 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class CatalogItemPageController {
 
     private final CatalogItemService catalogItemService;
+    private final CatalogCategoryService catalogCategoryService;
+
+    /** Група рядків списку товарів: категорія (null — «Без категорії») і її позиції. */
+    public record CategoryGroup(Long id, String name, List<CatalogItemResponse> items) {
+    }
 
     @GetMapping
     public String list(@RequestParam(defaultValue = "MATERIAL") CatalogItemType activeType,
                         @RequestParam(required = false) String filterName,
+                        @RequestParam(required = false) String category,
                         Model model) {
-        model.addAttribute("catalogItems", catalogItemService.findAll().stream()
+        List<CatalogItemResponse> ofType = catalogItemService.findAll().stream()
                 .filter(ci -> ci.type() == activeType)
                 .filter(ci -> isBlank(filterName) || containsIgnoreCase(ci.name(), filterName))
-                .toList());
+                .toList();
+        // Товари — по підкатегоріях: вкладки-фільтри з кількістю, а при «Усі» — заголовки груп.
+        // category: id, "none" (без категорії) або порожньо (усі).
+        Map<Long, String> categoryNames = catalogCategoryService.names();
+        List<CategoryGroup> groups = new ArrayList<>();
+        if (activeType == CatalogItemType.MATERIAL) {
+            categoryNames.forEach((id, name) -> groups.add(new CategoryGroup(id, name,
+                    ofType.stream().filter(ci -> id.equals(ci.categoryId())).toList())));
+            groups.add(new CategoryGroup(null, "Без категорії", ofType.stream()
+                    .filter(ci -> ci.categoryId() == null || !categoryNames.containsKey(ci.categoryId())).toList()));
+        }
+        List<CategoryGroup> shown = groups.stream()
+                .filter(g -> !g.items().isEmpty())
+                .filter(g -> isBlank(category)
+                        || ("none".equals(category) ? g.id() == null : String.valueOf(g.id()).equals(category)))
+                .toList();
+        model.addAttribute("catalogItems", ofType);
+        model.addAttribute("categoryGroups", groups);
+        model.addAttribute("shownGroups", shown);
+        model.addAttribute("category", isBlank(category) ? null : category);
         model.addAttribute("activeType", activeType);
         model.addAttribute("filterName", filterName);
         return "catalog-items/list";
@@ -49,14 +78,18 @@ public class CatalogItemPageController {
 
     @GetMapping("/{id}")
     public String view(@PathVariable Long id, Model model) {
-        model.addAttribute("catalogItem", catalogItemService.findById(id));
+        CatalogItemResponse item = catalogItemService.findById(id);
+        model.addAttribute("catalogItem", item);
+        model.addAttribute("categoryName", catalogCategoryService.nameOf(item.categoryId()));
         return "catalog-items/view";
     }
 
     @GetMapping("/new")
-    public String createForm(@RequestParam(defaultValue = "MATERIAL") CatalogItemType activeType, Model model) {
+    public String createForm(@RequestParam(defaultValue = "MATERIAL") CatalogItemType activeType,
+                             @RequestParam(required = false) Long categoryId, Model model) {
         CatalogItemFormData form = new CatalogItemFormData();
         form.setType(activeType);
+        form.setCategoryId(categoryId);
         model.addAttribute("catalogItem", form);
         addReferenceData(model);
         return "catalog-items/form";
@@ -104,11 +137,16 @@ public class CatalogItemPageController {
         model.addAttribute("types", CatalogItemType.values());
         model.addAttribute("vatRates", VatRate.values());
         model.addAttribute("units", CatalogUnit.values());
+        model.addAttribute("categories", catalogCategoryService.findAll());
     }
 
     private CatalogItemRequest toRequest(CatalogItemFormData form) {
+        Long categoryId = form.getCategoryId();
+        if (form.getType() == CatalogItemType.MATERIAL && !isBlank(form.getNewCategoryName())) {
+            categoryId = catalogCategoryService.findOrCreate(form.getNewCategoryName());
+        }
         return new CatalogItemRequest(form.getType(), form.getName(), form.getBasePrice(), form.getStockQuantity(),
-                form.getVatRate(), form.getPurchasePrice(), form.getUnit());
+                form.getVatRate(), form.getPurchasePrice(), form.getUnit(), categoryId);
     }
 
     private CatalogItemFormData toFormData(CatalogItemResponse response) {
@@ -120,6 +158,7 @@ public class CatalogItemPageController {
         form.setStockQuantity(response.stockQuantity());
         form.setVatRate(response.vatRate());
         form.setUnit(response.unit());
+        form.setCategoryId(response.categoryId());
         return form;
     }
 }

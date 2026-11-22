@@ -16,7 +16,8 @@
                 <div class="actions-cell">
                     <a class="btn-outline" th:href="@{/catalog-items/usage}">Витрата товарів</a>
                     <a class="btn-outline" sec:authorize="hasAnyRole('ADMIN', 'ACCOUNTANT')" th:href="@{/stock-revisions}">Ревізія складу</a>
-                    <a class="btn" sec:authorize="!hasRole('ACCOUNTANT')" th:href="@{/catalog-items/new(activeType=${activeType})}">+ Нова позиція</a>
+                    <a class="btn" sec:authorize="!hasRole('ACCOUNTANT')"
+                       th:href="@{/catalog-items/new(activeType=${activeType}, categoryId=${category != null and category != 'none' ? category : null})}">+ Нова позиція</a>
                 </div>
             </div>
 
@@ -25,8 +26,24 @@
                 <a class="doc-tab-btn" th:classappend="${activeType.name() == 'SERVICE'} ? 'active'" th:href="@{/catalog-items(activeType='SERVICE')}">Послуги</a>
             </div>
 
+            <!-- Підкатегорії товарів (docs/Каталог.md): «Усі» показує всі групи із заголовками. -->
+            <nav class="category-chips" th:if="${activeType.name() == 'MATERIAL'}" aria-label="Категорії товарів">
+                <a class="category-chip" th:classappend="${category == null} ? 'active'"
+                   th:href="@{/catalog-items(activeType='MATERIAL', filterName=${filterName})}">
+                    Усі <span class="category-chip-count" th:text="${#lists.size(catalogItems)}"></span>
+                </a>
+                <a class="category-chip" th:each="g : ${categoryGroups}" th:if="${g.id != null or !#lists.isEmpty(g.items)}"
+                   th:with="key=${g.id != null ? '' + g.id : 'none'}"
+                   th:classappend="${category == key} ? 'active'"
+                   th:href="@{/catalog-items(activeType='MATERIAL', category=${key}, filterName=${filterName})}">
+                    <span th:text="${g.name}"></span>
+                    <span class="category-chip-count" th:text="${#lists.size(g.items)}"></span>
+                </a>
+            </nav>
+
             <form th:action="@{/catalog-items}" method="get" class="filter-bar">
                 <input type="hidden" name="activeType" th:value="${activeType}">
+                <input type="hidden" name="category" th:if="${category != null}" th:value="${category}">
                 <div class="field">
                     <label for="filterName">Назва</label>
                     <input type="text" id="filterName" name="filterName" th:value="${filterName}" placeholder="Пошук за назвою">
@@ -35,7 +52,7 @@
                     <label>&nbsp;</label>
                     <div class="filter-actions">
                         <button type="submit" class="btn-outline">Фільтрувати</button>
-                        <a class="link-btn" th:if="${filterName != null}" th:href="@{/catalog-items(activeType=${activeType})}">Скинути фільтр</a>
+                        <a class="link-btn" th:if="${filterName != null}" th:href="@{/catalog-items(activeType=${activeType}, category=${category})}">Скинути фільтр</a>
                     </div>
                 </div>
             </form>
@@ -62,6 +79,8 @@
                 </tr>
                 </thead>
                 <tbody>
+                <!-- Послуги — простим списком -->
+                <th:block th:if="${activeType.name() == 'SERVICE'}">
                 <tr th:each="ci : ${catalogItems}" class="clickable-row" th:attr="data-href=@{/catalog-items/{id}(id=${ci.id})}">
                     <td th:text="${ci.id}"></td>
                     <td th:text="${ci.name}"></td>
@@ -77,8 +96,33 @@
                         </form>
                     </td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(catalogItems)}">
-                    <td colspan="6" th:text="${activeType.name() == 'MATERIAL'} ? 'Товарів ще немає' : 'Послуг ще немає'"></td>
+                </th:block>
+                <!-- Товари — групами за категоріями -->
+                <th:block th:each="g : ${shownGroups}">
+                <tr class="category-group-row">
+                    <td colspan="7">
+                        <span th:text="${g.name}"></span>
+                        <span class="category-chip-count" th:text="${#lists.size(g.items)}"></span>
+                    </td>
+                </tr>
+                <tr th:each="ci : ${g.items}" class="clickable-row" th:attr="data-href=@{/catalog-items/{id}(id=${ci.id})}">
+                    <td th:text="${ci.id}"></td>
+                    <td th:text="${ci.name}"></td>
+                    <td th:text="${ci.purchasePrice != null ? #numbers.formatDecimal(ci.purchasePrice, 1, 2) : '—'}"></td>
+                    <td th:text="${#numbers.formatDecimal(ci.basePrice, 1, 2)} + (${ci.unitLabel()} == 'м' ? ' / м' : '')"></td>
+                    <td th:text="${ci.vatRate.label}"></td>
+                    <td th:text="${ci.stockQuantity != null ? ci.stockQuantityDisplay() + ' ' + ci.unitLabel() : '—'}"></td>
+                    <td class="actions-cell">
+                        <a class="link-btn" th:href="@{/catalog-items/{id}/edit(id=${ci.id})}">Редагувати</a>
+                        <form sec:authorize="hasRole('ADMIN')" th:action="@{/catalog-items/{id}/delete(id=${ci.id})}" method="post" style="display:inline">
+                            <button type="submit" class="link-btn link-btn-danger"
+                                    onclick="return confirm('Видалити позицію каталогу?')">Видалити</button>
+                        </form>
+                    </td>
+                </tr>
+                </th:block>
+                <tr th:if="${activeType.name() == 'SERVICE' ? #lists.isEmpty(catalogItems) : #lists.isEmpty(shownGroups)}">
+                    <td colspan="7" th:text="${activeType.name() == 'MATERIAL'} ? 'Товарів не знайдено' : 'Послуг ще немає'"></td>
                 </tr>
                 </tbody>
             </table>

@@ -6,6 +6,7 @@ import com.example.protaxo.common.vat.VatRate;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import lombok.Data;
 
@@ -31,4 +32,10 @@ public class CatalogItemFormData {
     private VatRate vatRate = VatRate.VAT_20;
 
     private CatalogUnit unit = CatalogUnit.PIECE;
+
+    private Long categoryId;
+
+    /** «Нова категорія» у формі: якщо заповнено — створюється й обирається замість categoryId. */
+    @Size(max = 100, message = "Назва категорії — до 100 символів")
+    private String newCategoryName;
 }

@@ -53,4 +53,8 @@ public class CatalogItem extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private CatalogUnit unit = CatalogUnit.PIECE;
+
+    /** Підкатегорія товару ({@link CatalogCategory}); у послуг — null. */
+    @Column(name = "category_id")
+    private Long categoryId;
 }

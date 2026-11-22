@@ -13,7 +13,8 @@ public record CatalogItemResponse(
         BigDecimal stockQuantity,
         VatRate vatRate,
         BigDecimal purchasePrice,
-        CatalogUnit unit
+        CatalogUnit unit,
+        Long categoryId
 ) {
 
     /** "шт" / "м"; у послуг одиниці немає. */

@@ -2587,3 +2587,51 @@ a.acc-card-meta:hover {
 .maintenance-banner a {
     color: #ffffff;
 }
+
+/* Підкатегорії товарів у каталозі (catalog-items/list.html) */
+.category-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0 0 1rem;
+}
+
+.category-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.category-chip:hover {
+    border-color: var(--accent);
+}
+
+.category-chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+}
+
+.category-chip-count {
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.category-chip.active .category-chip-count {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.category-group-row td {
+    background: var(--bg);
+    font-weight: 600;
+    color: var(--brand-dark);
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+}

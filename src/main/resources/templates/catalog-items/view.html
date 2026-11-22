@@ -24,6 +24,10 @@
                     <label>Тип</label>
                     <div th:text="${catalogItem.type.name() == 'MATERIAL'} ? 'Товар' : 'Послуга'"></div>
                 </div>
+                <div class="field" th:if="${catalogItem.type.name() == 'MATERIAL'}">
+                    <label>Категорія</label>
+                    <div th:text="${categoryName ?: 'Без категорії'}"></div>
+                </div>
                 <div class="field">
                     <label>Назва</label>
                     <div th:text="${catalogItem.name}"></div>

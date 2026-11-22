@@ -15,6 +15,7 @@ public record CatalogItemRequest(
         @DecimalMin("0.000") BigDecimal stockQuantity,
         @NotNull VatRate vatRate,
         @DecimalMin("0.00") BigDecimal purchasePrice,
-        CatalogUnit unit
+        CatalogUnit unit,
+        Long categoryId
 ) {
 }

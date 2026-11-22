@@ -44,6 +44,7 @@ public class AuditLogService {
             Map.entry("Contract", "Договір"),
             Map.entry("Invoice", "Наряд-заказ"),
             Map.entry("CatalogItem", "Позиція каталогу"),
+            Map.entry("CatalogCategory", "Категорія каталогу"),
             Map.entry("CalibrationProtocol", "Протокол калібрування"),
             Map.entry("User", "Користувач"),
             Map.entry("FinanceOperation", "Фінансова операція"),
