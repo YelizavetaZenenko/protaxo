@@ -4,20 +4,21 @@
     <meta charset="UTF-8" />
     <title>Договір</title>
     <style>
-        @page { size: A4; margin: 2cm; }
+        /* Як рахунок і акт (2026-11-22): ті ж поля, 9,5 pt, щільні рядки. */
+        @page { size: A4; margin: 1.4cm 1.6cm; }
         /* Бланк акту — на одній сторінці з полями, як у самого акту (pdf/act.html). */
         @page act { size: A4; margin: 0.8cm 1.3cm; }
-        body { font-family: 'Times New Roman'; font-size: 10pt; color: #111111; line-height: 1.35; }
-        h1 { font-size: 13pt; text-align: center; margin: 0 0 2pt 0; }
-        .subtitle { text-align: center; font-size: 11pt; font-weight: bold; margin: 0 0 14pt 0; }
-        table.dateline { width: 100%; border-collapse: collapse; margin-bottom: 14pt; }
-        table.dateline td { border: none; padding: 0; font-size: 10pt; }
+        body { font-family: 'Times New Roman'; font-size: 9.5pt; color: #111111; line-height: 1.15; }
+        h1 { font-size: 12pt; text-align: center; margin: 0 0 2pt 0; }
+        .subtitle { text-align: center; font-size: 10pt; font-weight: bold; margin: 0 0 8pt 0; }
+        table.dateline { width: 100%; border-collapse: collapse; margin-bottom: 8pt; }
+        table.dateline td { border: none; padding: 0; font-size: 9.5pt; }
         table.dateline td.right { text-align: right; }
-        p.party { text-align: justify; margin: 0 0 10pt 0; }
-        h2 { font-size: 10.5pt; margin: 14pt 0 6pt 0; }
-        p.clause { text-align: justify; margin: 0 0 6pt 0; }
-        ul.clause-list { margin: 0 0 6pt 0; padding-left: 18pt; }
-        ul.clause-list li { text-align: justify; margin: 0 0 2pt 0; }
+        p.party { text-align: justify; margin: 0 0 5pt 0; }
+        h2 { font-size: 9.5pt; margin: 8pt 0 3pt 0; }
+        p.clause { text-align: justify; margin: 0 0 2pt 0; }
+        ul.clause-list { margin: 0 0 2pt 0; padding-left: 18pt; }
+        ul.clause-list li { text-align: justify; margin: 0 0 1pt 0; }
         .fill-line { display: inline-block; border-bottom: 1px solid #333333; min-width: 160pt; min-height: 10pt; }
         .fill-line-short { display: inline-block; border-bottom: 1px solid #333333; min-width: 70pt; min-height: 10pt; }
         table.req-table { width: 100%; border-collapse: collapse; margin-top: 6pt; }
@@ -29,12 +30,12 @@
         table.req col.c-lbl { width: 15%; }
         table.req col.c-val { width: 33%; }
         table.req col.c-gap { width: 4%; }
-        table.req td { border: none; padding: 1.5pt 3pt 1.5pt 0; font-size: 10pt; vertical-align: top; }
+        table.req td { border: none; padding: 1pt 3pt 1pt 0; font-size: 9.5pt; vertical-align: top; }
         table.req .nowrap { white-space: nowrap; }
         table.req td.lbl { color: #444444; white-space: nowrap; }
         table.req td.val { word-wrap: break-word; }
         table.req td.val.blank { border-bottom: 1px solid #333333; height: 12pt; }
-        table.req tr.party-row td { font-weight: bold; font-size: 10.5pt; padding-bottom: 3pt; }
+        table.req tr.party-row td { font-weight: bold; font-size: 9.5pt; padding-bottom: 3pt; }
         table.req tr.name-row td { font-weight: bold; padding-bottom: 5pt; vertical-align: top; }
         table.req tr.position-row td { padding-top: 14pt; }
         table.req tr.sign-row td { padding-top: 10pt; white-space: nowrap; vertical-align: bottom; }
