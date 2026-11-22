@@ -66,6 +66,8 @@
         </div>
 
         <form th:action="@{/login}" method="post">
+            <!-- Куди повернутись після входу (topbar.html, коли сесія завершилась). Перевіряє SecurityConfig.safeReturnPath. -->
+            <input type="hidden" name="continue" th:if="${param.continue}" th:value="${param.continue[0]}">
             <div class="field">
                 <label for="username">Email</label>
                 <input type="email" id="username" name="username" autocomplete="username" required autofocus>

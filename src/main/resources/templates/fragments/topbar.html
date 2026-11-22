@@ -141,7 +141,9 @@
                             // Сесія вже завершилась (сон ПК, обрив мережі) — сервер шле 302 на /login,
                             // а не 204. Переводимо вкладку на вхід, щоб вона не висіла "наче залогінена".
                             if (res.type === 'opaqueredirect' || res.status === 401 || res.status === 403) {
-                                location.href = location.origin + '/login?expired';
+                                // continue — після входу SecurityConfig поверне саме на цю сторінку.
+                                location.href = location.origin + '/login?expired&continue='
+                                    + encodeURIComponent(location.pathname + location.search);
                             }
                         })
                         .catch(function () { /* мережа — наступний пульс спробує знову */ });
