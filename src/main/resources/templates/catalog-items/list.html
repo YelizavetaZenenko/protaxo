@@ -59,8 +59,7 @@
 
             <table class="clean-table">
                 <colgroup>
-                    <col style="width:7%">
-                    <col style="width:33%">
+                    <col style="width:40%">
                     <col style="width:12%">
                     <col style="width:12%">
                     <col style="width:8%">
@@ -69,7 +68,6 @@
                 </colgroup>
                 <thead>
                 <tr>
-                    <th>ID</th>
                     <th>Назва</th>
                     <th>Закупівля</th>
                     <th>Продаж</th>
@@ -82,7 +80,6 @@
                 <!-- Послуги — простим списком -->
                 <th:block th:if="${activeType.name() == 'SERVICE'}">
                 <tr th:each="ci : ${catalogItems}" class="clickable-row" th:attr="data-href=@{/catalog-items/{id}(id=${ci.id})}">
-                    <td th:text="${ci.id}"></td>
                     <td th:text="${ci.name}"></td>
                     <td th:text="${ci.purchasePrice != null ? #numbers.formatDecimal(ci.purchasePrice, 1, 2) : '—'}"></td>
                     <td th:text="${#numbers.formatDecimal(ci.basePrice, 1, 2)} + (${ci.unitLabel()} == 'м' ? ' / м' : '')"></td>
@@ -100,13 +97,12 @@
                 <!-- Товари — групами за категоріями -->
                 <th:block th:each="g : ${shownGroups}">
                 <tr class="category-group-row">
-                    <td colspan="7">
+                    <td colspan="6">
                         <span th:text="${g.name}"></span>
                         <span class="category-chip-count" th:text="${#lists.size(g.items)}"></span>
                     </td>
                 </tr>
                 <tr th:each="ci : ${g.items}" class="clickable-row" th:attr="data-href=@{/catalog-items/{id}(id=${ci.id})}">
-                    <td th:text="${ci.id}"></td>
                     <td th:text="${ci.name}"></td>
                     <td th:text="${ci.purchasePrice != null ? #numbers.formatDecimal(ci.purchasePrice, 1, 2) : '—'}"></td>
                     <td th:text="${#numbers.formatDecimal(ci.basePrice, 1, 2)} + (${ci.unitLabel()} == 'м' ? ' / м' : '')"></td>
@@ -122,7 +118,7 @@
                 </tr>
                 </th:block>
                 <tr th:if="${activeType.name() == 'SERVICE' ? #lists.isEmpty(catalogItems) : #lists.isEmpty(shownGroups)}">
-                    <td colspan="7" th:text="${activeType.name() == 'MATERIAL'} ? 'Товарів не знайдено' : 'Послуг ще немає'"></td>
+                    <td colspan="6" th:text="${activeType.name() == 'MATERIAL'} ? 'Товарів не знайдено' : 'Послуг ще немає'"></td>
                 </tr>
                 </tbody>
             </table>
