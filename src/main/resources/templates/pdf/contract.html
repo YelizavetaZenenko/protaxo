@@ -23,6 +23,22 @@
         table.req-table { width: 100%; border-collapse: collapse; margin-top: 6pt; }
         table.req-table > tbody > tr > td { width: 50%; border: none; padding: 0 8pt 0 0; font-size: 10pt; vertical-align: top; }
         table.req-table > tbody > tr > td + td { padding: 0 0 0 8pt; }
+
+        /* Розділ 14 — реквізити Сторін рядок у рядок. */
+        table.req { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 8pt; page-break-inside: avoid; }
+        table.req col.c-lbl { width: 15%; }
+        table.req col.c-val { width: 33%; }
+        table.req col.c-gap { width: 4%; }
+        table.req td { border: none; padding: 1.5pt 3pt 1.5pt 0; font-size: 10pt; vertical-align: top; }
+        table.req .nowrap { white-space: nowrap; }
+        table.req td.lbl { color: #444444; white-space: nowrap; }
+        table.req td.val { word-wrap: break-word; }
+        table.req td.val.blank { border-bottom: 1px solid #333333; height: 12pt; }
+        table.req tr.party-row td { font-weight: bold; font-size: 10.5pt; padding-bottom: 3pt; }
+        table.req tr.name-row td { font-weight: bold; padding-bottom: 5pt; vertical-align: top; }
+        table.req tr.position-row td { padding-top: 14pt; }
+        table.req tr.sign-row td { padding-top: 10pt; white-space: nowrap; vertical-align: bottom; }
+        table.req tr.caption-row td { font-size: 8pt; color: #555555; padding-top: 1pt; }
         .party-heading { font-weight: bold; margin: 0 0 4pt 0; }
         .req-line { margin: 0 0 2pt 0; }
         .sig-row { margin-top: 18pt; }
@@ -204,55 +220,66 @@
 
     <h2>14. Юридичні адреси, банківські реквізити і підписи Сторін</h2>
 
-    <table class="req-table">
+    <!-- Реквізити: одна таблиця, кожен рядок Замовника навпроти такого ж рядка Виконавця — рівно
+         при будь-якій кількості заповнених полів; порожнє поле — лінія для заповнення від руки. -->
+    <table class="req">
+        <col class="c-lbl"/><col class="c-val"/><col class="c-gap"/><col class="c-lbl"/><col class="c-val"/>
+        <tr class="party-row">
+            <td colspan="2">Замовник</td><td></td><td colspan="2">Виконавець</td>
+        </tr>
+        <tr class="name-row">
+            <td colspan="2" th:text="${client.fullName()}">Замовник</td><td></td>
+            <td colspan="2">ФОП Вишивата Діана Олександрівна</td>
+        </tr>
         <tr>
-            <td>
-                <div class="party-heading">Замовник</div>
-                <p class="req-line"><strong th:text="${client.fullName()}">Замовник</strong></p>
-                <p class="req-line">Адреса:
-                    <th:block th:if="${not #strings.isEmpty(client.legalAddress())}" th:text="${client.legalAddress()}">адреса</th:block>
-                    <span class="fill-line" th:if="${#strings.isEmpty(client.legalAddress())}"></span>
-                </p>
-                <p class="req-line">р/р
-                    <th:block th:if="${not #strings.isEmpty(client.iban())}" th:text="${client.iban()}">UA…</th:block>
-                    <span class="fill-line" th:if="${#strings.isEmpty(client.iban())}"></span>
-                </p>
-                <p class="req-line">в банку
-                    <th:block th:if="${not #strings.isEmpty(client.bankName())}" th:text="${client.bankName()}">банк</th:block>
-                    <span class="fill-line" th:if="${#strings.isEmpty(client.bankName())}"></span>
-                </p>
-                <p class="req-line">МФО
-                    <th:block th:if="${not #strings.isEmpty(client.mfo())}" th:text="${client.mfo()}">305299</th:block>
-                    <span class="fill-line-short" th:if="${#strings.isEmpty(client.mfo())}"></span>
-                </p>
-                <p class="req-line" th:if="${not #strings.isEmpty(client.edrpou())}" th:text="'Код ЄДРПОУ ' + ${client.edrpou()}">ЄДРПОУ</p>
-                <p class="req-line" th:if="${not #strings.isEmpty(client.code())}" th:text="'ІПН ' + ${client.code()}">ІПН</p>
-                <p class="req-line" th:if="${#strings.isEmpty(client.edrpou()) and #strings.isEmpty(client.code())}">Код ЄДРПОУ/РНОКПП: <span class="fill-line-short"></span></p>
-                <p class="req-line">Тел.:
-                    <th:block th:if="${not #strings.isEmpty(client.requisitesPhone())}" th:text="${client.requisitesPhone()}">+38(0XX)-XXX-XX-XX</th:block>
-                    <span class="fill-line-short" th:if="${#strings.isEmpty(client.requisitesPhone())}"></span>
-                </p>
-                <p class="req-line" th:if="${not #strings.isEmpty(client.email())}" th:text="'E-mail: ' + ${client.email()}">E-mail</p>
-                <p class="sig-position" th:if="${not #strings.isEmpty(client.signatoryPosition())}" th:text="${client.signatoryPosition()}">Директор</p>
-                <p th:class="${#strings.isEmpty(client.signatoryPosition())} ? 'sig-row' : 'req-line'">
-                    _________________ /
-                    <th:block th:if="${client.signatoryShortName() != null}" th:text="${client.signatoryShortName()}">Іванов І.І.</th:block>
-                    <span class="fill-line-short" th:if="${client.signatoryShortName() == null}"></span>
-                </p>
-                <p class="req-line">М.П. (за наявності)</p>
-            </td>
-            <td>
-                <div class="party-heading">Виконавець</div>
-                <p class="req-line"><strong>ФОП Вишивата Діана Олександрівна</strong></p>
-                <p class="req-line">45604, Волинська обл., Луцький р-н, с. Крупа, вул. Дубнівська, 10</p>
-                <p class="req-line">р/р UA833348510000000026002389961</p>
-                <p class="req-line">в банку АТ «ПУМБ», МФО 334851</p>
-                <p class="req-line">РНОКПП 3809602220</p>
-                <p class="req-line">Тел.: +380962322363</p>
-                <p class="req-line">E-mail: protaho2025@gmail.com</p>
-                <p class="sig-row">_________________ / Вишивата Д.О.</p>
-                <p class="req-line">М.П. (за наявності)</p>
-            </td>
+            <td class="lbl">Адреса:</td><td class="val" th:classappend="${#strings.isEmpty(client.legalAddress())} ? 'blank'" th:text="${client.legalAddress()}"></td><td></td>
+            <td class="lbl">Адреса:</td><td class="val">45604, Волинська обл., <span class="nowrap">Луцький р-н,</span> с. Крупа, вул. Дубнівська, 10</td>
+        </tr>
+        <tr>
+            <td class="lbl">IBAN:</td><td class="val" th:classappend="${#strings.isEmpty(client.iban())} ? 'blank'" th:text="${client.iban()}"></td><td></td>
+            <td class="lbl">IBAN:</td><td class="val">UA833348510000000026002389961</td>
+        </tr>
+        <tr>
+            <td class="lbl">Банк:</td><td class="val" th:classappend="${#strings.isEmpty(client.bankName())} ? 'blank'" th:text="${client.bankName()}"></td><td></td>
+            <td class="lbl">Банк:</td><td class="val">АТ «ПУМБ»</td>
+        </tr>
+        <tr>
+            <td class="lbl">МФО:</td><td class="val" th:classappend="${#strings.isEmpty(client.mfo())} ? 'blank'" th:text="${client.mfo()}"></td><td></td>
+            <td class="lbl">МФО:</td><td class="val">334851</td>
+        </tr>
+        <!-- Юрособа: Код ЄДРПОУ + ІПН; фізособа/ФОП без ЄДРПОУ: РНОКПП. -->
+        <tr th:with="legal=${not #strings.isEmpty(client.edrpou())}">
+            <td class="lbl" th:text="${legal} ? 'Код ЄДРПОУ:' : 'РНОКПП:'">Код ЄДРПОУ:</td>
+            <td class="val" th:classappend="${legal or not #strings.isEmpty(client.code())} ? '' : 'blank'"
+                th:text="${legal} ? ${client.edrpou()} : ${client.code()}"></td><td></td>
+            <td class="lbl">РНОКПП:</td><td class="val">3809602220</td>
+        </tr>
+        <tr th:if="${not #strings.isEmpty(client.edrpou())}">
+            <td class="lbl">ІПН:</td><td class="val" th:classappend="${#strings.isEmpty(client.code())} ? 'blank'" th:text="${client.code()}"></td><td></td>
+            <td></td><td></td>
+        </tr>
+        <tr>
+            <td class="lbl">Телефон:</td><td class="val" th:classappend="${#strings.isEmpty(client.requisitesPhone())} ? 'blank'" th:text="${client.requisitesPhone()}"></td><td></td>
+            <td class="lbl">Телефон:</td><td class="val">+38(096)-232-23-63</td>
+        </tr>
+        <tr>
+            <td class="lbl">E-mail:</td><td class="val" th:classappend="${#strings.isEmpty(client.email())} ? 'blank'" th:text="${client.email()}"></td><td></td>
+            <td class="lbl">E-mail:</td><td class="val">protaho2025@gmail.com</td>
+        </tr>
+        <tr class="position-row">
+            <td colspan="2" th:text="${client.signatoryPosition()}"></td><td></td>
+            <td colspan="2"></td>
+        </tr>
+        <tr class="sign-row">
+            <td colspan="2">_____________________ /
+                <th:block th:if="${client.signatoryShortName() != null}" th:text="${client.signatoryShortName()}">Іванов І.І.</th:block>
+                <th:block th:if="${client.signatoryShortName() == null}">_______________</th:block>
+            </td><td></td>
+            <td colspan="2">_____________________ / Вишивата Д.О.</td>
+        </tr>
+        <tr class="caption-row">
+            <td colspan="2">(підпис) &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; М.П. (за наявності)</td><td></td>
+            <td colspan="2">(підпис) &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; М.П. (за наявності)</td>
         </tr>
     </table>
 

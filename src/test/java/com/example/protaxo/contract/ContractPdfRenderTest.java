@@ -56,14 +56,14 @@ class ContractPdfRenderTest {
         assertThat(html)
                 .contains("в особі", "директор", "Іваненко Петро Васильович", "на підставі", "Статуту")
                 .contains("79000, м. Львів, вул. Городоцька, 15", "UA213223130000026007233566001",
-                        "АТ КБ «ПриватБанк»", "МФО", "305299", "Код ЄДРПОУ 44556677", "ІПН 445566771234")
+                        "АТ КБ «ПриватБанк»", "МФО:", "305299", "Код ЄДРПОУ:", "44556677", "ІПН:", "445566771234")
                 .contains("Директор", "Іваненко П.В.");
     }
 
     @Test
     void emptyRequisitesStayBlankLines() {
         String html = html(client(false));
-        assertThat(html).contains("fill-line").doesNotContain("UA2132");
+        assertThat(html).contains("val blank").doesNotContain("UA2132");
     }
 
     @Test
@@ -80,6 +80,8 @@ class ContractPdfRenderTest {
         String out = System.getProperty("contract.pdf.out");
         if (out != null) {
             Files.write(Path.of(out), pdf);
+            // Той самий договір із незаповненими реквізитами замовника — як виглядають лінії.
+            Files.write(Path.of(out.replace(".pdf", "-empty.pdf")), renderer.render("contract", context(client(false))));
         }
     }
 }
