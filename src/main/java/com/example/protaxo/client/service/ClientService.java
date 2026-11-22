@@ -115,7 +115,13 @@ public class ClientService {
                 .add("Телефон контактної особи", c.getContactPersonPhone())
                 .add("Телефон", c.getPhone())
                 .add("Email", c.getEmail())
-                .add("Платник ПДВ", c.isVatPayer());
+                .add("Платник ПДВ", c.isVatPayer())
+                .add("Юридична адреса", c.getLegalAddress())
+                .add("IBAN", c.getIban())
+                .add("Банк", c.getBankName())
+                .add("МФО", c.getMfo())
+                .add("Посада підписанта", c.getSignatoryPosition())
+                .add("Діє на підставі", c.getSignatoryBasis());
     }
 
     private Client getOrThrow(Long id) {

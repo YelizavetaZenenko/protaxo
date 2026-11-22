@@ -4,6 +4,7 @@ import com.example.protaxo.client.entity.Gender;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 public record ClientRequest(
@@ -26,6 +27,14 @@ public record ClientRequest(
         @Pattern(regexp = "^(\\+38\\(0\\d{2}\\)-\\d{3}-\\d{2}-\\d{2})?$", message = "Телефон має бути у форматі +38(0XX)-XXX-XX-XX")
         String phone,
         @Email(message = "Некоректний email") String email,
-        boolean vatPayer
+        boolean vatPayer,
+        @Size(max = 500) String legalAddress,
+        @Pattern(regexp = "^(UA\\d{27})?$", message = "IBAN має бути у форматі UA + 27 цифр")
+        String iban,
+        @Size(max = 255) String bankName,
+        @Pattern(regexp = "^(\\d{6})?$", message = "МФО має складатись з 6 цифр")
+        String mfo,
+        @Size(max = 100) String signatoryPosition,
+        @Size(max = 255) String signatoryBasis
 ) {
 }

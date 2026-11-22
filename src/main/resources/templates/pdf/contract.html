@@ -5,6 +5,8 @@
     <title>Договір</title>
     <style>
         @page { size: A4; margin: 2cm; }
+        /* Бланк акту — на одній сторінці з полями, як у самого акту (pdf/act.html). */
+        @page act { size: A4; margin: 0.8cm 1.3cm; }
         body { font-family: 'Times New Roman'; font-size: 10pt; color: #111111; line-height: 1.35; }
         h1 { font-size: 13pt; text-align: center; margin: 0 0 2pt 0; }
         .subtitle { text-align: center; font-size: 11pt; font-weight: bold; margin: 0 0 14pt 0; }
@@ -26,10 +28,38 @@
         .sig-row { margin-top: 18pt; }
         .appendix { page-break-before: always; }
         .appendix-ref { text-align: right; margin: 0 0 14pt 0; }
-        table.order-form { width: 100%; border-collapse: collapse; margin-top: 8pt; }
-        table.order-form td { border: 1px solid #333333; padding: 5pt 6pt; font-size: 10pt; vertical-align: top; }
-        table.order-form td.label { width: 38%; }
-        table.order-form tr.work-row td { height: 16pt; }
+        .sig-position { margin: 14pt 0 0 0; }
+
+        /* Додаток №1 — незаповнений бланк акту виконаних робіт, як pdf/act.html (docs/Договори.md). */
+        .act-annex { page: act; font-size: 9pt; line-height: 1.15; }
+        .act-annex .head { text-align: center; font-weight: bold; margin-bottom: 4pt; }
+        .act-annex .head .title { font-size: 11pt; margin-bottom: 2pt; }
+        .act-annex .head .line { font-size: 9.5pt; }
+        .act-annex table.card { width: 100%; border-collapse: collapse; border: 1.5px solid #000000; }
+        .act-annex table.card td { border: 1px solid #000000; padding: 1pt 3pt; font-size: 9pt; vertical-align: top; height: 11pt; }
+        .act-annex table.card td.lbl { font-weight: bold; white-space: nowrap; }
+        .act-annex h3 { font-size: 9pt; font-weight: bold; margin: 5pt 0 1pt 0; }
+        .act-annex table.items { width: 100%; border-collapse: collapse; border: 1.5px solid #000000; table-layout: fixed; }
+        .act-annex table.items th, .act-annex table.items td { border: 1px solid #000000; padding: 0.5pt 3pt; font-size: 9pt; }
+        .act-annex table.items th { text-align: center; font-weight: bold; }
+        .act-annex table.items td { height: 11pt; }
+        .act-annex table.items td.sum-lbl { font-weight: bold; white-space: nowrap; }
+        .act-annex table.pay { border-collapse: collapse; margin-top: 4pt; width: 100%; }
+        .act-annex table.pay td { border: none; padding: 1pt 0; font-weight: bold; font-size: 9.5pt; }
+        .act-annex table.pay td.lbl { width: 130pt; }
+        .act-annex table.pay td.fill { border-bottom: 1px solid #000000; }
+        .act-annex .warranty { border: 1.5px solid #000000; padding: 1.5pt 5pt; margin-top: 4pt; font-size: 8pt; line-height: 1.1; }
+        .act-annex .warranty .item { padding-left: 30pt; }
+        .act-annex table.handover { width: 100%; border-collapse: collapse; margin-top: 4pt; }
+        .act-annex table.handover td { border: none; padding: 0; vertical-align: bottom; font-size: 8.5pt; line-height: 1.1; }
+        .act-annex .sign-line { border-bottom: 1px solid #000000; min-height: 11pt; padding-top: 4pt; }
+        .act-annex .caption { font-size: 6.5pt; margin-bottom: 2pt; }
+        .act-annex p.place { font-size: 9pt; margin: 4pt 0 0 0; padding-bottom: 2pt; border-bottom: 2px solid #000000; }
+        .act-annex table.parties { width: 100%; border-collapse: collapse; margin-top: 3pt; }
+        .act-annex table.parties td { border: none; padding: 0; vertical-align: top; font-size: 8.5pt; width: 50%; line-height: 1.1; }
+        .act-annex table.parties td.left { padding-right: 16pt; }
+        .act-annex .party-title { font-size: 9.5pt; margin-bottom: 8pt; }
+        .act-annex .party-line { border-bottom: 1px solid #000000; height: 10pt; margin-bottom: 2pt; }
     </style>
 </head>
 <body>
@@ -46,7 +76,8 @@
     <p class="party">
         <strong>Замовник:</strong> <strong th:text="${client.fullName()}">Замовник</strong>,
         в особі
-        <th:block th:if="${not #strings.isEmpty(client.contactPersonName())}"><span th:text="${client.contactPersonName()}">Іванов Іван</span></th:block><span class="fill-line" th:if="${#strings.isEmpty(client.contactPersonName())}"></span>, який (яка) діє на підставі <span class="fill-line"></span>, з одного боку, та
+        <th:block th:if="${not #strings.isEmpty(client.signatoryPosition())}"><span th:text="${#strings.toLowerCase(client.signatoryPosition())}">директора</span>&#160;</th:block><th:block th:if="${client.signatoryName() != null}"><span th:text="${client.signatoryName()}">Іванов Іван</span></th:block><span class="fill-line" th:if="${client.signatoryName() == null}"></span>, який (яка) діє на підставі
+        <th:block th:if="${not #strings.isEmpty(client.signatoryBasis())}"><span th:text="${client.signatoryBasis()}">Статуту</span></th:block><span class="fill-line" th:if="${#strings.isEmpty(client.signatoryBasis())}"></span>, з одного боку, та
     </p>
 
     <p class="party">
@@ -179,23 +210,35 @@
             <td>
                 <div class="party-heading">Замовник</div>
                 <p class="req-line"><strong th:text="${client.fullName()}">Замовник</strong></p>
-                <p class="req-line">Адреса: <span class="fill-line"></span></p>
-                <p class="req-line">р/р <span class="fill-line"></span></p>
-                <p class="req-line">в банку <span class="fill-line"></span></p>
-                <p class="req-line">Код ЄДРПОУ/РНОКПП:
-                    <th:block th:if="${not #strings.isEmpty(client.edrpou())}" th:text="${client.edrpou()}">1234567890</th:block>
-                    <th:block th:if="${#strings.isEmpty(client.edrpou()) and not #strings.isEmpty(client.code())}" th:text="${client.code()}">1234567890</th:block>
-                    <span class="fill-line-short" th:if="${#strings.isEmpty(client.edrpou()) and #strings.isEmpty(client.code())}"></span>
+                <p class="req-line">Адреса:
+                    <th:block th:if="${not #strings.isEmpty(client.legalAddress())}" th:text="${client.legalAddress()}">адреса</th:block>
+                    <span class="fill-line" th:if="${#strings.isEmpty(client.legalAddress())}"></span>
                 </p>
+                <p class="req-line">р/р
+                    <th:block th:if="${not #strings.isEmpty(client.iban())}" th:text="${client.iban()}">UA…</th:block>
+                    <span class="fill-line" th:if="${#strings.isEmpty(client.iban())}"></span>
+                </p>
+                <p class="req-line">в банку
+                    <th:block th:if="${not #strings.isEmpty(client.bankName())}" th:text="${client.bankName()}">банк</th:block>
+                    <span class="fill-line" th:if="${#strings.isEmpty(client.bankName())}"></span>
+                </p>
+                <p class="req-line">МФО
+                    <th:block th:if="${not #strings.isEmpty(client.mfo())}" th:text="${client.mfo()}">305299</th:block>
+                    <span class="fill-line-short" th:if="${#strings.isEmpty(client.mfo())}"></span>
+                </p>
+                <p class="req-line" th:if="${not #strings.isEmpty(client.edrpou())}" th:text="'Код ЄДРПОУ ' + ${client.edrpou()}">ЄДРПОУ</p>
+                <p class="req-line" th:if="${not #strings.isEmpty(client.code())}" th:text="'ІПН ' + ${client.code()}">ІПН</p>
+                <p class="req-line" th:if="${#strings.isEmpty(client.edrpou()) and #strings.isEmpty(client.code())}">Код ЄДРПОУ/РНОКПП: <span class="fill-line-short"></span></p>
                 <p class="req-line">Тел.:
-                    <th:block th:if="${not #strings.isEmpty(client.phone())}" th:text="${client.phone()}">+38(0XX)-XXX-XX-XX</th:block>
-                    <span class="fill-line-short" th:if="${#strings.isEmpty(client.phone())}"></span>
+                    <th:block th:if="${not #strings.isEmpty(client.requisitesPhone())}" th:text="${client.requisitesPhone()}">+38(0XX)-XXX-XX-XX</th:block>
+                    <span class="fill-line-short" th:if="${#strings.isEmpty(client.requisitesPhone())}"></span>
                 </p>
                 <p class="req-line" th:if="${not #strings.isEmpty(client.email())}" th:text="'E-mail: ' + ${client.email()}">E-mail</p>
-                <p class="sig-row">
+                <p class="sig-position" th:if="${not #strings.isEmpty(client.signatoryPosition())}" th:text="${client.signatoryPosition()}">Директор</p>
+                <p th:class="${#strings.isEmpty(client.signatoryPosition())} ? 'sig-row' : 'req-line'">
                     _________________ /
-                    <th:block th:if="${not #strings.isEmpty(client.contactPersonName())}" th:text="${client.contactPersonName()}">Іванов Іван</th:block>
-                    <span class="fill-line-short" th:if="${#strings.isEmpty(client.contactPersonName())}"></span>
+                    <th:block th:if="${client.signatoryShortName() != null}" th:text="${client.signatoryShortName()}">Іванов І.І.</th:block>
+                    <span class="fill-line-short" th:if="${client.signatoryShortName() == null}"></span>
                 </p>
                 <p class="req-line">М.П. (за наявності)</p>
             </td>
@@ -214,39 +257,129 @@
         </tr>
     </table>
 
-    <div class="appendix">
+    <!-- Додаток №1 — незаповнений бланк «мого» акту виконаних робіт (pdf/act.html), а не замовлення-наряд (2026-11-22). -->
+    <div class="appendix act-annex" th:with="vat=${settings.vatPayer}">
         <p class="appendix-ref" th:text="'Додаток №1 до договору № ' + ${contract.contractNumber} + ' від ' + ${#temporals.format(contract.contractDate, 'dd.MM.yyyy')} + ' р.'">Додаток №1</p>
-        <h1>ЗАМОВЛЕННЯ-НАРЯД (зразок)</h1>
-        <div class="subtitle">на виконання робіт з ремонту та технічного обслуговування</div>
 
-        <table class="order-form">
-            <tr><td class="label">Власник транспортного засобу</td><td></td></tr>
-            <tr><td class="label">Марка транспортного засобу</td><td></td></tr>
-            <tr><td class="label">Державний номер / VIN</td><td></td></tr>
-            <tr><td class="label">Марка тахографа чи автономного опалювача</td><td></td></tr>
-            <tr><td class="label">Дата оформлення замовлення</td><td></td></tr>
-        </table>
+        <div class="head">
+            <div class="title">АКТ ВИКОНАНИХ РОБІТ З ТЕХНІЧНОГО ОБСЛУГОВУВАННЯ І РЕМОНТУ ТРАНСПОРТНОГО ЗАСОБУ</div>
+            <div class="line">№ ________ від ____________________ 20____ р.</div>
+            <div class="line" th:text="'Договір: № ' + ${contract.contractNumber} + ' від ' + ${#temporals.format(contract.contractDate, 'd MMMM yyyy')} + ' р.'">Договір</div>
+            <div class="line">Рахунок: № ________ від ____________________ 20____ р.</div>
+        </div>
 
-        <table class="order-form">
-            <tr><td><strong>Види робіт, які потрібно виконати</strong></td></tr>
-            <tr class="work-row"><td></td></tr>
-            <tr class="work-row"><td></td></tr>
-            <tr class="work-row"><td></td></tr>
-            <tr class="work-row"><td></td></tr>
-            <tr class="work-row"><td></td></tr>
-            <tr class="work-row"><td></td></tr>
-        </table>
-
-        <table class="order-form">
-            <tr><td class="label">Інші відомості</td><td></td></tr>
-            <tr><td class="label">Уповноважена особа Замовника (ПІБ, посада)</td><td></td></tr>
-            <tr><td class="label">Підпис уповноваженої особи Замовника</td><td></td></tr>
-        </table>
-
-        <table class="req-table">
+        <table class="card">
+            <col style="width: 15%;"/><col style="width: 30%;"/><col style="width: 13%;"/><col style="width: 42%;"/>
             <tr>
-                <td><p class="sig-row">Замовник _________________</p></td>
-                <td><p class="sig-row">Виконавець _________________ / Вишивата Д.О.</p></td>
+                <td class="lbl">Автомобіль</td><td></td>
+                <td class="lbl">Власник</td><td th:text="${client.fullName()}">Власник</td>
+            </tr>
+            <tr>
+                <td class="lbl">Державний номер</td><td></td>
+                <td class="lbl" th:text="${not #strings.isEmpty(client.edrpou())} ? 'Код ЄДРПОУ' : 'РНОКПП'">Код</td>
+                <td th:text="${not #strings.isEmpty(client.edrpou())} ? ${client.edrpou()} : ${client.code()}"></td>
+            </tr>
+            <tr>
+                <td class="lbl">№ кузова</td><td></td>
+                <td class="lbl">Телефон</td><td th:text="${client.requisitesPhone()}"></td>
+            </tr>
+            <tr>
+                <td class="lbl">Пробіг</td><td></td>
+                <td class="lbl">Водій</td><td></td>
+            </tr>
+            <tr>
+                <td class="lbl">Приймальник</td><td></td>
+                <td class="lbl"></td><td></td>
+            </tr>
+        </table>
+
+        <th:block th:each="title : ${ {'НАДАНІ МАТЕРІАЛИ', 'НАДАНІ ПОСЛУГИ'} }">
+            <h3 th:text="${title}">НАДАНІ МАТЕРІАЛИ</h3>
+            <table class="items">
+                <tr>
+                    <th style="width: 30pt;">№ п/п</th>
+                    <th>Назва</th>
+                    <th style="width: 44pt;">Од. вим.</th>
+                    <th style="width: 34pt;">К-сть</th>
+                    <th style="width: 84pt;" th:text="${vat} ? 'Ціна грн., без ПДВ' : 'Ціна, грн.'">Ціна</th>
+                    <th style="width: 88pt;" th:text="${vat} ? 'Сума грн., без ПДВ' : 'Сума, грн.'">Сума</th>
+                </tr>
+                <tr th:each="i : ${#numbers.sequence(1, 4)}"><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td class="sum-lbl" colspan="2">Всього</td><td colspan="3"></td><td></td></tr>
+                <tr><td class="sum-lbl" colspan="2">Знижка</td><td colspan="3"></td><td></td></tr>
+                <tr th:if="${vat}"><td class="sum-lbl" colspan="2">ПДВ (20%)</td><td colspan="3"></td><td></td></tr>
+                <tr><td class="sum-lbl" colspan="2" th:text="${vat} ? 'Всього з ПДВ' : 'Всього, без ПДВ'">Всього</td><td colspan="3"></td><td></td></tr>
+            </table>
+        </th:block>
+
+        <table class="pay">
+            <tr><td class="lbl">Передплата:</td><td class="fill"></td></tr>
+            <tr><td class="lbl">До оплати:</td><td class="fill"></td></tr>
+            <tr><td class="lbl">До оплати прописом:</td><td class="fill"></td></tr>
+        </table>
+
+        <div class="warranty">
+            Умови гарантії (базуються на умовах гарантії та ДСТУ 2322-93)<br/>
+            <div class="item">- на оригінальні запчастини 1 (один) рік або 20 тис. км пробігу;</div>
+            <div class="item">- 20 діб або не більше 1500 км пробігу на регулювальні роботи;</div>
+            Гарантія не розповсюджується на деталі, вузли і агрегати, надані для здійснення ремонту Замовником.<br/>
+            Увага! Гарантія на виконані роботи та встановлені деталі, вузли і агрегати надається виконавцем за таких умов:
+            <div class="item">- виконання правил експлуатації та зберігання автомобіля згідно вимог заводу-виробника;</div>
+            <div class="item">- технічно справний стан всіх вузлів і агрегатів автомобіля;</div>
+        </div>
+
+        <table class="handover">
+            <tr>
+                <td style="width: 50%; padding-right: 20pt;">
+                    ДТЗ (його складові), замінені (запасні)<br/>
+                    частини і невикористані матеріали передав
+                    <div class="sign-line"></div>
+                    <div class="caption">(прізвище та ініціали) (підпис)</div>
+                </td>
+                <td style="width: 50%;">
+                    Договірна вартість автозапчастин, матеріалів<br/>
+                    та робіт узгоджена.<br/>
+                    ДТЗ (його складові) отримав.<br/>
+                    З правилами експлуатації тахографа, місцями<br/>
+                    нанесення та к-тю пломб і наклейок ознайомлений.
+                    <div class="sign-line"></div>
+                    <div class="caption">(прізвище та ініціали) (підпис)</div>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-right: 20pt;"></td>
+                <td style="padding-top: 3pt;">
+                    Замінені (запасні) частини і невикористані матеріали прийняв.
+                    <div class="sign-line"></div>
+                    <div class="caption">(прізвище та ініціали) (підпис)</div>
+                </td>
+            </tr>
+        </table>
+
+        <p class="place">Місце складання:&#160; 45604, Волинська обл., Луцький р-н, с. Крупа, вул. Дубнівська, 10</p>
+
+        <table class="parties">
+            <tr>
+                <td class="left">
+                    <div class="party-title">Від виконавця</div>
+                    <div class="party-line"></div>
+                    <div>__.__.20___</div>
+                    ФОП Вишивата Діана Олександрівна,<br/>
+                    РНОКПП 3809602220, тел.: +380962322363,<br/>
+                    р/р UA833348510000000026002389961 у банку АТ «ПУМБ», МФО 334851,<br/>
+                    45604, Волинська обл., Луцький р-н, с. Крупа, вул. Дубнівська, 10
+                </td>
+                <td>
+                    <div class="party-title">Від замовника</div>
+                    <div class="party-line"></div>
+                    <div>За довіреністю № ________ від __.__.20___</div>
+                    <span th:text="${client.fullName()}">Замовник</span>,<br/>
+                    <th:block th:if="${not #strings.isEmpty(client.edrpou())}">код за ЄДРПОУ <span th:text="${client.edrpou()}"></span>,<br/></th:block>
+                    <th:block th:if="${not #strings.isEmpty(client.code())}">ІПН <span th:text="${client.code()}"></span>,<br/></th:block>
+                    <th:block th:if="${not #strings.isEmpty(client.iban())}">р/р <span th:text="${client.iban()}"></span><th:block th:if="${not #strings.isEmpty(client.bankName())}"> у банку <span th:text="${client.bankName()}"></span></th:block><th:block th:if="${not #strings.isEmpty(client.mfo())}">, МФО <span th:text="${client.mfo()}"></span></th:block>,<br/></th:block>
+                    <th:block th:if="${not #strings.isEmpty(client.legalAddress())}"><span th:text="${client.legalAddress()}"></span><br/></th:block>
+                    <th:block th:if="${not #strings.isEmpty(client.requisitesPhone())}">тел.: <span th:text="${client.requisitesPhone()}"></span></th:block>
+                </td>
             </tr>
         </table>
     </div>

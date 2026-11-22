@@ -74,4 +74,26 @@ public class Client extends BaseEntity {
 
     @Column(name = "vat_payer", nullable = false)
     private boolean vatPayer;
+
+    // Реквізити для договору (V71, docs/Договори.md)
+    @Column(name = "legal_address", length = 500)
+    private String legalAddress;
+
+    /** Поточний рахунок, IBAN (UA + 27 цифр). */
+    @Column(length = 34)
+    private String iban;
+
+    @Column(name = "bank_name")
+    private String bankName;
+
+    @Column(length = 6)
+    private String mfo;
+
+    /** Посада того, хто підписує договір від замовника, напр. «Директор». */
+    @Column(name = "signatory_position", length = 100)
+    private String signatoryPosition;
+
+    /** На підставі чого діє підписант: «Статуту», «довіреності № …». */
+    @Column(name = "signatory_basis")
+    private String signatoryBasis;
 }

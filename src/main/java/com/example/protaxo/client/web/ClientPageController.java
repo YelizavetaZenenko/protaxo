@@ -150,7 +150,13 @@ public class ClientPageController {
                 existing != null ? existing.employerClientId() : null,
                 existing != null ? existing.position() : null,
                 existing != null ? existing.phone() : null,
-                form.getEmail(), form.isVatPayer());
+                blankToNull(form.getEmail()), form.isVatPayer(),
+                blankToNull(form.getLegalAddress()), blankToNull(form.getIban()), blankToNull(form.getBankName()),
+                blankToNull(form.getMfo()), blankToNull(form.getSignatoryPosition()), blankToNull(form.getSignatoryBasis()));
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private ClientFormData toFormData(ClientResponse response) {
@@ -165,6 +171,12 @@ public class ClientPageController {
         form.setMiddleName(response.middleName());
         form.setEmail(response.email());
         form.setVatPayer(response.vatPayer());
+        form.setLegalAddress(response.legalAddress());
+        form.setIban(response.iban());
+        form.setBankName(response.bankName());
+        form.setMfo(response.mfo());
+        form.setSignatoryPosition(response.signatoryPosition());
+        form.setSignatoryBasis(response.signatoryBasis());
         return form;
     }
 }

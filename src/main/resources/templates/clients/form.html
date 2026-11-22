@@ -49,9 +49,55 @@
                 </div>
 
                 <div class="field">
-                    <label for="email">Email *</label>
-                    <input type="email" id="email" th:field="*{email}" required>
+                    <label for="email">Email</label>
+                    <input type="email" id="email" th:field="*{email}">
                     <div class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                </div>
+
+                <!-- Реквізити для договору (docs/Договори.md): порожнє поле друкується лінією для заповнення від руки. -->
+                <div class="field-full form-section">
+                    <strong>Реквізити для договору</strong>
+                    <div class="muted">Необов'язкові — що не заповнено, у договорі буде порожньою лінією</div>
+                </div>
+
+                <div class="field field-full">
+                    <label for="legalAddress">Юридична адреса</label>
+                    <input type="text" id="legalAddress" th:field="*{legalAddress}" maxlength="500"
+                           placeholder="35708, Рівненська обл., Здолбунівський р-н, с. Ільпінь, вул. Солов'їна, 5а">
+                    <div class="field-error" th:if="${#fields.hasErrors('legalAddress')}" th:errors="*{legalAddress}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="iban">Поточний рахунок (IBAN)</label>
+                    <input type="text" id="iban" th:field="*{iban}" maxlength="40" placeholder="UA000000000000000000000000000"
+                           autocomplete="off" spellcheck="false">
+                    <div class="field-error" th:if="${#fields.hasErrors('iban')}" th:errors="*{iban}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="bankName">Банк</label>
+                    <input type="text" id="bankName" th:field="*{bankName}" maxlength="255" placeholder="АТ КБ «ПриватБанк»">
+                    <div class="field-error" th:if="${#fields.hasErrors('bankName')}" th:errors="*{bankName}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="mfo">МФО</label>
+                    <input type="text" id="mfo" th:field="*{mfo}" maxlength="6" inputmode="numeric" placeholder="305299">
+                    <div class="field-error" th:if="${#fields.hasErrors('mfo')}" th:errors="*{mfo}"></div>
+                </div>
+
+                <div class="field">
+                    <label for="signatoryPosition">Посада підписанта</label>
+                    <input type="text" id="signatoryPosition" th:field="*{signatoryPosition}" maxlength="100" placeholder="Директор">
+                    <div class="field-error" th:if="${#fields.hasErrors('signatoryPosition')}" th:errors="*{signatoryPosition}"></div>
+                    <div class="muted">Підписант — контактна особа нижче</div>
+                </div>
+
+                <div class="field">
+                    <label for="signatoryBasis">Діє на підставі</label>
+                    <input type="text" id="signatoryBasis" th:field="*{signatoryBasis}" maxlength="255" placeholder="Статуту">
+                    <div class="field-error" th:if="${#fields.hasErrors('signatoryBasis')}" th:errors="*{signatoryBasis}"></div>
+                    <div class="muted">«…який діє на підставі <em>Статуту</em>»</div>
                 </div>
 
                 <div class="field-full form-section">
@@ -214,6 +260,11 @@
             var edrpouInput = document.getElementById('edrpou');
             edrpouInput.addEventListener('input', function () {
                 edrpouInput.value = edrpouInput.value.replace(/\D/g, '').slice(0, 8);
+            });
+
+            var mfoInput = document.getElementById('mfo');
+            mfoInput.addEventListener('input', function () {
+                mfoInput.value = mfoInput.value.replace(/\D/g, '').slice(0, 6);
             });
 
             ProtaxoPhone.mask(document.getElementById('contactPersonPhone'));

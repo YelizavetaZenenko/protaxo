@@ -71,6 +71,23 @@
                     <label>Email</label>
                     <div th:text="${client.email}"></div>
                 </div>
+                <div class="field field-full" th:if="${not #strings.isEmpty(client.legalAddress)}">
+                    <label>Юридична адреса</label>
+                    <div th:text="${client.legalAddress}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(client.iban)}">
+                    <label>Поточний рахунок (IBAN)</label>
+                    <div th:text="${client.iban}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(client.bankName) or not #strings.isEmpty(client.mfo)}">
+                    <label>Банк</label>
+                    <div th:text="${#strings.trim((client.bankName ?: '') + (#strings.isEmpty(client.mfo) ? '' : ', МФО ' + client.mfo))}"></div>
+                </div>
+                <div class="field" th:if="${not #strings.isEmpty(client.signatoryPosition) or not #strings.isEmpty(client.signatoryBasis)}">
+                    <label>Підписант договору</label>
+                    <div th:text="${#strings.trim((client.signatoryPosition ?: '') + ' ' + (client.signatoryName() ?: ''))
+                                  + (#strings.isEmpty(client.signatoryBasis) ? '' : ', діє на підставі ' + client.signatoryBasis)}"></div>
+                </div>
             </div>
 
             <h2 class="view-section-title">Працівники</h2>
