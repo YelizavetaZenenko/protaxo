@@ -14,6 +14,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.protaxo.audit.service.AuditLogService;
+import com.example.protaxo.bank.Bank;
+import com.example.protaxo.bank.BankService;
 import com.example.protaxo.client.dto.ClientRequest;
 import com.example.protaxo.client.dto.ClientResponse;
 import com.example.protaxo.client.service.ClientService;
@@ -47,6 +49,7 @@ class ClientRequisitesPagesTest {
     @MockitoBean ClientService clientService;
     @MockitoBean DriverService driverService;
     @MockitoBean VehicleService vehicleService;
+    @MockitoBean BankService bankService;
     @MockitoBean AuditLogService auditLogService;
     @MockitoBean AuthAuditRecorder authAuditRecorder;
     @MockitoBean LoginAttemptService loginAttemptService;
@@ -59,6 +62,9 @@ class ClientRequisitesPagesTest {
 
     @Test
     void newClientFormHasRequisitesAndBasisDropdownAndOptionalEmail() throws Exception {
+        when(bankService.findAll()).thenReturn(List.of(
+                Bank.builder().id(1L).name("АТ «ПУМБ»").mfo("334851").build(),
+                Bank.builder().id(2L).name("АТ КБ «ПриватБанк»").mfo("305299").build()));
         mvc.perform(get("/clients/new").with(user("a@b.c").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(allOf(
@@ -70,6 +76,11 @@ class ClientRequisitesPagesTest {
                         containsString("Модельного статуту"),
                         containsString("Довіреності"),
                         containsString("type=\"hidden\" id=\"signatoryBasis\""),
+                        containsString("id=\"bankSelect\""),
+                        containsString("data-mfo=\"334851\""),
+                        containsString("АТ КБ «ПриватБанк»"),
+                        containsString("+ Додати банк…"),
+                        containsString("id=\"bankModalOverlay\""),
                         not(containsString("type=\"email\" id=\"email\" name=\"email\" value=\"\" required")))));
     }
 

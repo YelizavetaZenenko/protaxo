@@ -1,5 +1,7 @@
 package com.example.protaxo.client.web;
 
+import com.example.protaxo.bank.Bank;
+import com.example.protaxo.bank.BankService;
 import com.example.protaxo.client.dto.ClientFormData;
 import com.example.protaxo.client.dto.ClientRequest;
 import com.example.protaxo.client.dto.ClientResponse;
@@ -30,6 +32,13 @@ public class ClientPageController {
     private final ClientService clientService;
     private final DriverService driverService;
     private final VehicleService vehicleService;
+    private final BankService bankService;
+
+    /** Довідник банків для випадного списку «Банк» у формі (docs/Контрагенти.md). */
+    @ModelAttribute("banks")
+    public List<Bank> banks() {
+        return bankService.findAll();
+    }
 
     @GetMapping
     public String list(@RequestParam(required = false) String filterName,

@@ -75,9 +75,17 @@
                 </div>
 
                 <div class="field">
-                    <label for="bankName">Банк</label>
-                    <input type="text" id="bankName" th:field="*{bankName}" maxlength="255" placeholder="АТ КБ «ПриватБанк»">
+                    <!-- Банк із довідника (V72): вибір підставляє МФО; IBAN сам обирає банк за МФО (цифри 5–10).
+                         У контрагента зберігаються назва й МФО текстом — їх друкує договір. -->
+                    <label for="bankSelect">Банк</label>
+                    <input type="hidden" id="bankName" th:field="*{bankName}">
+                    <select id="bankSelect">
+                        <option value="">— оберіть банк —</option>
+                        <option th:each="b : ${banks}" th:value="${b.name}" th:attr="data-mfo=${b.mfo}" th:text="${b.name}">АТ КБ «ПриватБанк»</option>
+                        <option value="__add__" sec:authorize="!hasRole('ACCOUNTANT')">+ Додати банк…</option>
+                    </select>
                     <div class="field-error" th:if="${#fields.hasErrors('bankName')}" th:errors="*{bankName}"></div>
+                    <div class="muted" id="bankHint">Банк і МФО підставляються самі, щойно введено IBAN</div>
                 </div>
 
                 <div class="field">
@@ -241,6 +249,29 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="bankModalOverlay" hidden>
+        <div class="modal">
+            <h2>Новий банк</h2>
+            <div class="alert alert-error" id="bankModalError" hidden></div>
+            <div class="field field-full">
+                <label for="newBankName">Назва банку *</label>
+                <input type="text" id="newBankName" maxlength="255" placeholder="АТ «Назва Банку»">
+            </div>
+            <div class="field field-full">
+                <label for="newBankMfo">МФО</label>
+                <input type="text" id="newBankMfo" maxlength="6" inputmode="numeric" placeholder="6 цифр">
+            </div>
+            <div class="field field-full">
+                <label for="newBankEdrpou">Код ЄДРПОУ банку</label>
+                <input type="text" id="newBankEdrpou" maxlength="8" inputmode="numeric" placeholder="8 цифр, необов'язково">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveBankBtn">Додати</button>
+                <button type="button" class="btn-outline" id="cancelBankBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="driverModalOverlay" hidden>
         <div class="modal">
             <h2 id="driverModalTitle">Новий працівник</h2>
@@ -318,6 +349,113 @@
                 sync();
                 kind.addEventListener('change', function () { sync(); if (!details.hidden) details.focus(); });
                 details.addEventListener('input', sync);
+            })();
+
+            // Банк: список ↔ прихований bankName, МФО з банку, банк з IBAN, «+ Додати банк» у модальному вікні.
+            (function () {
+                var select = document.getElementById('bankSelect');
+                var hidden = document.getElementById('bankName');
+                var mfo = document.getElementById('mfo');
+                var iban = document.getElementById('iban');
+                var hint = document.getElementById('bankHint');
+                var overlay = document.getElementById('bankModalOverlay');
+                var errorBox = document.getElementById('bankModalError');
+                var nameIn = document.getElementById('newBankName');
+                var mfoIn = document.getElementById('newBankMfo');
+                var edrpouIn = document.getElementById('newBankEdrpou');
+                var addOption = select.querySelector('option[value="__add__"]');
+                var previous = '';
+
+                function optionByName(name) {
+                    return Array.prototype.find.call(select.options, function (o) {
+                        return o.value && o.value !== '__add__' && o.value.toLowerCase() === (name || '').toLowerCase();
+                    });
+                }
+                function optionByMfo(code) {
+                    return Array.prototype.find.call(select.options, function (o) { return code && o.dataset.mfo === code; });
+                }
+                function addBankOption(name, code) {
+                    var o = document.createElement('option');
+                    o.value = name; o.textContent = name;
+                    if (code) o.dataset.mfo = code;
+                    select.insertBefore(o, addOption || null);
+                    return o;
+                }
+                function choose(option) {
+                    select.value = option ? option.value : '';
+                    previous = select.value;
+                    hidden.value = option ? option.value : '';
+                    if (option && option.dataset.mfo) mfo.value = option.dataset.mfo;
+                }
+
+                // Збережена назва, якої немає в довіднику (вписана раніше вручну), — окремим пунктом.
+                if (hidden.value) {
+                    choose(optionByName(hidden.value) || addBankOption(hidden.value, mfo.value));
+                    if (!mfo.value && optionByName(hidden.value)) mfo.value = optionByName(hidden.value).dataset.mfo || '';
+                }
+
+                select.addEventListener('change', function () {
+                    if (select.value === '__add__') {
+                        select.value = previous;
+                        errorBox.hidden = true;
+                        nameIn.value = ''; edrpouIn.value = '';
+                        mfoIn.value = mfo.value || ibanMfo() || '';
+                        overlay.hidden = false;
+                        nameIn.focus();
+                        return;
+                    }
+                    choose(select.options[select.selectedIndex]);
+                    if (!select.value) mfo.value = '';
+                });
+
+                function ibanMfo() {
+                    var v = (iban.value || '').replace(/\s+/g, '').toUpperCase();
+                    return /^UA\d{8}/.test(v) ? v.substr(4, 6) : null;
+                }
+                iban.addEventListener('input', function () {
+                    var code = ibanMfo();
+                    if (!code) return;
+                    var option = optionByMfo(code);
+                    if (option) {
+                        choose(option);
+                        hint.textContent = 'Банк визначено за IBAN (МФО ' + code + ')';
+                    } else {
+                        mfo.value = code;
+                        hint.textContent = 'Банку з МФО ' + code + ' немає в списку — додайте його через «+ Додати банк…»';
+                    }
+                });
+
+                [mfoIn, edrpouIn].forEach(function (input) {
+                    input.addEventListener('input', function () { input.value = input.value.replace(/\D/g, ''); });
+                });
+                document.getElementById('cancelBankBtn').addEventListener('click', function () { overlay.hidden = true; });
+                document.getElementById('saveBankBtn').addEventListener('click', function () {
+                    var name = nameIn.value.trim();
+                    if (!name) {
+                        errorBox.textContent = 'Вкажіть назву банку';
+                        errorBox.hidden = false;
+                        return;
+                    }
+                    fetch('/api/banks', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: name, mfo: mfoIn.value.trim() || null, edrpou: edrpouIn.value.trim() || null })
+                    }).then(function (resp) {
+                        if (!resp.ok) {
+                            return resp.json().catch(function () { return {}; }).then(function (b) {
+                                throw new Error(b.message || 'Не вдалося додати банк');
+                            });
+                        }
+                        return resp.json();
+                    }).then(function (bank) {
+                        choose(addBankOption(bank.name, bank.mfo));
+                        overlay.hidden = true;
+                    }).catch(function (err) {
+                        errorBox.textContent = err.message;
+                        errorBox.hidden = false;
+                    });
+                });
             })();
 
             var mfoInput = document.getElementById('mfo');

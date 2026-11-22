@@ -40,6 +40,7 @@ public class AuditLogService {
             Map.entry("Vehicle", "Автомобіль"),
             Map.entry("Tachograph", "Тахограф"),
             Map.entry("Client", "Контрагент"),
+            Map.entry("Bank", "Банк"),
             Map.entry("Driver", "Працівник"),
             Map.entry("Contract", "Договір"),
             Map.entry("Invoice", "Наряд-заказ"),
