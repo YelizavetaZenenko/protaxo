@@ -23,7 +23,10 @@ import org.springframework.web.bind.annotation.RequestParam;
  *       цього моменту ще не стартувала нова сторінка. Перехід на іншу сторінку чи F5 теж дає
  *       pagehide, але нова сторінка стартує пізніше за нього: якщо її пульс прийшов раніше за
  *       beacon — beacon ігнорується, якщо пізніше — SessionTimeoutResetFilter повертає звичайний
- *       таймаут. Порядок доставки запитів неважливий, бо порівнюються мітки одного годинника.</li>
+ *       таймаут. Порядок доставки запитів неважливий, бо порівнюються мітки одного годинника.
+ *       Але якщо beacon і перший пінг нової сторінки обробляються <i>одночасно</i> (так робить
+ *       Safari), beacon не бачить свіжого {@code start} і все одно скорочує сесію — тому grace
+ *       (45 с) більший за інтервал пульсу (15 с): наступний пінг живої сторінки це виправляє.</li>
  * </ul>
  */
 @Controller
@@ -34,7 +37,7 @@ public class SessionLifecycleController {
 
     private final Duration closingGrace;
 
-    public SessionLifecycleController(@Value("${app.session.closing-grace:10s}") Duration closingGrace) {
+    public SessionLifecycleController(@Value("${app.session.closing-grace:45s}") Duration closingGrace) {
         this.closingGrace = closingGrace;
     }
 

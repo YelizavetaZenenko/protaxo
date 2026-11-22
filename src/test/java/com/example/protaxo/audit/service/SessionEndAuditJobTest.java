@@ -13,13 +13,13 @@ class SessionEndAuditJobTest {
     private final SessionEndAuditJob job = new SessionEndAuditJob(null, null);
 
     {
-        ReflectionTestUtils.setField(job, "closingGrace", Duration.ofSeconds(10));
+        ReflectionTestUtils.setField(job, "closingGrace", Duration.ofSeconds(45));
     }
 
     @Test
     void shortTimeoutMeansAllTabsClosed() {
         Map<String, String[]> changes = job.describe(
-                new SessionEndAuditJob.Expired("id", "a@b.c", 0, 3_600_000, 10, 3_610_000), "/invoices/5");
+                new SessionEndAuditJob.Expired("id", "a@b.c", 0, 3_600_000, 45, 3_645_000), "/invoices/5");
         assertThat(changes.get("Причина")[1]).isEqualTo("Закрито всі вкладки сайту");
         assertThat(changes.get("Остання сторінка")[1]).isEqualTo("/invoices/5");
         assertThat(changes.get("Тривалість сесії")[1]).isEqualTo("1 год 0 хв");

@@ -43,7 +43,7 @@ public class SessionEndAuditJob {
     private final AuditLogService auditLogService;
     private final DeserializingConverter deserializer = new DeserializingConverter();
 
-    @Value("${app.session.closing-grace:10s}")
+    @Value("${app.session.closing-grace:45s}")
     private Duration closingGrace;
 
     record Expired(String id, String principal, long created, long lastAccess, int maxInactive, long expiry) {
