@@ -63,6 +63,21 @@ public class ClientFormData {
     @Size(max = 255, message = "До 255 символів")
     private String signatoryBasis;
 
+    // Юридична адреса частинами (V73)
+    private String addressSettlementCode;
+
+    @Size(max = 255, message = "Вулиця — до 255 символів")
+    private String addressStreet;
+
+    @Size(max = 30, message = "Будинок — до 30 символів")
+    private String addressBuilding;
+
+    @Size(max = 30, message = "Офіс / квартира — до 30 символів")
+    private String addressOffice;
+
+    @Pattern(regexp = "^(\\d{5})?$", message = "Індекс має складатись з 5 цифр")
+    private String addressPostalCode;
+
     /** «UA 83 3348…» з пробілами й малими літерами → «UA833348…», щоб вставлене з виписки проходило. */
     public void setIban(String iban) {
         this.iban = iban == null ? null : iban.replaceAll("\\s+", "").toUpperCase();

@@ -35,7 +35,8 @@ class ContractPdfRenderTest {
                 withRequisites ? "АТ КБ «ПриватБанк»" : null,
                 withRequisites ? "305299" : null,
                 withRequisites ? "Директор" : null,
-                withRequisites ? "Статуту" : null);
+                withRequisites ? "Статуту" : null,
+                null, null, null, null, null);
     }
 
     private String html(ClientResponse client) {

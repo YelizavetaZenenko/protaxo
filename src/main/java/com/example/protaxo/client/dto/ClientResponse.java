@@ -26,7 +26,12 @@ public record ClientResponse(
         String bankName,
         String mfo,
         String signatoryPosition,
-        String signatoryBasis
+        String signatoryBasis,
+        String addressSettlementCode,
+        String addressStreet,
+        String addressBuilding,
+        String addressOffice,
+        String addressPostalCode
 ) {
 
     /**

@@ -2643,3 +2643,14 @@ a.acc-card-meta:hover {
     align-items: flex-start;
     gap: 0.2rem;
 }
+
+/* Юридична адреса у формі контрагента: будинок / офіс / індекс в один рядок. */
+.address-small-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.6rem;
+}
+
+#addressPreview {
+    margin-top: -0.25rem;
+}

@@ -35,6 +35,12 @@ public record ClientRequest(
         @Pattern(regexp = "^(\\d{6})?$", message = "МФО має складатись з 6 цифр")
         String mfo,
         @Size(max = 100) String signatoryPosition,
-        @Size(max = 255) String signatoryBasis
+        @Size(max = 255) String signatoryBasis,
+        @Size(max = 19) String addressSettlementCode,
+        @Size(max = 255) String addressStreet,
+        @Size(max = 30) String addressBuilding,
+        @Size(max = 30) String addressOffice,
+        @Pattern(regexp = "^(\\d{5})?$", message = "Індекс має складатись з 5 цифр")
+        String addressPostalCode
 ) {
 }

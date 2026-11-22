@@ -96,4 +96,21 @@ public class Client extends BaseEntity {
     /** На підставі чого діє підписант: «Статуту», «довіреності № …». */
     @Column(name = "signatory_basis")
     private String signatoryBasis;
+
+    // Юридична адреса частинами (V73): населений пункт з КАТОТТГ + вулиця, будинок, офіс, індекс.
+    // legalAddress складається з них у ClientService; без населеного пункту — старий текст як є.
+    @Column(name = "address_settlement_code", length = 19)
+    private String addressSettlementCode;
+
+    @Column(name = "address_street")
+    private String addressStreet;
+
+    @Column(name = "address_building", length = 30)
+    private String addressBuilding;
+
+    @Column(name = "address_office", length = 30)
+    private String addressOffice;
+
+    @Column(name = "address_postal_code", length = 5)
+    private String addressPostalCode;
 }

@@ -1,5 +1,6 @@
 package com.example.protaxo.client.web;
 
+import com.example.protaxo.address.AddressDirectoryService;
 import com.example.protaxo.bank.Bank;
 import com.example.protaxo.bank.BankService;
 import com.example.protaxo.client.dto.ClientFormData;
@@ -33,6 +34,13 @@ public class ClientPageController {
     private final DriverService driverService;
     private final VehicleService vehicleService;
     private final BankService bankService;
+    private final AddressDirectoryService addressDirectoryService;
+
+    /** Області для поля «Юридична адреса» (КАТОТТГ, V73). */
+    @ModelAttribute("addressRegions")
+    public List<AddressDirectoryService.Region> addressRegions() {
+        return addressDirectoryService.regions();
+    }
 
     /** Довідник банків для випадного списку «Банк» у формі (docs/Контрагенти.md). */
     @ModelAttribute("banks")
@@ -161,7 +169,10 @@ public class ClientPageController {
                 existing != null ? existing.phone() : null,
                 blankToNull(form.getEmail()), form.isVatPayer(),
                 blankToNull(form.getLegalAddress()), blankToNull(form.getIban()), blankToNull(form.getBankName()),
-                blankToNull(form.getMfo()), blankToNull(form.getSignatoryPosition()), blankToNull(form.getSignatoryBasis()));
+                blankToNull(form.getMfo()), blankToNull(form.getSignatoryPosition()), blankToNull(form.getSignatoryBasis()),
+                blankToNull(form.getAddressSettlementCode()), blankToNull(form.getAddressStreet()),
+                blankToNull(form.getAddressBuilding()), blankToNull(form.getAddressOffice()),
+                blankToNull(form.getAddressPostalCode()));
     }
 
     private static String blankToNull(String value) {
@@ -186,6 +197,11 @@ public class ClientPageController {
         form.setMfo(response.mfo());
         form.setSignatoryPosition(response.signatoryPosition());
         form.setSignatoryBasis(response.signatoryBasis());
+        form.setAddressSettlementCode(response.addressSettlementCode());
+        form.setAddressStreet(response.addressStreet());
+        form.setAddressBuilding(response.addressBuilding());
+        form.setAddressOffice(response.addressOffice());
+        form.setAddressPostalCode(response.addressPostalCode());
         return form;
     }
 }

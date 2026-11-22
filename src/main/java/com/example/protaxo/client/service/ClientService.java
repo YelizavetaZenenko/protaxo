@@ -1,5 +1,6 @@
 package com.example.protaxo.client.service;
 
+import com.example.protaxo.address.AddressDirectoryService;
 import com.example.protaxo.audit.entity.AuditAction;
 import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.client.dto.ClientRequest;
@@ -27,6 +28,7 @@ public class ClientService {
     private final ClientRepository clientRepository;
     private final ClientMapper clientMapper;
     private final AuditLogService auditLogService;
+    private final AddressDirectoryService addressDirectoryService;
 
     @Transactional(readOnly = true)
     public List<ClientResponse> findAll() {
@@ -42,6 +44,7 @@ public class ClientService {
 
     public ClientResponse create(ClientRequest request) {
         Client client = clientMapper.toEntity(request);
+        composeLegalAddress(client);
         client.setEmployerClient(resolveEmployer(request.employerClientId(), null));
         Client saved = saveOrThrowFriendly(client);
         auditLogService.record(AuditAction.CREATE, "Client", saved.getId(), FieldDiff.created(snapshot(saved)));
@@ -52,6 +55,7 @@ public class ClientService {
         Client client = getOrThrow(id);
         FieldDiff.Snapshot before = snapshot(client);
         clientMapper.updateEntity(request, client);
+        composeLegalAddress(client);
         client.setEmployerClient(resolveEmployer(request.employerClientId(), id));
         Client saved = saveOrThrowFriendly(client);
         auditLogService.record(AuditAction.UPDATE, "Client", saved.getId(), FieldDiff.between(before, snapshot(saved)));
@@ -96,6 +100,21 @@ public class ClientService {
         client.setDeletedAt(Instant.now());
         clientRepository.save(client);
         auditLogService.record(AuditAction.DELETE, "Client", id, FieldDiff.deleted(snapshot(client)));
+    }
+
+    /**
+     * Обрано населений пункт із КАТОТТГ — юридична адреса для договору складається з частин
+     * («45604, Волинська обл., Луцький р-н, с. Крупа, вул. Дубнівська, 10»). Не обрано — лишається
+     * текст, як його ввели раніше (старі контрагенти до V73).
+     */
+    private void composeLegalAddress(Client client) {
+        if (client.getAddressSettlementCode() == null) {
+            return;
+        }
+        AddressDirectoryService.Settlement settlement = addressDirectoryService.find(client.getAddressSettlementCode())
+                .orElseThrow(() -> new BusinessRuleException("Населений пункт не знайдено в довіднику — оберіть його зі списку"));
+        client.setLegalAddress(addressDirectoryService.format(client.getAddressPostalCode(), settlement,
+                client.getAddressStreet(), client.getAddressBuilding(), client.getAddressOffice()));
     }
 
     private static FieldDiff.Snapshot snapshot(Client c) {

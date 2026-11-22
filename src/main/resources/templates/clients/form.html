@@ -60,12 +60,56 @@
                     <div class="muted">Необов'язкові — що не заповнено, у договорі буде порожньою лінією</div>
                 </div>
 
-                <div class="field field-full">
-                    <label for="legalAddress">Юридична адреса</label>
-                    <input type="text" id="legalAddress" th:field="*{legalAddress}" maxlength="500"
-                           placeholder="35708, Рівненська обл., Здолбунівський р-н, с. Ільпінь, вул. Солов'їна, 5а">
-                    <div class="field-error" th:if="${#fields.hasErrors('legalAddress')}" th:errors="*{legalAddress}"></div>
+                <!-- Юридична адреса частинами (КАТОТТГ, V73). Повний рядок для договору складає сервер
+                     (ClientService.composeLegalAddress); legalAddress тут лише несе старий текст без населеного пункту. -->
+                <input type="hidden" id="legalAddress" th:field="*{legalAddress}">
+                <input type="hidden" id="addressSettlementCode" th:field="*{addressSettlementCode}">
+
+                <div class="field-full muted" id="legacyAddressNote"
+                     th:if="${not #strings.isEmpty(client.legalAddress) and #strings.isEmpty(client.addressSettlementCode)}">
+                    Збережена адреса (текстом): <strong th:text="${client.legalAddress}"></strong> —
+                    оберіть населений пункт нижче, щоб замінити її адресою з довідника.
                 </div>
+
+                <div class="field">
+                    <label for="addressRegion">Юридична адреса: область</label>
+                    <select id="addressRegion">
+                        <option value="">— усі області —</option>
+                        <option th:each="r : ${addressRegions}" th:value="${r.code}" th:text="${r.label()}">Волинська обл.</option>
+                    </select>
+                    <div class="muted">Звужує пошук населеного пункту</div>
+                </div>
+
+                <div class="field">
+                    <label for="addressSettlement">Населений пункт</label>
+                    <input type="text" id="addressSettlement" maxlength="150" placeholder="Почніть вводити: Крупа, Луцьк…">
+                    <div class="field-error" id="addressSettlementError" hidden>Оберіть населений пункт зі списку</div>
+                    <div class="muted" id="addressSettlementHint"></div>
+                </div>
+
+                <div class="field">
+                    <label for="addressStreet">Вулиця</label>
+                    <input type="text" id="addressStreet" th:field="*{addressStreet}" maxlength="255" placeholder="вул. Дубнівська">
+                    <div class="field-error" th:if="${#fields.hasErrors('addressStreet')}" th:errors="*{addressStreet}"></div>
+                </div>
+
+                <div class="field address-small-row">
+                    <div>
+                        <label for="addressBuilding">Будинок</label>
+                        <input type="text" id="addressBuilding" th:field="*{addressBuilding}" maxlength="30" placeholder="10">
+                    </div>
+                    <div>
+                        <label for="addressOffice">Офіс / кв.</label>
+                        <input type="text" id="addressOffice" th:field="*{addressOffice}" maxlength="30" placeholder="оф. 5">
+                    </div>
+                    <div>
+                        <label for="addressPostalCode">Індекс</label>
+                        <input type="text" id="addressPostalCode" th:field="*{addressPostalCode}" maxlength="5" inputmode="numeric" placeholder="45604">
+                    </div>
+                </div>
+                <div class="field-error field-full" th:if="${#fields.hasErrors('addressPostalCode')}" th:errors="*{addressPostalCode}"></div>
+
+                <div class="field-full muted" id="addressPreview"></div>
 
                 <div class="field">
                     <label for="iban">Поточний рахунок (IBAN)</label>
@@ -75,15 +119,11 @@
                 </div>
 
                 <div class="field">
-                    <!-- Банк із довідника (V72): вибір підставляє МФО; IBAN сам обирає банк за МФО (цифри 5–10).
-                         У контрагента зберігаються назва й МФО текстом — їх друкує договір. -->
-                    <label for="bankSelect">Банк</label>
-                    <input type="hidden" id="bankName" th:field="*{bankName}">
-                    <select id="bankSelect">
-                        <option value="">— оберіть банк —</option>
-                        <option th:each="b : ${banks}" th:value="${b.name}" th:attr="data-mfo=${b.mfo}" th:text="${b.name}">АТ КБ «ПриватБанк»</option>
-                        <option value="__add__" sec:authorize="!hasRole('ACCOUNTANT')">+ Додати банк…</option>
-                    </select>
+                    <!-- Банк із довідника (V72): пошук за частиною назви, вибір підставляє МФО; IBAN сам обирає
+                         банк за МФО (цифри 5–10). У контрагента зберігаються назва й МФО текстом — їх друкує договір. -->
+                    <label for="bankName">Банк</label>
+                    <input type="text" id="bankName" th:field="*{bankName}" maxlength="255" placeholder="Почніть вводити: приват, пумб, ощад…">
+                    <button type="button" class="link-btn" id="addBankBtn" sec:authorize="!hasRole('ACCOUNTANT')">+ Додати банк, якого немає в списку</button>
                     <div class="field-error" th:if="${#fields.hasErrors('bankName')}" th:errors="*{bankName}"></div>
                     <div class="muted" id="bankHint">Банк і МФО підставляються самі, щойно введено IBAN</div>
                 </div>
@@ -351,10 +391,10 @@
                 details.addEventListener('input', sync);
             })();
 
-            // Банк: список ↔ прихований bankName, МФО з банку, банк з IBAN, «+ Додати банк» у модальному вікні.
+            // Банк: пошук за частиною назви (без лапок і «АТ»), вибір підставляє МФО; IBAN обирає банк за МФО;
+            // «+ Додати банк…» — модальне вікно → POST /api/banks.
             (function () {
-                var select = document.getElementById('bankSelect');
-                var hidden = document.getElementById('bankName');
+                var input = document.getElementById('bankName');
                 var mfo = document.getElementById('mfo');
                 var iban = document.getElementById('iban');
                 var hint = document.getElementById('bankHint');
@@ -363,49 +403,38 @@
                 var nameIn = document.getElementById('newBankName');
                 var mfoIn = document.getElementById('newBankMfo');
                 var edrpouIn = document.getElementById('newBankEdrpou');
-                var addOption = select.querySelector('option[value="__add__"]');
-                var previous = '';
+                var addBtn = document.getElementById('addBankBtn');
+                var banks = (window.protaxoBanks || []).slice();
 
-                function optionByName(name) {
-                    return Array.prototype.find.call(select.options, function (o) {
-                        return o.value && o.value !== '__add__' && o.value.toLowerCase() === (name || '').toLowerCase();
-                    });
+                function plain(text) {
+                    return (text || '').toLowerCase().replace(/[«»"'’]/g, '').replace(/\s+/g, ' ').trim();
                 }
-                function optionByMfo(code) {
-                    return Array.prototype.find.call(select.options, function (o) { return code && o.dataset.mfo === code; });
+                function byMfo(code) {
+                    return banks.find(function (b) { return code && b.mfo === code; });
                 }
-                function addBankOption(name, code) {
-                    var o = document.createElement('option');
-                    o.value = name; o.textContent = name;
-                    if (code) o.dataset.mfo = code;
-                    select.insertBefore(o, addOption || null);
-                    return o;
-                }
-                function choose(option) {
-                    select.value = option ? option.value : '';
-                    previous = select.value;
-                    hidden.value = option ? option.value : '';
-                    if (option && option.dataset.mfo) mfo.value = option.dataset.mfo;
+                function choose(bank) {
+                    input.value = bank.name;
+                    if (bank.mfo) mfo.value = bank.mfo;
+                    hint.textContent = bank.mfo ? 'МФО ' + bank.mfo : '';
                 }
 
-                // Збережена назва, якої немає в довіднику (вписана раніше вручну), — окремим пунктом.
-                if (hidden.value) {
-                    choose(optionByName(hidden.value) || addBankOption(hidden.value, mfo.value));
-                    if (!mfo.value && optionByName(hidden.value)) mfo.value = optionByName(hidden.value).dataset.mfo || '';
-                }
-
-                select.addEventListener('change', function () {
-                    if (select.value === '__add__') {
-                        select.value = previous;
-                        errorBox.hidden = true;
-                        nameIn.value = ''; edrpouIn.value = '';
-                        mfoIn.value = mfo.value || ibanMfo() || '';
-                        overlay.hidden = false;
-                        nameIn.focus();
-                        return;
-                    }
-                    choose(select.options[select.selectedIndex]);
-                    if (!select.value) mfo.value = '';
+                ProtaxoAutocomplete.attach(input, {
+                    minLength: 1,
+                    emptyText: 'Банк не знайдено — додайте його кнопкою нижче',
+                    source: function (q, done) {
+                        var needle = plain(q);
+                        var found = banks.filter(function (b) { return plain(b.name).indexOf(needle) !== -1; })
+                            .sort(function (a, b) {
+                                // спершу ті, де збіг з початку слова
+                                var ia = (' ' + plain(a.name)).indexOf(' ' + needle);
+                                var ib = (' ' + plain(b.name)).indexOf(' ' + needle);
+                                return (ia === -1) - (ib === -1) || a.name.localeCompare(b.name, 'uk');
+                            })
+                            .slice(0, 15)
+                            .map(function (b) { return { label: b.name, hint: b.mfo ? 'МФО ' + b.mfo : '', bank: b }; });
+                        done(found);
+                    },
+                    onSelect: function (item) { choose(item.bank); }
                 });
 
                 function ibanMfo() {
@@ -415,18 +444,29 @@
                 iban.addEventListener('input', function () {
                     var code = ibanMfo();
                     if (!code) return;
-                    var option = optionByMfo(code);
-                    if (option) {
-                        choose(option);
+                    var bank = byMfo(code);
+                    if (bank) {
+                        choose(bank);
                         hint.textContent = 'Банк визначено за IBAN (МФО ' + code + ')';
                     } else {
                         mfo.value = code;
-                        hint.textContent = 'Банку з МФО ' + code + ' немає в списку — додайте його через «+ Додати банк…»';
+                        hint.textContent = 'Банку з МФО ' + code + ' немає в списку — додайте його кнопкою нижче';
                     }
                 });
 
-                [mfoIn, edrpouIn].forEach(function (input) {
-                    input.addEventListener('input', function () { input.value = input.value.replace(/\D/g, ''); });
+                if (addBtn) {
+                    addBtn.addEventListener('click', function () {
+                        errorBox.hidden = true;
+                        var typed = input.value.trim();
+                        nameIn.value = banks.some(function (b) { return plain(b.name) === plain(typed); }) ? '' : typed;
+                        edrpouIn.value = '';
+                        mfoIn.value = mfo.value || ibanMfo() || '';
+                        overlay.hidden = false;
+                        nameIn.focus();
+                    });
+                }
+                [mfoIn, edrpouIn].forEach(function (el) {
+                    el.addEventListener('input', function () { el.value = el.value.replace(/\D/g, ''); });
                 });
                 document.getElementById('cancelBankBtn').addEventListener('click', function () { overlay.hidden = true; });
                 document.getElementById('saveBankBtn').addEventListener('click', function () {
@@ -449,13 +489,115 @@
                         }
                         return resp.json();
                     }).then(function (bank) {
-                        choose(addBankOption(bank.name, bank.mfo));
+                        var added = { name: bank.name, mfo: bank.mfo };
+                        banks.push(added);
+                        choose(added);
                         overlay.hidden = true;
                     }).catch(function (err) {
                         errorBox.textContent = err.message;
                         errorBox.hidden = false;
                     });
                 });
+            })();
+
+            // Юридична адреса: пошук населеного пункту в КАТОТТГ (/api/address/settlements), частини адреси
+            // окремими полями; під ними — як адреса виглядатиме в договорі.
+            (function () {
+                var region = document.getElementById('addressRegion');
+                var input = document.getElementById('addressSettlement');
+                var code = document.getElementById('addressSettlementCode');
+                var hint = document.getElementById('addressSettlementHint');
+                var error = document.getElementById('addressSettlementError');
+                var street = document.getElementById('addressStreet');
+                var building = document.getElementById('addressBuilding');
+                var office = document.getElementById('addressOffice');
+                var postal = document.getElementById('addressPostalCode');
+                var preview = document.getElementById('addressPreview');
+                var legacy = document.getElementById('legalAddress');
+                var selected = null; // { code, label, shortLabel, regionCode, districtName, hromadaName }
+
+                function regionPart(s) {
+                    // label: «с. Крупа, Луцький р-н, Волинська обл.» → усе після назви пункту
+                    return s.label.indexOf(', ') === -1 ? '' : s.label.slice(s.shortLabel.length + 2);
+                }
+                function updatePreview() {
+                    if (!selected) {
+                        preview.textContent = legacy.value && !code.value ? '' : 'Оберіть населений пункт — адреса для договору складеться сама';
+                        return;
+                    }
+                    var parts = [postal.value.trim()];
+                    var rest = regionPart(selected);
+                    // у договорі порядок: індекс, область, район, населений пункт, вулиця, будинок, офіс
+                    if (rest) parts = parts.concat(rest.split(', ').reverse());
+                    parts.push(selected.shortLabel, street.value.trim(), building.value.trim(), office.value.trim());
+                    preview.textContent = 'У договорі: ' + parts.filter(Boolean).join(', ');
+                }
+                function select(s) {
+                    selected = s;
+                    code.value = s.code;
+                    input.value = s.shortLabel;
+                    hint.textContent = regionPart(s) + (s.hromadaName ? ' · ' + s.hromadaName + ' громада' : '');
+                    error.hidden = true;
+                    if (s.regionCode && region.value !== s.regionCode) region.value = s.regionCode;
+                    updatePreview();
+                }
+
+                ProtaxoAutocomplete.attach(input, {
+                    minLength: 2,
+                    delay: 200,
+                    emptyText: 'Нічого не знайдено — перевірте назву або область',
+                    source: function (q, done) {
+                        var url = '/api/address/settlements?q=' + encodeURIComponent(q)
+                            + (region.value ? '&region=' + encodeURIComponent(region.value) : '');
+                        fetch(url, { credentials: 'same-origin' })
+                            .then(function (r) { return r.ok ? r.json() : []; })
+                            .then(function (list) {
+                                done(list.map(function (s) {
+                                    return { label: s.shortLabel, hint: regionPart(s) + (s.hromadaName ? ' · ' + s.hromadaName + ' громада' : ''), s: s };
+                                }));
+                            })
+                            .catch(function () { done([]); });
+                    },
+                    onSelect: function (item) { select(item.s); }
+                });
+
+                // Змінили текст, але не обрали зі списку — пункт не прив'язаний.
+                input.addEventListener('input', function () {
+                    if (selected && input.value !== selected.shortLabel) {
+                        selected = null;
+                        code.value = '';
+                        hint.textContent = '';
+                        updatePreview();
+                    }
+                });
+                input.addEventListener('blur', function () {
+                    setTimeout(function () { error.hidden = !(input.value.trim() && !code.value); }, 200);
+                });
+                region.addEventListener('change', function () {
+                    if (selected && region.value && selected.regionCode !== region.value) {
+                        selected = null; code.value = ''; input.value = ''; hint.textContent = '';
+                    }
+                    updatePreview();
+                });
+                [street, building, office, postal].forEach(function (el) { el.addEventListener('input', updatePreview); });
+                postal.addEventListener('input', function () { postal.value = postal.value.replace(/\D/g, '').slice(0, 5); });
+
+                // Не відправляти форму з вписаним, але не обраним населеним пунктом.
+                input.form.addEventListener('submit', function (e) {
+                    if (input.value.trim() && !code.value) {
+                        e.preventDefault();
+                        error.hidden = false;
+                        input.focus();
+                    }
+                });
+
+                if (code.value) {
+                    fetch('/api/address/settlements/' + encodeURIComponent(code.value), { credentials: 'same-origin' })
+                        .then(function (r) { return r.ok ? r.json() : null; })
+                        .then(function (s) { if (s) select(s); });
+                } else {
+                    updatePreview();
+                }
             })();
 
             var mfoInput = document.getElementById('mfo');
@@ -468,8 +610,11 @@
         });
     </script>
 
+    <script th:src="@{/js/autocomplete.js}"></script>
     <script th:inline="javascript">
         var editClientId = /*[[${editId}]]*/ null;
+        /** Довідник банків (V72) для пошуку в полі «Банк». */
+        var protaxoBanks = /*[[${banks}]]*/ [];
     </script>
     <script>
         /** Reusable styled replacement for window.confirm() — see #confirmModalOverlay. */

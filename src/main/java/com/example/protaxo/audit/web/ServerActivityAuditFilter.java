@@ -56,7 +56,7 @@ public class ServerActivityAuditFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = path(request);
-        return path.startsWith("/session/") || path.startsWith("/css/") || path.startsWith("/images/")
+        return path.startsWith("/session/") || path.startsWith("/css/") || path.startsWith("/js/") || path.startsWith("/images/")
                 || path.startsWith("/ws/") || path.startsWith("/favicon") || path.equals("/error");
     }
 

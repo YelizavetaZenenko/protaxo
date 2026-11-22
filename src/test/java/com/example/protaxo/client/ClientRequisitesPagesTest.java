@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.protaxo.address.AddressDirectoryService;
 import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.bank.Bank;
 import com.example.protaxo.bank.BankService;
@@ -50,6 +51,7 @@ class ClientRequisitesPagesTest {
     @MockitoBean DriverService driverService;
     @MockitoBean VehicleService vehicleService;
     @MockitoBean BankService bankService;
+    @MockitoBean AddressDirectoryService addressDirectoryService;
     @MockitoBean AuditLogService auditLogService;
     @MockitoBean AuthAuditRecorder authAuditRecorder;
     @MockitoBean LoginAttemptService loginAttemptService;
@@ -65,6 +67,8 @@ class ClientRequisitesPagesTest {
         when(bankService.findAll()).thenReturn(List.of(
                 Bank.builder().id(1L).name("АТ «ПУМБ»").mfo("334851").build(),
                 Bank.builder().id(2L).name("АТ КБ «ПриватБанк»").mfo("305299").build()));
+        when(addressDirectoryService.regions()).thenReturn(List.of(
+                new AddressDirectoryService.Region("UA07000000000024379", "Волинська", "O")));
         mvc.perform(get("/clients/new").with(user("a@b.c").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(allOf(
@@ -76,10 +80,15 @@ class ClientRequisitesPagesTest {
                         containsString("Модельного статуту"),
                         containsString("Довіреності"),
                         containsString("type=\"hidden\" id=\"signatoryBasis\""),
-                        containsString("id=\"bankSelect\""),
-                        containsString("data-mfo=\"334851\""),
+                        containsString("type=\"text\" id=\"bankName\""),
+                        containsString("\"mfo\":\"334851\""),
                         containsString("АТ КБ «ПриватБанк»"),
-                        containsString("+ Додати банк…"),
+                        containsString("id=\"addBankBtn\""),
+                        containsString("/js/autocomplete.js"),
+                        containsString("Волинська обл."),
+                        containsString("id=\"addressSettlement\""),
+                        containsString("name=\"addressSettlementCode\""),
+                        containsString("name=\"addressPostalCode\""),
                         containsString("id=\"bankModalOverlay\""),
                         not(containsString("type=\"email\" id=\"email\" name=\"email\" value=\"\" required")))));
     }
@@ -107,7 +116,8 @@ class ClientRequisitesPagesTest {
     void editFormCarriesStoredBasis() throws Exception {
         when(clientService.findById(5L)).thenReturn(new ClientResponse(5L, "К", "44556677", "ТОВ К", null,
                 "+38(067)-123-45-67", "445566771234", "Іваненко", "Петро", "Васильович", null, null, null, null,
-                null, null, false, null, null, null, null, "Директор", "Наказу № 7 від 01.02.2026"));
+                null, null, false, null, null, null, null, "Директор", "Наказу № 7 від 01.02.2026",
+                null, null, null, null, null));
         when(driverService.findByClientId(5L)).thenReturn(List.of());
         when(vehicleService.findByClientId(5L)).thenReturn(List.of());
         mvc.perform(get("/clients/5/edit").with(user("a@b.c").roles("ADMIN")))
