@@ -118,13 +118,13 @@
                         <div th:each="c, st : ${changes}" class="audit-change-row"
                              th:classappend="${st.index >= 3} ? 'audit-change-extra'">
                             <strong th:text="${c.key}"></strong>:
-                            <th:block th:if="${act == 'CREATE' or act == 'LOGIN_FAILED'}">
+                            <th:block th:unless="${act == 'UPDATE' or act == 'DELETE'}">
                                 <span th:text="${#strings.isEmpty(c.value[1]) ? '—' : c.value[1]}"></span>
                             </th:block>
                             <th:block th:if="${act == 'DELETE'}">
                                 <span th:text="${#strings.isEmpty(c.value[0]) ? '—' : c.value[0]}"></span>
                             </th:block>
-                            <th:block th:unless="${act == 'CREATE' or act == 'DELETE' or act == 'LOGIN_FAILED'}">
+                            <th:block th:if="${act == 'UPDATE'}">
                                 <span class="audit-old" th:text="${#strings.isEmpty(c.value[0]) ? '—' : c.value[0]}"></span>
                                 <span>→</span>
                                 <span class="audit-new" th:text="${#strings.isEmpty(c.value[1]) ? '—' : c.value[1]}"></span>

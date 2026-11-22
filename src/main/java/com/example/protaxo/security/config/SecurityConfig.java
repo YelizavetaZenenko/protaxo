@@ -1,5 +1,7 @@
 package com.example.protaxo.security.config;
 
+import com.example.protaxo.audit.entity.AuditAction;
+import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.security.entity.PermissionKey;
 import com.example.protaxo.security.listener.AuthAuditRecorder;
 import com.example.protaxo.security.service.LoginAttemptService;
@@ -7,6 +9,8 @@ import com.example.protaxo.security.service.PermissionService;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +23,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.access.AccessDeniedHandlerImpl;
+import org.springframework.security.web.csrf.CsrfException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
@@ -34,6 +41,7 @@ public class SecurityConfig {
     private final PermissionService permissionService;
     private final AuthAuditRecorder authAuditRecorder;
     private final LoginAttemptService loginAttemptService;
+    private final AuditLogService auditLogService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -80,6 +88,7 @@ public class SecurityConfig {
                         .successHandler(roleLandingHandler())
                         .failureHandler(loginFailureHandler())
                         .permitAll())
+                .exceptionHandling(ex -> ex.accessDeniedHandler(auditedAccessDeniedHandler()))
                 .logout(logout -> logout
                         .addLogoutHandler((request, response, authentication) -> authAuditRecorder.loggedOut(authentication))
                         .logoutSuccessUrl("/login?logout")
@@ -154,6 +163,29 @@ public class SecurityConfig {
                 target += "&continue=" + URLEncoder.encode(back, StandardCharsets.UTF_8);
             }
             response.sendRedirect(request.getContextPath() + target);
+        };
+    }
+
+    /**
+     * 403 у журнал дій: немає прав на розділ, або CSRF-токен застарів (форму з давно відкритої
+     * сторінки відправили вже після нового входу). Далі — звичайна сторінка помилки 403.
+     */
+    private AccessDeniedHandler auditedAccessDeniedHandler() {
+        AccessDeniedHandler delegate = new AccessDeniedHandlerImpl();
+        return (request, response, exception) -> {
+            try {
+                String query = request.getQueryString();
+                Map<String, String[]> changes = new LinkedHashMap<>();
+                changes.put("Адреса", new String[]{"", request.getMethod() + " " + request.getRequestURI()
+                        + (query != null ? "?" + query : "")});
+                changes.put("Причина", new String[]{"", exception instanceof CsrfException
+                        ? "Застарілий токен форми (CSRF): сторінку відкрито до повторного входу — оновіть її"
+                        : "Немає прав на цей розділ"});
+                auditLogService.record(AuditAction.ACCESS_DENIED, "Page", null, changes);
+            } catch (RuntimeException e) {
+                // журнал не повинен ламати відповідь
+            }
+            delegate.handle(request, response, exception);
         };
     }
 

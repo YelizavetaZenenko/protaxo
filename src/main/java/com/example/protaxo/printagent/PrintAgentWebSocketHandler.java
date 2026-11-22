@@ -29,7 +29,8 @@ public class PrintAgentWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        registry.unregister(session);
+        registry.unregister(session, "З'єднання закрито (код " + status.getCode()
+                + (status.getReason() != null ? ", " + status.getReason() : "") + ")");
     }
 
     @Override

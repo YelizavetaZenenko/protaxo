@@ -979,15 +979,28 @@ td.actions-cell > * + * {
 }
 
 .audit-badge-delete,
-.audit-badge-login_failed {
+.audit-badge-login_failed,
+.audit-badge-access_denied,
+.audit-badge-server_error,
+.audit-badge-printer_offline {
     background: #fbe7e5;
     color: var(--danger);
 }
 
 .audit-badge-login,
-.audit-badge-logout {
+.audit-badge-logout,
+.audit-badge-session_ended,
+.audit-badge-server_start,
+.audit-badge-server_stop {
     background: #eeeeee;
     color: #555555;
+}
+
+.audit-badge-file_download,
+.audit-badge-print,
+.audit-badge-printer_online {
+    background: #fdf3e1;
+    color: #8a5a00;
 }
 
 .audit-history-banner {

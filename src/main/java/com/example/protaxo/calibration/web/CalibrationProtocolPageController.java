@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import com.example.protaxo.audit.entity.AuditAction;
+import com.example.protaxo.audit.service.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
@@ -57,6 +59,7 @@ public class CalibrationProtocolPageController {
     private final PdfRenderService pdfRenderService;
     private final PrintAgentSessionRegistry printAgentSessionRegistry;
     private final LabelImageRenderer labelImageRenderer;
+    private final AuditLogService auditLogService;
 
     @GetMapping
     public String list(@RequestParam(defaultValue = "desc") String dir,
@@ -185,6 +188,8 @@ public class CalibrationProtocolPageController {
         ClientResponse client = clientService.findById(protocol.clientId());
         byte[] label = labelImageRenderer.renderPng(protocol, client.edrpou());
         boolean sent = printAgentSessionRegistry.broadcast(label);
+        auditLogService.record(AuditAction.PRINT, "CalibrationProtocol", id, Map.of("Результат",
+                new String[]{"", sent ? "Наклейку надіслано на принтер" : "Не надіслано: Print Agent не підключений"}));
         if (sent) {
             redirectAttributes.addFlashAttribute("printSuccess", "Завдання на друк наклейки відправлено");
         } else {

@@ -56,7 +56,14 @@ public class AuditLogService {
             Map.entry("MasterCard", "Картка майстерні"),
             Map.entry("TachographAttribute", "Довідник тахографів"),
             Map.entry("VehicleMake", "Марка авто"),
-            Map.entry("VehicleModel", "Модель авто")
+            Map.entry("VehicleModel", "Модель авто"),
+            Map.entry("Session", "Сесія"),
+            Map.entry("Server", "Сервер"),
+            Map.entry("PrintAgent", "Print Agent"),
+            Map.entry("Page", "Сторінка"),
+            Map.entry("File", "Файл"),
+            Map.entry("Finance", "Фінанси"),
+            Map.entry("FinanceAttachment", "Вкладення")
     );
 
     private final AuditLogRepository auditLogRepository;
@@ -81,8 +88,16 @@ public class AuditLogService {
      * reset, login/logout events — where the person is known some other way (their email).
      */
     public void recordAs(String username, AuditAction action, String entityType, Long entityId, Map<String, String[]> changes) {
+        recordAs(username, action, entityType, entityId, changes, currentIpAddress());
+    }
+
+    /**
+     * Для подій поза HTTP-запитом (фонові завдання, WebSocket Print Agent-а), де IP відомий
+     * інакше або його немає.
+     */
+    public void recordAs(String username, AuditAction action, String entityType, Long entityId,
+                         Map<String, String[]> changes, String ipAddress) {
         String changesJson = (changes == null || changes.isEmpty()) ? null : writeChanges(changes);
-        String ipAddress = currentIpAddress();
 
         AuditLog log = AuditLog.builder()
                 .username(username == null || username.isBlank() ? "system" : username)
@@ -211,6 +226,15 @@ public class AuditLogService {
             case LOGIN -> "Вхід";
             case LOGIN_FAILED -> "Невдалий вхід";
             case LOGOUT -> "Вихід";
+            case SESSION_ENDED -> "Сесію завершено";
+            case FILE_DOWNLOAD -> "Файл";
+            case PRINT -> "Друк";
+            case PRINTER_ONLINE -> "Принтер онлайн";
+            case PRINTER_OFFLINE -> "Принтер офлайн";
+            case ACCESS_DENIED -> "Доступ заборонено";
+            case SERVER_ERROR -> "Помилка сервера";
+            case SERVER_START -> "Сервер запущено";
+            case SERVER_STOP -> "Сервер зупинено";
         };
     }
 
@@ -230,6 +254,11 @@ public class AuditLogService {
 
     private String currentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null ? authentication.getName() : "system";
+        if (authentication == null) {
+            return "system";
+        }
+        // Публічні сторінки (перевірка протоколу за QR) — без входу.
+        return authentication instanceof org.springframework.security.authentication.AnonymousAuthenticationToken
+                ? "guest" : authentication.getName();
     }
 }

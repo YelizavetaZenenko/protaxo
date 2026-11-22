@@ -1,9 +1,12 @@
 package com.example.protaxo.printagent;
 
+import com.example.protaxo.audit.entity.AuditAction;
+import com.example.protaxo.audit.service.AuditLogService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -25,6 +28,9 @@ public class PrintAgentHandshakeInterceptor implements HandshakeInterceptor {
     @Value("${print-agent.token}")
     private String expectedToken;
 
+    @Autowired
+    private AuditLogService auditLogService;
+
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                     WebSocketHandler wsHandler, Map<String, Object> attributes) {
@@ -33,6 +39,12 @@ public class PrintAgentHandshakeInterceptor implements HandshakeInterceptor {
         if (token == null || !constantTimeEquals(token, expectedToken)) {
             log.warn("Rejected Print Agent handshake from {} — missing or wrong token", request.getRemoteAddress());
             response.setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
+            try {
+                auditLogService.recordAs("print-agent", AuditAction.ACCESS_DENIED, "PrintAgent", null,
+                        Map.of("Причина", new String[]{"", token == null ? "Підключення без токена" : "Неправильний токен"}));
+            } catch (RuntimeException e) {
+                log.warn("Audit of rejected handshake failed: {}", e.getMessage());
+            }
             return false;
         }
         return true;

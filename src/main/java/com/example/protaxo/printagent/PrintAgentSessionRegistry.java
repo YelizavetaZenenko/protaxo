@@ -1,11 +1,16 @@
 package com.example.protaxo.printagent;
 
+import com.example.protaxo.audit.entity.AuditAction;
+import com.example.protaxo.audit.service.AuditLogService;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -28,23 +33,58 @@ import org.springframework.web.socket.WebSocketSession;
  */
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class PrintAgentSessionRegistry {
 
     private static final int STALE_AFTER_SECONDS = 90;
 
     private final Set<WebSocketSession> sessions = new CopyOnWriteArraySet<>();
     private final Map<String, Instant> lastSeen = new ConcurrentHashMap<>();
+    private final Map<String, Instant> connectedAt = new ConcurrentHashMap<>();
+    private final AuditLogService auditLogService;
 
     void register(WebSocketSession session) {
         sessions.add(session);
         lastSeen.put(session.getId(), Instant.now());
+        connectedAt.put(session.getId(), Instant.now());
         log.info("Print Agent connected: {}", session.getId());
+        audit(AuditAction.PRINTER_ONLINE, session, null);
     }
 
     void unregister(WebSocketSession session) {
-        sessions.remove(session);
+        unregister(session, "З'єднання закрито");
+    }
+
+    /** Двічі для однієї сесії (sweep + afterConnectionClosed) — у журнал лише перше. */
+    void unregister(WebSocketSession session, String reason) {
+        boolean removed = sessions.remove(session);
         lastSeen.remove(session.getId());
+        Instant since = connectedAt.remove(session.getId());
         log.info("Print Agent disconnected: {}", session.getId());
+        if (removed) {
+            Map<String, String[]> changes = new LinkedHashMap<>();
+            changes.put("Причина", new String[]{"", reason});
+            if (since != null) {
+                changes.put("Був онлайн", new String[]{"", Duration.between(since, Instant.now()).toMinutes() + " хв"});
+            }
+            audit(AuditAction.PRINTER_OFFLINE, session, changes);
+        }
+    }
+
+    /** Поза HTTP-запитом IP береться з заголовків рукостискання (за Caddy — X-Forwarded-For). */
+    private void audit(AuditAction action, WebSocketSession session, Map<String, String[]> changes) {
+        try {
+            String ip = null;
+            String forwarded = session.getHandshakeHeaders().getFirst("X-Forwarded-For");
+            if (forwarded != null && !forwarded.isBlank()) {
+                ip = forwarded.split(",")[0].trim();
+            } else if (session.getRemoteAddress() != null) {
+                ip = session.getRemoteAddress().getAddress().getHostAddress();
+            }
+            auditLogService.recordAs("print-agent", action, "PrintAgent", null, changes, ip);
+        } catch (RuntimeException e) {
+            log.warn("Audit of {} failed: {}", action, e.getMessage());
+        }
     }
 
     /** Called by {@link PrintAgentWebSocketHandler} whenever a pong frame comes back. */
@@ -76,7 +116,7 @@ public class PrintAgentSessionRegistry {
                 // A failed send means this session is dead — drop it now rather than leaving it
                 // registered (which would keep isAnyAgentConnected() reporting true, and keep
                 // retrying a send that will never succeed, for every future job).
-                unregister(session);
+                unregister(session, "Не вдалося надіслати завдання на друк: " + e.getMessage());
             }
         }
         return sentToAny;
@@ -95,7 +135,7 @@ public class PrintAgentSessionRegistry {
             if (seenAt.isBefore(staleThreshold)) {
                 log.warn("Print Agent session {} unresponsive for over {}s, dropping", session.getId(), STALE_AFTER_SECONDS);
                 closeQuietly(session);
-                unregister(session);
+                unregister(session, "Не відповідав понад " + STALE_AFTER_SECONDS + " с (сон ПК, обрив мережі, агент зупинено)");
                 continue;
             }
             try {
@@ -104,7 +144,7 @@ public class PrintAgentSessionRegistry {
                 }
             } catch (IOException e) {
                 log.warn("Ping failed for Print Agent session {}: {}", session.getId(), e.getMessage());
-                unregister(session);
+                unregister(session, "Не вдалося надіслати пінг: " + e.getMessage());
             }
         }
     }
