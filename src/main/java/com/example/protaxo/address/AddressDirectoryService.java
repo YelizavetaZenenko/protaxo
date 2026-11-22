@@ -1,6 +1,10 @@
 package com.example.protaxo.address;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -10,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Довідник адрес КАТОТТГ (V73, docs/Контрагенти.md): регіони, пошук населених пунктів і складання
@@ -95,6 +100,38 @@ public class AddressDirectoryService {
         sql.append(" ORDER BY CASE s.kind WHEN 'K' THEN 0 WHEN 'M' THEN 1 WHEN 'X' THEN 2 ELSE 3 END, s.name, r.name LIMIT ")
                 .append(SEARCH_LIMIT);
         return jdbcTemplate.query(sql.toString(), SETTLEMENT, args.toArray());
+    }
+
+    /**
+     * Індекси, які вже вводили для цих населених пунктів: код → індекси, найчастіший першим
+     * (V74 — офіційного довідника індексів за КАТОТТГ у відкритому доступі немає).
+     */
+    public Map<String, List<String>> postalCodes(Collection<String> settlementCodes) {
+        Map<String, List<String>> result = new HashMap<>();
+        if (settlementCodes == null || settlementCodes.isEmpty()) {
+            return result;
+        }
+        List<String> codes = List.copyOf(settlementCodes);
+        String placeholders = String.join(",", Collections.nCopies(codes.size(), "?"));
+        jdbcTemplate.query("SELECT settlement_code, postal_code FROM address_postal_codes WHERE settlement_code IN ("
+                        + placeholders + ") ORDER BY uses DESC, last_used_at DESC, postal_code",
+                rs -> {
+                    result.computeIfAbsent(rs.getString(1), k -> new ArrayList<>()).add(rs.getString(2));
+                }, codes.toArray());
+        return result;
+    }
+
+    /** Запам'ятати індекс населеного пункту (зберегли контрагента з такою адресою). */
+    @Transactional
+    public void rememberPostalCode(String settlementCode, String postalCode) {
+        if (settlementCode == null || postalCode == null || !postalCode.matches("\\d{5}")) {
+            return;
+        }
+        jdbcTemplate.update("""
+                INSERT INTO address_postal_codes (settlement_code, postal_code) VALUES (?, ?)
+                ON CONFLICT (settlement_code, postal_code)
+                DO UPDATE SET uses = address_postal_codes.uses + 1, last_used_at = now()
+                """, settlementCode, postalCode);
     }
 
     /**

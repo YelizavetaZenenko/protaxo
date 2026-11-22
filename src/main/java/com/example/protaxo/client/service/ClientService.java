@@ -115,6 +115,8 @@ public class ClientService {
                 .orElseThrow(() -> new BusinessRuleException("Населений пункт не знайдено в довіднику — оберіть його зі списку"));
         client.setLegalAddress(addressDirectoryService.format(client.getAddressPostalCode(), settlement,
                 client.getAddressStreet(), client.getAddressBuilding(), client.getAddressOffice()));
+        // Наступного разу для цього пункту індекс підставиться сам (V74).
+        addressDirectoryService.rememberPostalCode(client.getAddressSettlementCode(), client.getAddressPostalCode());
     }
 
     private static FieldDiff.Snapshot snapshot(Client c) {

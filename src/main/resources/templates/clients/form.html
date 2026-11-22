@@ -33,13 +33,13 @@
 
                 <div class="field">
                     <label for="edrpou">Код ЄДРПОУ *</label>
-                    <input type="text" id="edrpou" th:field="*{edrpou}" maxlength="8" inputmode="numeric" placeholder="12345678" required>
+                    <input type="text" id="edrpou" th:field="*{edrpou}" maxlength="8" inputmode="numeric" required>
                     <div class="field-error" th:if="${#fields.hasErrors('edrpou')}" th:errors="*{edrpou}"></div>
                 </div>
 
                 <div class="field">
                     <label for="code">Код ІПН *</label>
-                    <input type="text" id="code" th:field="*{code}" maxlength="12" inputmode="numeric" placeholder="123456789012" required>
+                    <input type="text" id="code" th:field="*{code}" maxlength="12" inputmode="numeric" required>
                     <div class="field-error" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></div>
                 </div>
 
@@ -82,29 +82,30 @@
 
                 <div class="field">
                     <label for="addressSettlement">Населений пункт</label>
-                    <input type="text" id="addressSettlement" maxlength="150" placeholder="Почніть вводити: Крупа, Луцьк…">
+                    <input type="text" id="addressSettlement" maxlength="150">
                     <div class="field-error" id="addressSettlementError" hidden>Оберіть населений пункт зі списку</div>
                     <div class="muted" id="addressSettlementHint"></div>
                 </div>
 
                 <div class="field">
                     <label for="addressStreet">Вулиця</label>
-                    <input type="text" id="addressStreet" th:field="*{addressStreet}" maxlength="255" placeholder="вул. Дубнівська">
+                    <input type="text" id="addressStreet" th:field="*{addressStreet}" maxlength="255">
                     <div class="field-error" th:if="${#fields.hasErrors('addressStreet')}" th:errors="*{addressStreet}"></div>
                 </div>
 
                 <div class="field address-small-row">
                     <div>
                         <label for="addressBuilding">Будинок</label>
-                        <input type="text" id="addressBuilding" th:field="*{addressBuilding}" maxlength="30" placeholder="10">
+                        <input type="text" id="addressBuilding" th:field="*{addressBuilding}" maxlength="30">
                     </div>
                     <div>
                         <label for="addressOffice">Офіс / кв.</label>
-                        <input type="text" id="addressOffice" th:field="*{addressOffice}" maxlength="30" placeholder="оф. 5">
+                        <input type="text" id="addressOffice" th:field="*{addressOffice}" maxlength="30">
                     </div>
                     <div>
                         <label for="addressPostalCode">Індекс</label>
-                        <input type="text" id="addressPostalCode" th:field="*{addressPostalCode}" maxlength="5" inputmode="numeric" placeholder="45604">
+                        <input type="text" id="addressPostalCode" th:field="*{addressPostalCode}" maxlength="5" inputmode="numeric">
+                        <div class="muted" id="addressPostalHint"></div>
                     </div>
                 </div>
                 <div class="field-error field-full" th:if="${#fields.hasErrors('addressPostalCode')}" th:errors="*{addressPostalCode}"></div>
@@ -113,7 +114,7 @@
 
                 <div class="field">
                     <label for="iban">Поточний рахунок (IBAN)</label>
-                    <input type="text" id="iban" th:field="*{iban}" maxlength="40" placeholder="UA000000000000000000000000000"
+                    <input type="text" id="iban" th:field="*{iban}" maxlength="40"
                            autocomplete="off" spellcheck="false">
                     <div class="field-error" th:if="${#fields.hasErrors('iban')}" th:errors="*{iban}"></div>
                 </div>
@@ -122,7 +123,7 @@
                     <!-- Банк із довідника (V72): пошук за частиною назви, вибір підставляє МФО; IBAN сам обирає
                          банк за МФО (цифри 5–10). У контрагента зберігаються назва й МФО текстом — їх друкує договір. -->
                     <label for="bankName">Банк</label>
-                    <input type="text" id="bankName" th:field="*{bankName}" maxlength="255" placeholder="Почніть вводити: приват, пумб, ощад…">
+                    <input type="text" id="bankName" th:field="*{bankName}" maxlength="255">
                     <button type="button" class="link-btn" id="addBankBtn" sec:authorize="!hasRole('ACCOUNTANT')">+ Додати банк, якого немає в списку</button>
                     <div class="field-error" th:if="${#fields.hasErrors('bankName')}" th:errors="*{bankName}"></div>
                     <div class="muted" id="bankHint">Банк і МФО підставляються самі, щойно введено IBAN</div>
@@ -130,13 +131,13 @@
 
                 <div class="field">
                     <label for="mfo">МФО</label>
-                    <input type="text" id="mfo" th:field="*{mfo}" maxlength="6" inputmode="numeric" placeholder="305299">
+                    <input type="text" id="mfo" th:field="*{mfo}" maxlength="6" inputmode="numeric">
                     <div class="field-error" th:if="${#fields.hasErrors('mfo')}" th:errors="*{mfo}"></div>
                 </div>
 
                 <div class="field">
                     <label for="signatoryPosition">Посада підписанта</label>
-                    <input type="text" id="signatoryPosition" th:field="*{signatoryPosition}" maxlength="100" placeholder="Директор">
+                    <input type="text" id="signatoryPosition" th:field="*{signatoryPosition}" maxlength="100">
                     <div class="field-error" th:if="${#fields.hasErrors('signatoryPosition')}" th:errors="*{signatoryPosition}"></div>
                     <div class="muted">Підписант — контактна особа нижче</div>
                 </div>
@@ -157,7 +158,7 @@
                         <option value="Виписки з ЄДР">Виписки з ЄДР (ФОП)</option>
                         <option value="other">Інше — вписати</option>
                     </select>
-                    <input type="text" id="basisDetails" maxlength="200" placeholder="№ 15 від 03.11.2026" hidden style="margin-top:0.4rem;">
+                    <input type="text" id="basisDetails" maxlength="200" hidden style="margin-top:0.4rem;">
                     <div class="field-error" th:if="${#fields.hasErrors('signatoryBasis')}" th:errors="*{signatoryBasis}"></div>
                     <div class="muted" id="basisPreview">«…який діє на підставі <em>Статуту</em>»</div>
                 </div>
@@ -295,15 +296,15 @@
             <div class="alert alert-error" id="bankModalError" hidden></div>
             <div class="field field-full">
                 <label for="newBankName">Назва банку *</label>
-                <input type="text" id="newBankName" maxlength="255" placeholder="АТ «Назва Банку»">
+                <input type="text" id="newBankName" maxlength="255">
             </div>
             <div class="field field-full">
                 <label for="newBankMfo">МФО</label>
-                <input type="text" id="newBankMfo" maxlength="6" inputmode="numeric" placeholder="6 цифр">
+                <input type="text" id="newBankMfo" maxlength="6" inputmode="numeric">
             </div>
             <div class="field field-full">
                 <label for="newBankEdrpou">Код ЄДРПОУ банку</label>
-                <input type="text" id="newBankEdrpou" maxlength="8" inputmode="numeric" placeholder="8 цифр, необов'язково">
+                <input type="text" id="newBankEdrpou" maxlength="8" inputmode="numeric">
             </div>
             <div class="form-actions">
                 <button type="button" class="btn" id="saveBankBtn">Додати</button>
@@ -322,7 +323,7 @@
             </div>
             <div class="field field-full">
                 <label for="driverPosition">Посада</label>
-                <input type="text" id="driverPosition" maxlength="255" placeholder="Водій, механік, диспетчер…">
+                <input type="text" id="driverPosition" maxlength="255">
             </div>
             <div class="field field-full">
                 <label for="driverPhone">Телефон</label>
@@ -378,7 +379,6 @@
                     var isOther = kind.value === 'other';
                     var wantsDetails = isOther || (opt && opt.dataset.details === '1');
                     details.hidden = !wantsDetails;
-                    details.placeholder = isOther ? 'напр. Рішення загальних зборів № 3' : '№ 15 від 03.11.2026';
                     var text = isOther ? details.value.trim()
                         : kind.value ? (kind.value + (wantsDetails && details.value.trim() ? ' ' + details.value.trim() : '')) : '';
                     hidden.value = text;
@@ -513,6 +513,7 @@
                 var office = document.getElementById('addressOffice');
                 var postal = document.getElementById('addressPostalCode');
                 var preview = document.getElementById('addressPreview');
+                var postalHint = document.getElementById('addressPostalHint');
                 var legacy = document.getElementById('legalAddress');
                 var selected = null; // { code, label, shortLabel, regionCode, districtName, hromadaName }
 
@@ -532,13 +533,44 @@
                     parts.push(selected.shortLabel, street.value.trim(), building.value.trim(), office.value.trim());
                     preview.textContent = 'У договорі: ' + parts.filter(Boolean).join(', ');
                 }
-                function select(s) {
+                // Індекси, які вже вводили для пункту (V74): найчастіший — у поле, якщо воно порожнє або
+                // містить індекс іншого пункту; решта — кнопками під полем. Новий індекс запам'ятається при збереженні.
+                function showPostalCodes(s, fill) {
+                    postalHint.innerHTML = '';
+                    var codes = s.postalCodes || [];
+                    if (!codes.length) {
+                        postalHint.textContent = 'Індекс для цього пункту ще не вводили — після збереження запам\'ятається';
+                        return;
+                    }
+                    if (fill && (!postal.value || codes.indexOf(postal.value) === -1)) postal.value = codes[0];
+                    var others = codes.filter(function (c) { return c !== postal.value; });
+                    if (!others.length) {
+                        postalHint.textContent = 'Індекс підставлено з попередніх адрес';
+                        return;
+                    }
+                    postalHint.appendChild(document.createTextNode('Також: '));
+                    others.forEach(function (c, i) {
+                        var b = document.createElement('button');
+                        b.type = 'button';
+                        b.className = 'link-btn';
+                        b.textContent = c;
+                        b.addEventListener('click', function () {
+                            postal.value = c;
+                            showPostalCodes(s, false);
+                            updatePreview();
+                        });
+                        if (i) postalHint.appendChild(document.createTextNode(', '));
+                        postalHint.appendChild(b);
+                    });
+                }
+                function select(s, fromUser) {
                     selected = s;
                     code.value = s.code;
                     input.value = s.shortLabel;
                     hint.textContent = regionPart(s) + (s.hromadaName ? ' · ' + s.hromadaName + ' громада' : '');
                     error.hidden = true;
                     if (s.regionCode && region.value !== s.regionCode) region.value = s.regionCode;
+                    showPostalCodes(s, fromUser);
                     updatePreview();
                 }
 
@@ -558,7 +590,7 @@
                             })
                             .catch(function () { done([]); });
                     },
-                    onSelect: function (item) { select(item.s); }
+                    onSelect: function (item) { select(item.s, true); }
                 });
 
                 // Змінили текст, але не обрали зі списку — пункт не прив'язаний.
@@ -567,6 +599,7 @@
                         selected = null;
                         code.value = '';
                         hint.textContent = '';
+                        postalHint.textContent = '';
                         updatePreview();
                     }
                 });
@@ -594,7 +627,7 @@
                 if (code.value) {
                     fetch('/api/address/settlements/' + encodeURIComponent(code.value), { credentials: 'same-origin' })
                         .then(function (r) { return r.ok ? r.json() : null; })
-                        .then(function (s) { if (s) select(s); });
+                        .then(function (s) { if (s) select(s, false); });
                 } else {
                     updatePreview();
                 }
