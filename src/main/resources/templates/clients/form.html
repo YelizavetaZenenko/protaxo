@@ -538,16 +538,10 @@
                 function showPostalCodes(s, fill) {
                     postalHint.innerHTML = '';
                     var codes = s.postalCodes || [];
-                    if (!codes.length) {
-                        postalHint.textContent = 'Індекс для цього пункту ще не вводили — після збереження запам\'ятається';
-                        return;
-                    }
+                    if (!codes.length) return;
                     if (fill && (!postal.value || codes.indexOf(postal.value) === -1)) postal.value = codes[0];
                     var others = codes.filter(function (c) { return c !== postal.value; });
-                    if (!others.length) {
-                        postalHint.textContent = 'Індекс підставлено з попередніх адрес';
-                        return;
-                    }
+                    if (!others.length) return;
                     postalHint.appendChild(document.createTextNode('Також: '));
                     others.forEach(function (c, i) {
                         var b = document.createElement('button');
