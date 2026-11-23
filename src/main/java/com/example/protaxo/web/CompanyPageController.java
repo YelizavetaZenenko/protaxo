@@ -38,6 +38,7 @@ public class CompanyPageController {
         model.addAttribute("workers", repairWorkerService.findAllDetails());
         model.addAttribute("cards", masterCardService.findAll());
         model.addAttribute("printAgentBuildTime", printAgentDistribution.buildTime().orElse(null));
+        model.addAttribute("printAgentVersion", printAgentDistribution.version().orElse(null));
         return "company/index";
     }
 }

@@ -56,6 +56,19 @@ public class PrintAgentDistribution {
         }
     }
 
+    /** Номер версії програми (Implementation-Version з manifest, напр. «1.0.0»); порожньо, якщо файлу немає. */
+    public Optional<String> version() {
+        if (!available()) {
+            return Optional.empty();
+        }
+        try (JarFile jar = new JarFile(jarPath.toFile())) {
+            return Optional.ofNullable(jar.getManifest() == null ? null
+                    : jar.getManifest().getMainAttributes().getValue("Implementation-Version"));
+        } catch (IOException e) {
+            return Optional.empty();
+        }
+    }
+
     /** Maven пише Build-Time в UTC («2026-11-23 10:42») — показуємо в часовому поясі сервера (Київ). */
     static String localTime(String utc) {
         try {
