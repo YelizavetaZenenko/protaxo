@@ -96,6 +96,7 @@ class CatalogCategoryPagesTest {
                         containsString("category-chip"),
                         containsString("category-group-row"),
                         containsString("Ціна з ПДВ 20%"),
+                        containsString("id=\"toggleVatColumn\""),
                         containsString("120.00"),
                         containsString("Датчик 2159"),
                         containsString("Перехідник Isuzu 1318"),

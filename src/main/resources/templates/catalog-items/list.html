@@ -52,6 +52,7 @@
                     <label>&nbsp;</label>
                     <div class="filter-actions">
                         <button type="submit" class="btn-outline">Фільтрувати</button>
+                        <button type="button" class="btn-outline" id="toggleVatColumn" aria-pressed="true">Сховати ціну з ПДВ</button>
                         <a class="link-btn" th:if="${filterName != null}" th:href="@{/catalog-items(activeType=${activeType}, category=${category})}">Скинути фільтр</a>
                     </div>
                 </div>
@@ -63,7 +64,7 @@
                     <col style="width:10%">
                     <col style="width:10%">
                     <col style="width:12%">
-                    <col style="width:11%">
+                    <col style="width:11%" id="colVat">
                     <col style="width:9%">
                     <col style="width:14%">
                 </colgroup>
@@ -73,7 +74,7 @@
                     <th>Закупівля</th>
                     <th>Продаж</th>
                     <th title="Продаж − закупівля; у дужках — націнка від закупівлі">Різниця</th>
-                    <th title="Ціна продажу + 20% ПДВ">Ціна з ПДВ 20%</th>
+                    <th class="col-vat" title="Ціна продажу + 20% ПДВ">Ціна з ПДВ 20%</th>
                     <th>Залишок</th>
                     <th></th>
                 </tr>
@@ -91,7 +92,7 @@
                         <span class="muted" style="font-size:.85em" th:if="${ci.marginPercent() != null}"
                               th:text="'(' + ${ci.marginPercent()} + '%)'"></span>
                     </td>
-                    <td th:text="${ci.priceWithVat20() != null ? #numbers.formatDecimal(ci.priceWithVat20(), 1, 2) : '—'}"></td>
+                    <td class="col-vat" th:text="${ci.priceWithVat20() != null ? #numbers.formatDecimal(ci.priceWithVat20(), 1, 2) : '—'}"></td>
                     <td th:text="${ci.stockQuantity != null ? ci.stockQuantityDisplay() + ' ' + ci.unitLabel() : '—'}"></td>
                     <td class="actions-cell">
                         <a class="link-btn" th:href="@{/catalog-items/{id}/edit(id=${ci.id})}">Редагувати</a>
@@ -105,7 +106,7 @@
                 <!-- Товари — групами за категоріями -->
                 <th:block th:each="g : ${shownGroups}">
                 <tr class="category-group-row">
-                    <td colspan="7">
+                    <td colspan="7" class="span-all">
                         <span th:text="${g.name}"></span>
                         <span class="category-chip-count" th:text="${#lists.size(g.items)}"></span>
                     </td>
@@ -120,7 +121,7 @@
                         <span class="muted" style="font-size:.85em" th:if="${ci.marginPercent() != null}"
                               th:text="'(' + ${ci.marginPercent()} + '%)'"></span>
                     </td>
-                    <td th:text="${ci.priceWithVat20() != null ? #numbers.formatDecimal(ci.priceWithVat20(), 1, 2) : '—'}"></td>
+                    <td class="col-vat" th:text="${ci.priceWithVat20() != null ? #numbers.formatDecimal(ci.priceWithVat20(), 1, 2) : '—'}"></td>
                     <td th:text="${ci.stockQuantity != null ? ci.stockQuantityDisplay() + ' ' + ci.unitLabel() : '—'}"></td>
                     <td class="actions-cell">
                         <a class="link-btn" th:href="@{/catalog-items/{id}/edit(id=${ci.id})}">Редагувати</a>
@@ -132,7 +133,7 @@
                 </tr>
                 </th:block>
                 <tr th:if="${activeType.name() == 'SERVICE' ? #lists.isEmpty(catalogItems) : #lists.isEmpty(shownGroups)}">
-                    <td colspan="7" th:text="${activeType.name() == 'MATERIAL'} ? 'Товарів не знайдено' : 'Послуг ще немає'"></td>
+                    <td colspan="7" class="span-all" th:text="${activeType.name() == 'MATERIAL'} ? 'Товарів не знайдено' : 'Послуг ще немає'"></td>
                 </tr>
                 </tbody>
             </table>
@@ -141,6 +142,29 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Стовпець «Ціна з ПДВ 20%» — показати/сховати; вибір пам'ятає браузер (docs/Каталог.md).
+            var KEY = 'protaxoCatalogVatColumn';
+            var btn = document.getElementById('toggleVatColumn');
+            var col = document.getElementById('colVat');
+            var colParent = col.parentNode, colNext = col.nextElementSibling;
+            function apply(show) {
+                document.querySelectorAll('.col-vat').forEach(function (c) { c.style.display = show ? '' : 'none'; });
+                // <col> лишав би порожнє місце під схованим стовпцем — знімаємо/повертаємо його.
+                if (show && !col.parentNode) colParent.insertBefore(col, colNext);
+                if (!show && col.parentNode) col.remove();
+                document.querySelectorAll('.span-all').forEach(function (c) { c.colSpan = show ? 7 : 6; });
+                btn.textContent = show ? 'Сховати ціну з ПДВ' : 'Показати ціну з ПДВ';
+                btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+            }
+            var shown = true;
+            try { shown = localStorage.getItem(KEY) !== 'hidden'; } catch (e) { /* приватний режим */ }
+            apply(shown);
+            btn.addEventListener('click', function () {
+                shown = !shown;
+                try { localStorage.setItem(KEY, shown ? 'shown' : 'hidden'); } catch (e) { /* приватний режим */ }
+                apply(shown);
+            });
+
             document.querySelectorAll('.clickable-row').forEach(function (row) {
                 row.addEventListener('click', function (e) {
                     if (e.target.closest('.actions-cell')) return;
