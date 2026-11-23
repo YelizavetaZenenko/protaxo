@@ -46,6 +46,7 @@ class CompanyPageTest {
     @MockitoBean RepairWorkerService repairWorkerService;
     @MockitoBean MasterCardService masterCardService;
     @MockitoBean UserManagementService userManagementService;
+    @MockitoBean com.example.protaxo.printagent.PrintAgentDistribution printAgentDistribution;
     @MockitoBean AuditLogService auditLogService;
     @MockitoBean AuthAuditRecorder authAuditRecorder;
     @MockitoBean LoginAttemptService loginAttemptService;
@@ -75,6 +76,7 @@ class CompanyPageTest {
                         containsString("edit-card-btn"),
                         containsString("delete-card-btn"),
                         containsString("addWorkerBtn"),
+                        containsString("Програма друку наклейок"),
                         not(containsString("ProTaxo ERP")))));
     }
 

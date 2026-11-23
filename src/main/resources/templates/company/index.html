@@ -138,6 +138,27 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Програма друку наклейок (docs/Print Agent.md): збирається з кожним деплоєм, тож тут завжди остання версія. -->
+        <div class="card" style="margin-top:1.5rem;" id="print-agent">
+            <div class="toolbar">
+                <h1>Програма друку наклейок</h1>
+            </div>
+            <th:block th:if="${printAgentBuildTime != null}">
+                <p>Версія на сайті зібрана: <strong th:text="${printAgentBuildTime}"></strong></p>
+                <div class="actions-cell" style="margin-bottom:0.75rem;">
+                    <a class="btn" th:href="@{/downloads/print-agent.jar}">Завантажити оновлення (print-agent.jar)</a>
+                    <a class="btn-outline" th:href="@{/downloads/print-agent.zip}">Повний комплект для нового комп'ютера (.zip)</a>
+                </div>
+                <div class="muted">
+                    <strong>Оновлення:</strong> закрийте вікно «ProTaxo — друк наклейок», замініть файл print-agent.jar у папці
+                    програми завантаженим (на робочому ноутбуці — <code>D:\ProTaxo-PrintAgent</code>) і запустіть
+                    «Запустити друк наклейок.bat». Налаштування принтера й токен лишаються.<br>
+                    <strong>Новий комп'ютер:</strong> розпакуйте .zip і дотримуйтесь «Як встановити.txt» (потрібні Java 21+ і токен від адміністратора).
+                </div>
+            </th:block>
+            <div class="muted" th:if="${printAgentBuildTime == null}">Файл програми на цьому сервері недоступний.</div>
+        </div>
     </div>
 
     <div class="modal-overlay" id="viewWorkerOverlay" hidden>

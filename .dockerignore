@@ -5,5 +5,7 @@ logs/
 backups/
 *.log
 docs/
-print-agent/
+# Print Agent збирається в образі (Dockerfile); не копіюємо збірки й файл із реальним токеном.
+print-agent/target/
+print-agent/printagent.properties
 samples/

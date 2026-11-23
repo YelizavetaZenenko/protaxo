@@ -17,6 +17,14 @@ RUN ./mvnw -B -DskipTests package
 # (--layers розбиває на шари, --launcher додає spring-boot-loader для JarLauncher).
 RUN java -Djarmode=tools -jar target/*.jar extract --layers --launcher --destination target/extracted
 
+# Програма друку наклейок (Print Agent) збирається разом із сервером, щоб на сайті
+# («Основна інформація» → «Програма друку наклейок») завжди лежала остання версія.
+# Окремий Maven-проєкт без залежностей; кеш ~/.m2 вже прогрітий збіркою вище.
+COPY print-agent/pom.xml print-agent/pom.xml
+COPY print-agent/src/ print-agent/src/
+COPY print-agent/printagent.properties.example print-agent/printagent.properties.example
+RUN ./mvnw -B -q -f print-agent/pom.xml package
+
 # --- Runtime stage -----------------------------------------------------------
 FROM eclipse-temurin:21-jre AS runtime
 WORKDIR /app
@@ -34,6 +42,9 @@ COPY --from=build --chown=app:app /build/target/extracted/dependencies/ ./
 COPY --from=build --chown=app:app /build/target/extracted/spring-boot-loader/ ./
 COPY --from=build --chown=app:app /build/target/extracted/snapshot-dependencies/ ./
 COPY --from=build --chown=app:app /build/target/extracted/application/ ./
+# Файли для завантаження з сайту: print-agent.jar і приклад налаштувань (PrintAgentDownloadController).
+COPY --from=build --chown=app:app /build/print-agent/target/print-agent.jar /app/downloads/print-agent.jar
+COPY --from=build --chown=app:app /build/print-agent/printagent.properties.example /app/downloads/printagent.properties.example
 
 EXPOSE 8080
 

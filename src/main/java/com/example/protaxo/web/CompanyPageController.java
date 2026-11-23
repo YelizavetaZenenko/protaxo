@@ -1,6 +1,7 @@
 package com.example.protaxo.web;
 
 import com.example.protaxo.calibration.service.MasterCardService;
+import com.example.protaxo.printagent.PrintAgentDistribution;
 import com.example.protaxo.security.entity.PermissionKey;
 import com.example.protaxo.security.service.PermissionService;
 import com.example.protaxo.security.service.UserManagementService;
@@ -26,6 +27,7 @@ public class CompanyPageController {
     private final MasterCardService masterCardService;
     private final UserManagementService userManagementService;
     private final PermissionService permissionService;
+    private final PrintAgentDistribution printAgentDistribution;
 
     @GetMapping
     public String index(Model model, Authentication authentication) {
@@ -35,6 +37,7 @@ public class CompanyPageController {
         }
         model.addAttribute("workers", repairWorkerService.findAllDetails());
         model.addAttribute("cards", masterCardService.findAll());
+        model.addAttribute("printAgentBuildTime", printAgentDistribution.buildTime().orElse(null));
         return "company/index";
     }
 }
