@@ -59,17 +59,21 @@
 
             <table class="clean-table">
                 <colgroup>
-                    <col style="width:48%">
+                    <col style="width:34%">
+                    <col style="width:10%">
+                    <col style="width:10%">
                     <col style="width:12%">
-                    <col style="width:12%">
-                    <col style="width:13%">
-                    <col style="width:15%">
+                    <col style="width:11%">
+                    <col style="width:9%">
+                    <col style="width:14%">
                 </colgroup>
                 <thead>
                 <tr>
                     <th>Назва</th>
                     <th>Закупівля</th>
                     <th>Продаж</th>
+                    <th title="Продаж − закупівля; у дужках — націнка від закупівлі">Різниця</th>
+                    <th title="Ціна продажу + 20% ПДВ">Ціна з ПДВ 20%</th>
                     <th>Залишок</th>
                     <th></th>
                 </tr>
@@ -81,6 +85,13 @@
                     <td th:text="${ci.name}"></td>
                     <td th:text="${ci.purchasePrice != null ? #numbers.formatDecimal(ci.purchasePrice, 1, 2) : '—'}"></td>
                     <td th:text="${#numbers.formatDecimal(ci.basePrice, 1, 2)} + (${ci.unitLabel()} == 'м' ? ' / м' : '')"></td>
+                    <td th:if="${ci.margin() == null}" class="muted">—</td>
+                    <td th:unless="${ci.margin() == null}" th:style="${ci.margin().signum() < 0} ? 'color:var(--danger)' : ''">
+                        <span th:text="${(ci.margin().signum() > 0 ? '+' : '') + #numbers.formatDecimal(ci.margin(), 1, 2)}"></span>
+                        <span class="muted" style="font-size:.85em" th:if="${ci.marginPercent() != null}"
+                              th:text="'(' + ${ci.marginPercent()} + '%)'"></span>
+                    </td>
+                    <td th:text="${ci.priceWithVat20() != null ? #numbers.formatDecimal(ci.priceWithVat20(), 1, 2) : '—'}"></td>
                     <td th:text="${ci.stockQuantity != null ? ci.stockQuantityDisplay() + ' ' + ci.unitLabel() : '—'}"></td>
                     <td class="actions-cell">
                         <a class="link-btn" th:href="@{/catalog-items/{id}/edit(id=${ci.id})}">Редагувати</a>
@@ -94,7 +105,7 @@
                 <!-- Товари — групами за категоріями -->
                 <th:block th:each="g : ${shownGroups}">
                 <tr class="category-group-row">
-                    <td colspan="5">
+                    <td colspan="7">
                         <span th:text="${g.name}"></span>
                         <span class="category-chip-count" th:text="${#lists.size(g.items)}"></span>
                     </td>
@@ -103,6 +114,13 @@
                     <td th:text="${ci.name}"></td>
                     <td th:text="${ci.purchasePrice != null ? #numbers.formatDecimal(ci.purchasePrice, 1, 2) : '—'}"></td>
                     <td th:text="${#numbers.formatDecimal(ci.basePrice, 1, 2)} + (${ci.unitLabel()} == 'м' ? ' / м' : '')"></td>
+                    <td th:if="${ci.margin() == null}" class="muted">—</td>
+                    <td th:unless="${ci.margin() == null}" th:style="${ci.margin().signum() < 0} ? 'color:var(--danger)' : ''">
+                        <span th:text="${(ci.margin().signum() > 0 ? '+' : '') + #numbers.formatDecimal(ci.margin(), 1, 2)}"></span>
+                        <span class="muted" style="font-size:.85em" th:if="${ci.marginPercent() != null}"
+                              th:text="'(' + ${ci.marginPercent()} + '%)'"></span>
+                    </td>
+                    <td th:text="${ci.priceWithVat20() != null ? #numbers.formatDecimal(ci.priceWithVat20(), 1, 2) : '—'}"></td>
                     <td th:text="${ci.stockQuantity != null ? ci.stockQuantityDisplay() + ' ' + ci.unitLabel() : '—'}"></td>
                     <td class="actions-cell">
                         <a class="link-btn" th:href="@{/catalog-items/{id}/edit(id=${ci.id})}">Редагувати</a>
@@ -114,7 +132,7 @@
                 </tr>
                 </th:block>
                 <tr th:if="${activeType.name() == 'SERVICE' ? #lists.isEmpty(catalogItems) : #lists.isEmpty(shownGroups)}">
-                    <td colspan="5" th:text="${activeType.name() == 'MATERIAL'} ? 'Товарів не знайдено' : 'Послуг ще немає'"></td>
+                    <td colspan="7" th:text="${activeType.name() == 'MATERIAL'} ? 'Товарів не знайдено' : 'Послуг ще немає'"></td>
                 </tr>
                 </tbody>
             </table>

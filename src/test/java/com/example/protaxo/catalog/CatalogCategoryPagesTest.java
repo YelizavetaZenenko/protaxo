@@ -95,6 +95,8 @@ class CatalogCategoryPagesTest {
                 .andExpect(content().string(allOf(
                         containsString("category-chip"),
                         containsString("category-group-row"),
+                        containsString("Ціна з ПДВ 20%"),
+                        containsString("120.00"),
                         containsString("Датчик 2159"),
                         containsString("Перехідник Isuzu 1318"),
                         containsString("Без категорії"),
