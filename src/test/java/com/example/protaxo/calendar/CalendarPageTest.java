@@ -68,7 +68,10 @@ class CalendarPageTest {
         mvc.perform(get("/calendar").with(user("m@b.c").roles("MASTER")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(allOf(
-                        containsString("id=\"calGrid\""),
+                        containsString("id=\"calBody\""),
+                        containsString("id=\"calViewWeek\""),
+                        containsString("id=\"calDayToggles\""),
+                        containsString("id=\"apptDurH\""),
                         containsString("href=\"/calendar\""),
                         containsString("Волинь Зерно Продукт"),
                         containsString("AC1466HI (Volvo FH)"))));
