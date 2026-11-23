@@ -128,15 +128,16 @@
 
                 <div class="doc-tab-panel doc-tab-panel-block" id="tabTovary" hidden>
                     <div class="items-section" style="margin-top:0;">
-                        <table class="items-table">
+                        <table class="items-table" th:classappend="${!vatPayer} ? 'non-vat-payer'" th:attr="data-vat-payer=${vatPayer}">
                             <thead>
                             <tr>
                                 <th style="width:3%">№</th>
                                 <th>Номенклатура товару</th>
                                 <th class="num num-input" style="width:10%">Кількість</th>
-                                <th class="num num-input" style="width:12%">Ціна з ПДВ</th>
+                                <th class="num num-input" style="width:12%" th:text="${vatPayer} ? 'Ціна з ПДВ' : 'Ціна'">Ціна з ПДВ</th>
                                 <th class="num num-input" style="width:9%">Знижка,&nbsp;%</th>
-                                <th class="num" style="width:11%">ПДВ</th>
+                                <th class="num vat-cell" style="width:11%" th:text="${vatPayer} ? 'ПДВ' : 'Ціна з ПДВ'"
+                                    th:title="${vatPayer} ? null : 'Довідково: ціна × 1,2 (з урахуванням знижки). У документи не йде — ви не платник ПДВ'">ПДВ</th>
                                 <th class="num" style="width:12%">Вартість</th>
                                 <th style="width:3%"></th>
                             </tr>
@@ -154,7 +155,7 @@
                                 <td><input type="number" step="0.001" min="0" th:field="*{items[__${idx}__].quantity}" class="qty-input"> <span class="muted unit-label"></span></td>
                                 <td><input type="number" step="0.01" min="0" th:field="*{items[__${idx}__].price}" class="price-input"></td>
                                 <td><input type="number" step="0.01" min="0" max="100" th:field="*{items[__${idx}__].discountPercent}" class="discount-input" placeholder="0"></td>
-                                <td class="amount-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
+                                <td class="amount-cell vat-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
                                 <td class="amount-cell"><span class="amount-display">0.00</span></td>
                                 <td><button type="button" class="remove-row-btn" title="Видалити рядок">✕</button></td>
                             </tr>
@@ -162,7 +163,7 @@
                             <tfoot>
                             <tr>
                                 <td colspan="5">Разом за товари</td>
-                                <td class="amount-cell" id="materialsVatSubtotal">0.00</td>
+                                <td class="amount-cell vat-cell" id="materialsVatSubtotal">0.00</td>
                                 <td class="amount-cell" id="materialsSubtotal">0.00</td>
                                 <td></td>
                             </tr>
@@ -174,15 +175,16 @@
 
                 <div class="doc-tab-panel doc-tab-panel-block" id="tabPosluhy" hidden>
                     <div class="items-section" style="margin-top:0;">
-                        <table class="items-table">
+                        <table class="items-table" th:classappend="${!vatPayer} ? 'non-vat-payer'" th:attr="data-vat-payer=${vatPayer}">
                             <thead>
                             <tr>
                                 <th style="width:3%">№</th>
                                 <th>Автопослуга</th>
                                 <th class="num num-input" style="width:10%">Кількість</th>
-                                <th class="num num-input" style="width:12%">Ціна з ПДВ</th>
+                                <th class="num num-input" style="width:12%" th:text="${vatPayer} ? 'Ціна з ПДВ' : 'Ціна'">Ціна з ПДВ</th>
                                 <th class="num num-input" style="width:9%">Знижка,&nbsp;%</th>
-                                <th class="num" style="width:11%">ПДВ</th>
+                                <th class="num vat-cell" style="width:11%" th:text="${vatPayer} ? 'ПДВ' : 'Ціна з ПДВ'"
+                                    th:title="${vatPayer} ? null : 'Довідково: ціна × 1,2 (з урахуванням знижки). У документи не йде — ви не платник ПДВ'">ПДВ</th>
                                 <th class="num" style="width:12%">Вартість</th>
                                 <th style="width:3%"></th>
                             </tr>
@@ -200,7 +202,7 @@
                                 <td><input type="number" step="0.001" min="0" th:field="*{items[__${idx}__].quantity}" class="qty-input"> <span class="muted unit-label"></span></td>
                                 <td><input type="number" step="0.01" min="0" th:field="*{items[__${idx}__].price}" class="price-input"></td>
                                 <td><input type="number" step="0.01" min="0" max="100" th:field="*{items[__${idx}__].discountPercent}" class="discount-input" placeholder="0"></td>
-                                <td class="amount-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
+                                <td class="amount-cell vat-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
                                 <td class="amount-cell"><span class="amount-display">0.00</span></td>
                                 <td><button type="button" class="remove-row-btn" title="Видалити рядок">✕</button></td>
                             </tr>
@@ -208,7 +210,7 @@
                             <tfoot>
                             <tr>
                                 <td colspan="5">Разом за послуги</td>
-                                <td class="amount-cell" id="servicesVatSubtotal">0.00</td>
+                                <td class="amount-cell vat-cell" id="servicesVatSubtotal">0.00</td>
                                 <td class="amount-cell" id="servicesSubtotal">0.00</td>
                                 <td></td>
                             </tr>
@@ -413,7 +415,7 @@
             <td><input type="number" step="0.001" min="0" name="items[__INDEX__].quantity" class="qty-input"> <span class="muted unit-label"></span></td>
             <td><input type="number" step="0.01" min="0" name="items[__INDEX__].price" class="price-input"></td>
             <td><input type="number" step="0.01" min="0" max="100" name="items[__INDEX__].discountPercent" class="discount-input" placeholder="0"></td>
-            <td class="amount-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
+            <td class="amount-cell vat-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
             <td class="amount-cell"><span class="amount-display">0.00</span></td>
             <td><button type="button" class="remove-row-btn" title="Видалити рядок">✕</button></td>
         </tr>
@@ -432,7 +434,7 @@
             <td><input type="number" step="0.001" min="0" name="items[__INDEX__].quantity" class="qty-input"> <span class="muted unit-label"></span></td>
             <td><input type="number" step="0.01" min="0" name="items[__INDEX__].price" class="price-input"></td>
             <td><input type="number" step="0.01" min="0" max="100" name="items[__INDEX__].discountPercent" class="discount-input" placeholder="0"></td>
-            <td class="amount-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
+            <td class="amount-cell vat-cell"><span class="vat-display">0.00</span> <span class="muted vat-rate-label"></span></td>
             <td class="amount-cell"><span class="amount-display">0.00</span></td>
             <td><button type="button" class="remove-row-btn" title="Видалити рядок">✕</button></td>
         </tr>
@@ -464,9 +466,13 @@
 
             // Ціна вводиться з ПДВ; сума рядка = к-сть × ціна × (1 − знижка%), ПДВ виділяється
             // з неї за ставкою позиції каталогу — так само, як InvoiceService.applyItems.
+            //
+            // Неплатник ПДВ (налаштування обліку): ціна вводиться без ПДВ, а сірий стовпець замість
+            // «ПДВ» показує довідково ціну з ПДВ 20% — ціна × (1 − знижка%) × 1,2; у підсумку — вартість × 1,2.
             function recalcTable(tbody, subtotalEl, vatSubtotalEl) {
                 var total = 0;
                 var totalVat = 0;
+                var vatPayer = tbody.closest('table').dataset.vatPayer !== 'false';
                 Array.prototype.forEach.call(tbody.querySelectorAll('.item-row'), function (row, idx) {
                     row.querySelector('.row-index').textContent = idx + 1;
                     var qty = toNumber(row.querySelector('.qty-input').value);
@@ -475,18 +481,23 @@
                     var amount = round2(qty * price * (100 - discount) / 100);
                     var option = row.querySelector('.catalog-select').selectedOptions[0];
                     var hasItem = option && option.value;
-                    var vatPercent = hasItem && option.dataset.vat !== undefined ? toNumber(option.dataset.vat) : 20;
+                    var vatPercent = hasItem && option.dataset.vat !== undefined ? toNumber(option.dataset.vat) : (vatPayer ? 20 : 0);
                     var vat = round2(amount * vatPercent / (100 + vatPercent));
                     row.querySelector('.amount-display').textContent = amount.toFixed(2);
-                    row.querySelector('.vat-display').textContent = vat.toFixed(2);
-                    row.querySelector('.vat-rate-label').textContent = hasItem ? vatPercent + '%' : '';
+                    if (vatPayer) {
+                        row.querySelector('.vat-display').textContent = vat.toFixed(2);
+                        row.querySelector('.vat-rate-label').textContent = hasItem ? vatPercent + '%' : '';
+                    } else {
+                        row.querySelector('.vat-display').textContent = round2(price * (100 - discount) / 100 * 1.2).toFixed(2);
+                        row.querySelector('.vat-rate-label').textContent = '';
+                    }
                     // Одиниця товару (шт / м) біля кількості: 5 м × 100 грн/м = 500 грн
                     row.querySelector('.unit-label').textContent = hasItem && option.dataset.unit ? option.dataset.unit : '';
                     total += amount;
                     totalVat += vat;
                 });
                 subtotalEl.textContent = total.toFixed(2);
-                vatSubtotalEl.textContent = totalVat.toFixed(2);
+                vatSubtotalEl.textContent = (vatPayer ? totalVat : round2(total * 1.2)).toFixed(2);
                 return { total: total, vat: totalVat };
             }
 

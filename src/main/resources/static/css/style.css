@@ -2654,3 +2654,9 @@ a.acc-card-meta:hover {
 #addressPreview {
     margin-top: -0.25rem;
 }
+
+/* Наряд-заказ неплатника ПДВ: стовпець «Ціна з ПДВ» — довідковий, сірий (docs/Наряд-заказ.md). */
+.items-table.non-vat-payer .vat-cell {
+    background: #eef0f3;
+    color: #4b5563;
+}
