@@ -14,19 +14,16 @@
         p.validity { margin: 0; text-align: center; font-weight: bold; font-size: 8.5pt; }
         p.transfer-request { margin: 1pt 0 6pt 0; text-align: center; font-size: 8.5pt; }
 
-        /* Зразок заповнення платіжного доручення: підписи полів і значення — два рівні стовпчики,
-           праворуч — порожній квадрат під QR-код, який наклеюється / друкується окремо. */
+        /* Зразок заповнення платіжного доручення: підписи полів і значення — два рівні стовпчики.
+           Квадрат під QR-код прибрано (2026-11-23): QR-коду для оплати поки немає. */
         table.sample { width: 100%; border-collapse: collapse; border: 1px solid #000000; margin-bottom: 14pt; }
         table.sample > tbody > tr > td, table.sample > tr > td { border: none; padding: 0; vertical-align: top; }
         table.sample td.heading { text-align: center; font-weight: bold; font-size: 9pt; padding: 4pt 0 4pt 0; }
         table.sample td.fields { padding: 0 6pt 6pt 6pt; }
-        table.sample td.qr-cell { width: 100pt; padding: 0 8pt 6pt 0; }
         table.fields-table { width: 100%; border-collapse: collapse; }
         table.fields-table td { border: none; padding: 3pt 0; font-size: 8.5pt; vertical-align: middle; }
         table.fields-table td.lbl { width: 105pt; }
         .boxed { border: 1.5px solid #000000; padding: 2pt 6pt; font-weight: bold; }
-        table.qr-box { width: 92pt; height: 92pt; border-collapse: collapse; margin-left: auto; }
-        table.qr-box td { border: 1px dashed #888888; color: #999999; font-size: 7pt; text-align: center; vertical-align: middle; }
 
         h1 { font-size: 12.5pt; margin: 0; padding-bottom: 3pt; border-bottom: 2px solid #000000; }
 
@@ -71,7 +68,7 @@
     <p class="transfer-request">Прохання перераховувати кошти за реквізитами вказаними у рахунку</p>
 
     <table class="sample">
-        <tr><td class="heading" colspan="2">Зразок заповнення платіжного доручення</td></tr>
+        <tr><td class="heading">Зразок заповнення платіжного доручення</td></tr>
         <tr>
             <td class="fields">
                 <table class="fields-table">
@@ -96,9 +93,6 @@
                         <td><span class="boxed">UA833348510000000026002389961</span></td>
                     </tr>
                 </table>
-            </td>
-            <td class="qr-cell">
-                <table class="qr-box"><tr><td>QR-код</td></tr></table>
             </td>
         </tr>
     </table>
