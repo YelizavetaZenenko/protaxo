@@ -53,7 +53,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/css/**", "/js/**", "/images/**", "/login", "/accept-invite", "/forgot-password", "/reset-password", "/ws/print-agent", "/agent/update/**", "/verify/**").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/login", "/accept-invite", "/forgot-password", "/reset-password", "/ws/print-agent", "/verify/**").permitAll()
                         // Технічні роботи (docs/Технічні роботи.md): сторінку бачать усі, вмикає — лише розробник (DeveloperAccounts).
                         .requestMatchers("/maintenance").permitAll()
                         .requestMatchers("/maintenance/toggle").hasRole("DEVELOPER")

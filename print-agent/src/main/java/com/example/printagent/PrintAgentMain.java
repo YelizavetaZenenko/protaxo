@@ -31,8 +31,6 @@ public final class PrintAgentMain {
     private static final long RECONNECT_DELAY_MS = 5000;
     private static final String LAST_LABEL_FILE = "last-label.png";
     private static final String LOCK_FILE = "printagent.lock";
-    /** Друк і перезапуск для оновлення не перетинаються: Updater чекає, поки наклейка піде на принтер. */
-    static final Object PRINT_LOCK = new Object();
 
     private static volatile PrintAgentConfig config;
     private static volatile BackendWebSocketClient currentClient;
@@ -48,12 +46,6 @@ public final class PrintAgentMain {
         // aren't garbled regardless of the host's locale settings.
         System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
         System.setErr(new PrintStream(System.err, true, StandardCharsets.UTF_8));
-
-        // Режим заміни після автооновлення: дочекатися закриття старої копії, підмінити jar, запустити.
-        if (args.length > 0 && Updater.APPLY_FLAG.equals(args[0])) {
-            Updater.applyUpdate(args);
-            System.exit(0);
-        }
 
         boolean noGui = Arrays.asList(args).contains("--nogui") || GraphicsEnvironment.isHeadless();
         String pathArg = Arrays.stream(args).filter(a -> !a.startsWith("--")).findFirst().orElse("printagent.properties");
@@ -73,9 +65,6 @@ public final class PrintAgentMain {
             SwingUtilities.invokeAndWait(() -> SettingsWindow.open(configPath));
         }
 
-        System.out.println("[print-agent] Версія програми: " + Updater.currentVersion());
-        Updater.cleanUpLeftovers();
-        Updater.startBackgroundChecks(args);
         System.out.println("[print-agent] Стартую, backend=" + config.backendWsUrl()
                 + ", принтер=" + (config.printerName().isBlank() ? "(за замовчуванням)" : config.printerName())
                 + ", спосіб=" + config.mode().key() + ", поворот=" + config.labelRotation() + "°");
@@ -169,13 +158,11 @@ public final class PrintAgentMain {
                 return;
             }
         }
-        synchronized (PRINT_LOCK) {
-            try {
-                PrinterClient.print(payload, config);
-                System.out.println("[print-agent] Наклейку надіслано на друк (" + payload.length + " байт)");
-            } catch (PrintException e) {
-                System.err.println("[print-agent] Помилка друку: " + e.getMessage());
-            }
+        try {
+            PrinterClient.print(payload, config);
+            System.out.println("[print-agent] Наклейку надіслано на друк (" + payload.length + " байт)");
+        } catch (PrintException e) {
+            System.err.println("[print-agent] Помилка друку: " + e.getMessage());
         }
     }
 }

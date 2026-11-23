@@ -11,12 +11,7 @@
     -->
     <groupId>com.example</groupId>
     <artifactId>print-agent</artifactId>
-    <!--
-        Версія програми друку для АВТООНОВЛЕННЯ (docs/Print Agent.md): встановлені програми порівнюють
-        свою версію з цією й оновлюються, коли тут більше. Підвищуйте її (1.0.0 → 1.0.1 …) щоразу,
-        коли змінюєте код print-agent; без зміни коду не чіпайте — інакше всі програми зайво перезапустяться.
-    -->
-    <version>1.0.0</version>
+    <version>0.1.0</version>
     <packaging>jar</packaging>
 
     <properties>

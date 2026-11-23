@@ -145,14 +145,13 @@
                 <h1>Програма друку наклейок</h1>
             </div>
             <th:block th:if="${printAgentBuildTime != null}">
-                <p>Версія на сайті: <strong th:text="${printAgentVersion ?: '—'}"></strong>, зібрана <span th:text="${printAgentBuildTime}"></span>.
-                    Встановлені програми (від версії 1.0.0) оновлюються до неї <strong>самі</strong> — при запуску й щогодини.</p>
+                <p>Версія на сайті зібрана: <strong th:text="${printAgentBuildTime}"></strong></p>
                 <div class="actions-cell" style="margin-bottom:0.75rem;">
                     <a class="btn" th:href="@{/downloads/print-agent.jar}">Завантажити оновлення (print-agent.jar)</a>
                     <a class="btn-outline" th:href="@{/downloads/print-agent.zip}">Повний комплект для нового комп'ютера (.zip)</a>
                 </div>
                 <div class="muted">
-                    <strong>Оновлення вручну</strong> (лише для старих програм до 1.0.0 — один раз): закрийте вікно «ProTaxo — друк наклейок», замініть файл print-agent.jar у папці
+                    <strong>Оновлення:</strong> закрийте вікно «ProTaxo — друк наклейок», замініть файл print-agent.jar у папці
                     програми завантаженим (на робочому ноутбуці — <code>D:\ProTaxo-PrintAgent</code>) і запустіть
                     «Запустити друк наклейок.bat». Налаштування принтера й токен лишаються.<br>
                     <strong>Новий комп'ютер:</strong> розпакуйте .zip і дотримуйтесь «Як встановити.txt» (потрібні Java 21+ і токен від адміністратора).
