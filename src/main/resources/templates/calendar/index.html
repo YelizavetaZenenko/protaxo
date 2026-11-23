@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <title>ProTaxo — Календар</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/autocomplete.js}"></script>
+    <style>
+        /* Календар (docs/Календар.md): місяць на все вікно, без прокрутки сторінки. */
+        .cal-container { margin-top: 1rem; margin-bottom: 0; }
+        .cal-shell {
+            display: flex; flex-direction: column; min-height: 420px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            box-shadow: var(--shadow-card); overflow: hidden;
+        }
+        .cal-toolbar {
+            display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .cal-toolbar h1 { margin: 0 0 0 0.5rem; font-size: 1.25rem; font-weight: 600; min-width: 11rem; }
+        .cal-toolbar .cal-spacer { flex: 1; }
+        .cal-nav-btn {
+            border: 1px solid var(--border); background: var(--surface); color: var(--text);
+            border-radius: 8px; height: 2.2rem; min-width: 2.2rem; padding: 0 0.75rem;
+            font: inherit; cursor: pointer;
+        }
+        .cal-nav-btn:hover { background: var(--bg); }
+        .cal-nav-btn.cal-arrow { padding: 0; font-size: 1.2rem; line-height: 1; }
+        .cal-month-input {
+            border: 1px solid var(--border); border-radius: 8px; height: 2.2rem; padding: 0 0.5rem;
+            font: inherit; color: var(--text); background: var(--surface);
+        }
+        .cal-grid {
+            flex: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+            min-height: 0;
+        }
+        .cal-weekday {
+            padding: 0.4rem 0.6rem; font-size: 0.8rem; color: var(--muted);
+            border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.03em;
+        }
+        .cal-day {
+            position: relative; display: flex; flex-direction: column; min-height: 0; min-width: 0;
+            border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+            padding: 0.25rem 0.3rem 0.2rem; cursor: pointer; overflow: hidden;
+        }
+        .cal-day:nth-child(7n) { border-right: none; }
+        .cal-day:hover { background: #f8faf9; }
+        .cal-day.cal-weekend { background: #fafbfc; }
+        .cal-day.cal-other-month .cal-day-num { color: #b4b9c2; }
+        .cal-day.cal-other-month { background: #fcfcfd; }
+        .cal-day-head { display: flex; align-items: center; justify-content: space-between; gap: 0.25rem; }
+        .cal-day-num {
+            display: inline-flex; align-items: center; justify-content: center; min-width: 1.7rem; height: 1.7rem;
+            padding: 0 0.3rem; border-radius: 999px; font-size: 0.9rem; font-weight: 500;
+        }
+        .cal-day.cal-today .cal-day-num { background: var(--accent); color: #fff; }
+        .cal-day-add {
+            visibility: hidden; border: none; background: none; color: var(--accent); font-size: 1.1rem;
+            cursor: pointer; line-height: 1; padding: 0 0.2rem;
+        }
+        .cal-day:hover .cal-day-add { visibility: visible; }
+        .cal-events { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
+        .cal-event {
+            display: block; width: 100%; text-align: left; border: none; cursor: pointer;
+            background: #e6f1eb; color: var(--text); border-left: 3px solid var(--accent);
+            border-radius: 4px; padding: 1px 5px; font: inherit; font-size: 0.8rem; line-height: 1.35;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0;
+        }
+        .cal-event:hover { background: #d4e8dc; }
+        .cal-event .cal-event-time { font-weight: 600; margin-right: 0.3rem; }
+        .cal-event.cal-past { background: #eef0f3; border-left-color: #a3aab5; color: var(--muted); }
+        .cal-more {
+            border: none; background: none; color: var(--accent); font: inherit; font-size: 0.8rem;
+            text-align: left; padding: 0 5px; cursor: pointer; flex-shrink: 0;
+        }
+        .cal-more:hover { text-decoration: underline; }
+        .cal-status { padding: 0.25rem 1rem; font-size: 0.85rem; color: var(--danger); }
+        .cal-form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+        .cal-day-list { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; max-height: 55vh; overflow-y: auto; }
+        .cal-day-list .cal-event { font-size: 0.95rem; padding: 0.45rem 0.6rem; white-space: normal; }
+        .cal-day-list .cal-event small { display: block; color: var(--muted); }
+        .cal-hint { font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; }
+        .cal-warn { font-size: 0.85rem; color: #8a5a00; background: #fff6e0; border-radius: 8px; padding: 0.45rem 0.6rem; margin-bottom: 0.75rem; }
+        .cal-modal-actions { display: flex; gap: 0.75rem; align-items: center; }
+        .cal-modal-actions .cal-spacer { flex: 1; }
+        /* .btn-danger задає display — без цього [hidden] не ховає «Видалити» у новому записі. */
+        .cal-modal-actions [hidden] { display: none !important; }
+        @media (max-width: 700px) {
+            .cal-toolbar { flex-wrap: wrap; }
+            .cal-toolbar h1 { min-width: 0; font-size: 1.05rem; }
+            .cal-event .cal-event-name { display: none; }
+            .cal-form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/topbar :: topbar(active='calendar')}"></div>
+
+    <div class="container cal-container">
+        <div class="cal-shell" id="calShell">
+            <div class="cal-toolbar">
+                <button type="button" class="cal-nav-btn" id="calToday">Сьогодні</button>
+                <button type="button" class="cal-nav-btn cal-arrow" id="calPrev" title="Попередній місяць">‹</button>
+                <button type="button" class="cal-nav-btn cal-arrow" id="calNext" title="Наступний місяць">›</button>
+                <h1 id="calTitle">Календар</h1>
+                <input type="month" class="cal-month-input" id="calMonthPicker" title="Перейти до місяця">
+                <span class="cal-spacer"></span>
+                <button type="button" class="btn" id="calNewBtn">+ Новий запис</button>
+            </div>
+            <div class="cal-status" id="calStatus" hidden></div>
+            <div class="cal-grid" id="calGrid"></div>
+        </div>
+    </div>
+
+    <!-- Усі записи дня (коли в клітинці не вміщаються) -->
+    <div class="modal-overlay" id="dayOverlay" hidden>
+        <div class="modal">
+            <h2 id="dayTitle"></h2>
+            <div class="cal-day-list" id="dayList"></div>
+            <div class="cal-modal-actions">
+                <button type="button" class="btn" id="dayAddBtn">+ Додати запис</button>
+                <span class="cal-spacer"></span>
+                <button type="button" class="btn-outline" id="dayCloseBtn">Закрити</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Новий запис / редагування -->
+    <div class="modal-overlay" id="apptOverlay" hidden>
+        <div class="modal modal-wide" style="max-width:640px;">
+            <h2 id="apptTitle">Новий запис</h2>
+            <div class="alert alert-error" id="apptError" hidden></div>
+            <div class="cal-warn" id="apptOverlap" hidden></div>
+            <div class="cal-form-row">
+                <div class="field">
+                    <label for="apptDate">Дата *</label>
+                    <input type="date" id="apptDate">
+                </div>
+                <div class="field">
+                    <label for="apptTime">Час *</label>
+                    <input type="time" id="apptTime" step="900">
+                </div>
+                <div class="field">
+                    <label for="apptDuration">Тривалість</label>
+                    <select id="apptDuration">
+                        <option value="15">15 хв</option>
+                        <option value="30">30 хв</option>
+                        <option value="45">45 хв</option>
+                        <option value="60" selected>1 год</option>
+                        <option value="90">1,5 год</option>
+                        <option value="120">2 год</option>
+                        <option value="180">3 год</option>
+                        <option value="240">4 год</option>
+                        <option value="480">8 год</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field">
+                <label for="apptClient">Клієнт *</label>
+                <input type="text" id="apptClient" maxlength="255" autocomplete="off">
+                <div class="cal-hint" id="apptClientHint"></div>
+            </div>
+            <div class="cal-form-row" style="grid-template-columns:1fr 2fr;">
+                <div class="field">
+                    <label for="apptPhone">Телефон</label>
+                    <input type="text" id="apptPhone" maxlength="32">
+                </div>
+                <div class="field">
+                    <label for="apptVehicle">Автомобіль</label>
+                    <input type="text" id="apptVehicle" maxlength="255" list="apptVehicleList" autocomplete="off">
+                    <datalist id="apptVehicleList"></datalist>
+                </div>
+            </div>
+            <div class="field">
+                <label for="apptNote">Примітка</label>
+                <textarea id="apptNote" maxlength="2000"></textarea>
+            </div>
+            <div class="cal-modal-actions">
+                <button type="button" class="btn" id="apptSaveBtn">Зберегти</button>
+                <button type="button" class="btn-outline" id="apptCancelBtn">Скасувати</button>
+                <span class="cal-spacer"></span>
+                <a id="apptClientLink" href="#" target="_blank" hidden>Картка контрагента</a>
+                <button type="button" class="btn-danger" id="apptDeleteBtn" hidden>Видалити</button>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var CLIENTS = JSON.parse(/*[[${clientOptionsJson}]]*/ '[]');
+        /*]]>*/
+    </script>
+    <script>
+        (function () {
+            var MONTHS = ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень',
+                'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
+            var MONTHS_GEN = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня', 'липня',
+                'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'];
+            var MONTHS_SHORT = ['січ', 'лют', 'бер', 'квіт', 'трав', 'черв', 'лип', 'серп', 'вер', 'жовт', 'лист', 'груд'];
+            var WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+            var WEEKDAYS_FULL = ['неділя', 'понеділок', 'вівторок', 'середа', 'четвер', "п'ятниця", 'субота'];
+
+            var shell = document.getElementById('calShell');
+            var grid = document.getElementById('calGrid');
+            var title = document.getElementById('calTitle');
+            var monthPicker = document.getElementById('calMonthPicker');
+            var statusBox = document.getElementById('calStatus');
+
+            var current = initialMonth();   // перше число показаного місяця
+            var appointments = [];          // записи видимої сітки
+            var loadSeq = 0;
+
+            function pad(n) { return (n < 10 ? '0' : '') + n; }
+            function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+            function addDays(d, n) { var r = new Date(d); r.setDate(r.getDate() + n); return r; }
+            function sameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+            function parseLocal(s) { // "2026-11-23T09:30:00" — місцевий час, без зсуву
+                var p = s.split(/[-T:]/).map(Number);
+                return new Date(p[0], p[1] - 1, p[2], p[3] || 0, p[4] || 0);
+            }
+            function hhmm(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+
+            function initialMonth() {
+                var m = /[?&]month=(\d{4})-(\d{2})/.exec(location.search);
+                var now = new Date();
+                return m ? new Date(+m[1], +m[2] - 1, 1) : new Date(now.getFullYear(), now.getMonth(), 1);
+            }
+
+            /** Сітка завжди з понеділка; стільки тижнів, скільки займає місяць (4–6). */
+            function gridRange() {
+                var first = new Date(current);
+                var start = addDays(first, -((first.getDay() + 6) % 7));
+                var last = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+                var end = addDays(last, 7 - ((last.getDay() + 6) % 7)); // понеділок після останнього тижня
+                return { start: start, end: end, weeks: Math.round((end - start) / 864e5 / 7) };
+            }
+
+            /** Висота — до низу вікна, щоб увесь місяць було видно без прокрутки сторінки. */
+            function fitHeight() {
+                var top = shell.getBoundingClientRect().top + window.scrollY;
+                shell.style.height = Math.max(420, window.innerHeight - top - 16) + 'px';
+            }
+
+            function setMonth(d) {
+                current = new Date(d.getFullYear(), d.getMonth(), 1);
+                var url = location.pathname + '?month=' + current.getFullYear() + '-' + pad(current.getMonth() + 1);
+                history.replaceState(null, '', url);
+                load();
+            }
+
+            function load() {
+                var r = gridRange();
+                title.textContent = MONTHS[current.getMonth()] + ' ' + current.getFullYear();
+                monthPicker.value = current.getFullYear() + '-' + pad(current.getMonth() + 1);
+                appointments = [];
+                render();
+                var seq = ++loadSeq;
+                fetch('/api/appointments?from=' + iso(r.start) + '&to=' + iso(r.end), { credentials: 'same-origin' })
+                    .then(function (resp) {
+                        if (!resp.ok) throw new Error('Не вдалося завантажити записи (' + resp.status + ')');
+                        return resp.json();
+                    })
+                    .then(function (list) {
+                        if (seq !== loadSeq) return;
+                        statusBox.hidden = true;
+                        appointments = list.map(function (a) { a.start = parseLocal(a.startsAt); return a; });
+                        render();
+                    })
+                    .catch(function (err) {
+                        if (seq !== loadSeq) return;
+                        statusBox.textContent = err.message;
+                        statusBox.hidden = false;
+                    });
+            }
+
+            function dayAppointments(day) {
+                return appointments.filter(function (a) { return sameDay(a.start, day); })
+                    .sort(function (a, b) { return a.start - b.start; });
+            }
+
+            function eventButton(a) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'cal-event' + (a.start.getTime() + a.durationMinutes * 6e4 < Date.now() ? ' cal-past' : '');
+                var time = document.createElement('span');
+                time.className = 'cal-event-time';
+                time.textContent = hhmm(a.start);
+                var name = document.createElement('span');
+                name.className = 'cal-event-name';
+                name.textContent = a.clientName;
+                btn.appendChild(time);
+                btn.appendChild(name);
+                btn.title = hhmm(a.start) + ' ' + a.clientName + (a.vehicle ? ' — ' + a.vehicle : '') + (a.note ? '\n' + a.note : '');
+                btn.addEventListener('click', function (e) { e.stopPropagation(); openAppointment(a, null); });
+                return btn;
+            }
+
+            function render() {
+                var r = gridRange();
+                var today = new Date();
+                grid.innerHTML = '';
+                grid.style.gridTemplateRows = 'auto repeat(' + r.weeks + ', minmax(0, 1fr))';
+                WEEKDAYS.forEach(function (w) {
+                    var h = document.createElement('div');
+                    h.className = 'cal-weekday';
+                    h.textContent = w;
+                    grid.appendChild(h);
+                });
+                for (var day = new Date(r.start); day < r.end; day = addDays(day, 1)) {
+                    grid.appendChild(dayCell(new Date(day), today));
+                }
+                fitEvents();
+            }
+
+            function dayCell(day, today) {
+                var cell = document.createElement('div');
+                cell.className = 'cal-day';
+                if (day.getMonth() !== current.getMonth()) cell.classList.add('cal-other-month');
+                if (day.getDay() === 0 || day.getDay() === 6) cell.classList.add('cal-weekend');
+                if (sameDay(day, today)) cell.classList.add('cal-today');
+
+                var head = document.createElement('div');
+                head.className = 'cal-day-head';
+                var num = document.createElement('span');
+                num.className = 'cal-day-num';
+                num.textContent = day.getDate() === 1 ? '1 ' + MONTHS_SHORT[day.getMonth()] : day.getDate();
+                var add = document.createElement('button');
+                add.type = 'button';
+                add.className = 'cal-day-add';
+                add.title = 'Новий запис';
+                add.textContent = '+';
+                head.appendChild(num);
+                head.appendChild(add);
+                cell.appendChild(head);
+
+                var list = document.createElement('div');
+                list.className = 'cal-events';
+                var items = dayAppointments(day);
+                items.forEach(function (a) { list.appendChild(eventButton(a)); });
+                cell.appendChild(list);
+                cell._day = day;
+                cell._items = items;
+
+                cell.addEventListener('click', function () { openAppointment(null, day); });
+                return cell;
+            }
+
+            /** Записи, що не влазять у клітинку, ховаємо під «+N ще» (як у Teams/Outlook). */
+            function fitEvents() {
+                grid.querySelectorAll('.cal-day').forEach(function (cell) {
+                    var list = cell.querySelector('.cal-events');
+                    var chips = Array.prototype.slice.call(list.querySelectorAll('.cal-event'));
+                    if (!chips.length || list.scrollHeight <= list.clientHeight) return;
+                    var more = document.createElement('button');
+                    more.type = 'button';
+                    more.className = 'cal-more';
+                    more.addEventListener('click', function (e) { e.stopPropagation(); openDay(cell._day); });
+                    list.appendChild(more);
+                    var hidden = 0;
+                    for (var i = chips.length - 1; i >= 0 && list.scrollHeight > list.clientHeight; i--) {
+                        chips[i].style.display = 'none';
+                        hidden++;
+                        more.textContent = '+' + hidden + ' ще';
+                    }
+                });
+            }
+
+            document.getElementById('calPrev').addEventListener('click', function () {
+                setMonth(new Date(current.getFullYear(), current.getMonth() - 1, 1));
+            });
+            document.getElementById('calNext').addEventListener('click', function () {
+                setMonth(new Date(current.getFullYear(), current.getMonth() + 1, 1));
+            });
+            document.getElementById('calToday').addEventListener('click', function () { setMonth(new Date()); });
+            monthPicker.addEventListener('change', function () {
+                var m = /^(\d{4})-(\d{2})$/.exec(monthPicker.value);
+                if (m) setMonth(new Date(+m[1], +m[2] - 1, 1));
+            });
+            document.getElementById('calNewBtn').addEventListener('click', function () {
+                var now = new Date();
+                openAppointment(null, now.getMonth() === current.getMonth() && now.getFullYear() === current.getFullYear() ? now : current);
+            });
+            document.addEventListener('keydown', function (e) {
+                if (!dayOverlay.hidden || !apptOverlay.hidden) {
+                    if (e.key === 'Escape') { apptOverlay.hidden = true; dayOverlay.hidden = true; }
+                    return;
+                }
+                if (e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowLeft' && e.altKey) document.getElementById('calPrev').click();
+                if (e.key === 'ArrowRight' && e.altKey) document.getElementById('calNext').click();
+            });
+            var resizeTimer;
+            window.addEventListener('resize', function () {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function () { fitHeight(); render(); }, 100);
+            });
+
+            // ---- Усі записи дня
+            var dayOverlay = document.getElementById('dayOverlay');
+            var dayShown = null;
+            function dayLabel(d) {
+                return WEEKDAYS_FULL[d.getDay()].replace(/^./, function (c) { return c.toUpperCase(); })
+                    + ', ' + d.getDate() + ' ' + MONTHS_GEN[d.getMonth()] + ' ' + d.getFullYear();
+            }
+            function openDay(day) {
+                dayShown = day;
+                document.getElementById('dayTitle').textContent = dayLabel(day);
+                var list = document.getElementById('dayList');
+                list.innerHTML = '';
+                dayAppointments(day).forEach(function (a) {
+                    var btn = eventButton(a);
+                    var end = new Date(a.start.getTime() + a.durationMinutes * 6e4);
+                    btn.querySelector('.cal-event-time').textContent = hhmm(a.start) + '–' + hhmm(end);
+                    if (a.vehicle || a.phone) {
+                        var s = document.createElement('small');
+                        s.textContent = [a.vehicle, a.phone].filter(Boolean).join(' · ');
+                        btn.appendChild(s);
+                    }
+                    btn.addEventListener('click', function () { dayOverlay.hidden = true; });
+                    list.appendChild(btn);
+                });
+                dayOverlay.hidden = false;
+            }
+            document.getElementById('dayCloseBtn').addEventListener('click', function () { dayOverlay.hidden = true; });
+            document.getElementById('dayAddBtn').addEventListener('click', function () {
+                dayOverlay.hidden = true;
+                openAppointment(null, dayShown);
+            });
+
+            // ---- Форма запису
+            var apptOverlay = document.getElementById('apptOverlay');
+            var f = {
+                title: document.getElementById('apptTitle'),
+                error: document.getElementById('apptError'),
+                overlap: document.getElementById('apptOverlap'),
+                date: document.getElementById('apptDate'),
+                time: document.getElementById('apptTime'),
+                duration: document.getElementById('apptDuration'),
+                client: document.getElementById('apptClient'),
+                clientHint: document.getElementById('apptClientHint'),
+                phone: document.getElementById('apptPhone'),
+                vehicle: document.getElementById('apptVehicle'),
+                vehicleList: document.getElementById('apptVehicleList'),
+                note: document.getElementById('apptNote'),
+                del: document.getElementById('apptDeleteBtn'),
+                link: document.getElementById('apptClientLink')
+            };
+            var editing = null;      // запис, що редагується (null — новий)
+            var selectedClient = null;
+
+            if (window.ProtaxoPhone) window.ProtaxoPhone.mask(f.phone);
+
+            function clientById(id) {
+                return CLIENTS.find(function (c) { return c.id === id; }) || null;
+            }
+
+            function setClient(c) {
+                selectedClient = c;
+                f.vehicleList.innerHTML = '';
+                (c ? c.vehicles : []).forEach(function (v) {
+                    var o = document.createElement('option');
+                    o.value = v;
+                    f.vehicleList.appendChild(o);
+                });
+                f.link.hidden = !c;
+                if (c) f.link.href = '/clients/' + c.id;
+                updateClientHint();
+            }
+
+            function updateClientHint() {
+                if (selectedClient) {
+                    f.clientHint.textContent = 'З довідника контрагентів';
+                } else if (f.client.value.trim()) {
+                    f.clientHint.textContent = 'Немає в довіднику — збережеться лише ім\'я';
+                } else {
+                    f.clientHint.textContent = CLIENTS.length ? 'Почніть вводити назву або ПІБ' : '';
+                }
+            }
+
+            ProtaxoAutocomplete.attach(f.client, {
+                minLength: 1,
+                emptyText: 'Немає в довіднику — можна записати просто ім\'я',
+                source: function (q, done) {
+                    var needle = q.toLowerCase();
+                    done(CLIENTS.filter(function (c) {
+                        return (c.name || '').toLowerCase().indexOf(needle) !== -1 || (c.phone || '').replace(/\D/g, '').indexOf(q.replace(/\D/g, '') || '\u0000') !== -1;
+                    }).slice(0, 12).map(function (c) {
+                        return { label: c.name, hint: [c.phone].concat(c.vehicles.slice(0, 2)).filter(Boolean).join(' · '), client: c };
+                    }));
+                },
+                onSelect: function (item) {
+                    f.client.value = item.client.name;
+                    setClient(item.client);
+                    if (!f.phone.value && item.client.phone) f.phone.value = item.client.phone;
+                    if (!f.vehicle.value && item.client.vehicles.length === 1) f.vehicle.value = item.client.vehicles[0];
+                    checkOverlap();
+                }
+            });
+            f.client.addEventListener('input', function () {
+                if (selectedClient && f.client.value.trim() !== selectedClient.name) setClient(null);
+                updateClientHint();
+            });
+
+            function defaultTime(day) {
+                var now = new Date();
+                if (sameDay(day, now) && now.getHours() >= 8 && now.getHours() < 18) {
+                    return pad(now.getHours() + 1) + ':00';
+                }
+                return '09:00';
+            }
+
+            function openAppointment(a, day) {
+                editing = a;
+                f.title.textContent = a ? 'Запис' : 'Новий запис';
+                f.error.hidden = true;
+                f.date.value = iso(a ? a.start : day);
+                f.time.value = a ? hhmm(a.start) : defaultTime(day);
+                var dur = String(a ? a.durationMinutes : 60);
+                if (!Array.prototype.some.call(f.duration.options, function (o) { return o.value === dur; })) {
+                    var o = document.createElement('option');
+                    o.value = dur;
+                    o.textContent = dur + ' хв';
+                    f.duration.appendChild(o);
+                }
+                f.duration.value = dur;
+                f.client.value = a ? a.clientName : '';
+                f.phone.value = a && a.phone ? a.phone : '';
+                f.vehicle.value = a && a.vehicle ? a.vehicle : '';
+                f.note.value = a && a.note ? a.note : '';
+                setClient(a && a.clientId ? clientById(a.clientId) : null);
+                f.del.hidden = !a;
+                apptOverlay.hidden = false;
+                checkOverlap();
+                (a ? f.note : f.client).focus();
+            }
+
+            /** Попередження (не заборона), якщо час перетинається з іншим записом. */
+            function checkOverlap() {
+                var start = f.date.value && f.time.value ? parseLocal(f.date.value + 'T' + f.time.value) : null;
+                if (!start) { f.overlap.hidden = true; return; }
+                var end = start.getTime() + Number(f.duration.value) * 6e4;
+                var clash = appointments.filter(function (a) {
+                    if (editing && a.id === editing.id) return false;
+                    var aEnd = a.start.getTime() + a.durationMinutes * 6e4;
+                    return a.start.getTime() < end && aEnd > start.getTime();
+                });
+                f.overlap.hidden = !clash.length;
+                f.overlap.textContent = clash.length
+                    ? 'У цей час уже є запис: ' + clash.map(function (a) { return hhmm(a.start) + ' ' + a.clientName; }).join(', ')
+                    : '';
+            }
+            [f.date, f.time, f.duration].forEach(function (el) { el.addEventListener('change', checkOverlap); });
+
+            function showError(msg) {
+                f.error.textContent = msg;
+                f.error.hidden = false;
+            }
+
+            document.getElementById('apptCancelBtn').addEventListener('click', function () { apptOverlay.hidden = true; });
+            document.getElementById('apptSaveBtn').addEventListener('click', function () {
+                var name = f.client.value.trim();
+                if (!f.date.value || !f.time.value) return showError('Вкажіть дату й час');
+                if (!name) return showError('Вкажіть клієнта');
+                var body = {
+                    startsAt: f.date.value + 'T' + f.time.value + ':00',
+                    durationMinutes: Number(f.duration.value),
+                    clientId: selectedClient ? selectedClient.id : null,
+                    clientName: name,
+                    phone: f.phone.value.trim() || null,
+                    vehicle: f.vehicle.value.trim() || null,
+                    note: f.note.value.trim() || null
+                };
+                fetch(editing ? '/api/appointments/' + editing.id : '/api/appointments', {
+                    method: editing ? 'PUT' : 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().catch(function () { return {}; }).then(function (b) {
+                            throw new Error(b.message || 'Не вдалося зберегти запис');
+                        });
+                    }
+                    return resp.json();
+                }).then(function (saved) {
+                    apptOverlay.hidden = true;
+                    var d = parseLocal(saved.startsAt);
+                    if (d.getMonth() !== current.getMonth() || d.getFullYear() !== current.getFullYear()) {
+                        setMonth(d); // запис перенесли в інший місяць — переходимо туди
+                    } else {
+                        load();
+                    }
+                }).catch(function (err) { showError(err.message); });
+            });
+            f.del.addEventListener('click', function () {
+                if (!editing || !confirm('Видалити запис ' + hhmm(editing.start) + ' ' + editing.clientName + '?')) return;
+                fetch('/api/appointments/' + editing.id, { method: 'DELETE', credentials: 'same-origin' })
+                    .then(function (resp) {
+                        if (!resp.ok) throw new Error('Не вдалося видалити запис');
+                        apptOverlay.hidden = true;
+                        load();
+                    })
+                    .catch(function (err) { showError(err.message); });
+            });
+
+            fitHeight();
+            load();
+            // Шрифти й стилі можуть догрузитися пізніше й зсунути верх — перерахувати висоту.
+            window.addEventListener('load', function () { fitHeight(); render(); });
+            window.ProtaxoCalendar = { openAppointment: openAppointment };
+        })();
+    </script>
+</body>
+</html>

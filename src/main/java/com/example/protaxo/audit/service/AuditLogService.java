@@ -56,6 +56,7 @@ public class AuditLogService {
             Map.entry("RolePermissions", "Права ролей"),
             Map.entry("RepairWorker", "Робітник"),
             Map.entry("MasterCard", "Картка майстерні"),
+            Map.entry("Appointment", "Запис у календарі"),
             Map.entry("TachographAttribute", "Довідник тахографів"),
             Map.entry("VehicleMake", "Марка авто"),
             Map.entry("VehicleModel", "Модель авто"),

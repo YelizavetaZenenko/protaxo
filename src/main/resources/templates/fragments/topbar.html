@@ -16,6 +16,7 @@
             <a th:href="@{/invoices}" th:classappend="${active == 'invoices'} ? 'active'">Наряд-заказ</a>
             <a th:href="@{/catalog-items}" th:classappend="${active == 'catalog'} ? 'active'">Каталог</a>
             <a th:href="@{/calibration-protocols}" th:classappend="${active == 'calibration'} ? 'active'">Протоколи</a>
+            <a th:href="@{/calendar}" th:classappend="${active == 'calendar'} ? 'active'">Календар</a>
             <a sec:authorize="hasRole('ADMIN')" th:href="@{/finance}" th:classappend="${active == 'finance'} ? 'active'">Бухгалтерія</a>
             <a sec:authorize="hasRole('MASTER')" th:href="@{/finance/cash}" th:classappend="${active == 'finance'} ? 'active'">Каса</a>
             <a th:if="${canViewAuditLog}" th:href="@{/audit-log}" th:classappend="${active == 'audit'} ? 'active'">Журнал дій</a>

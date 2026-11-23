@@ -62,6 +62,8 @@ public class SecurityConfig {
                         // Див. PermissionService.
                         .requestMatchers("/audit-log/**").access(requiresPermission(PermissionKey.CAN_VIEW_AUDIT_LOG))
                         .requestMatchers("/users/**").access(requiresPermission(PermissionKey.CAN_MANAGE_USERS))
+                        // Записи календаря видаляє і майстер — він же їх і створює (docs/Календар.md).
+                        .requestMatchers(HttpMethod.DELETE, "/api/appointments/*").hasAnyRole("ADMIN", "MASTER")
                         .requestMatchers(HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/repair-workers").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/repair-workers/*").hasRole("ADMIN")
