@@ -2661,16 +2661,25 @@ a.acc-card-meta:hover {
     color: #4b5563;
 }
 
-/* Контрагент: «Інші рахунки» (V77) — IBAN / банк / МФО / прибрати в один рядок. */
-.extra-account-row {
-    display: grid;
-    grid-template-columns: minmax(0, 2.2fr) minmax(0, 2fr) minmax(0, 0.8fr) auto;
-    gap: 0.5rem;
-    align-items: center;
-    margin-bottom: 0.4rem;
+/* Контрагент: «Інші рахунки» (V77). Обгортки не мають власного блоку — поля стають у сітку форми
+   поруч з основним рахунком і виглядають так само; над кожним рахунком — заголовок, як .form-section. */
+.extra-accounts,
+.extra-account {
+    display: contents;
 }
-.extra-account-row .ea-error { grid-column: 1 / -1; }
-@media (max-width: 700px) {
-    .extra-account-row { grid-template-columns: 1fr auto; }
-    .extra-account-row .ea-bank, .extra-account-row .ea-mfo { grid-column: 1; }
+.extra-account-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0.25rem 0 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--border);
+    font-size: 0.9rem;
+}
+.extra-accounts-add {
+    align-self: start;
+}
+.extra-accounts-add .link-btn {
+    padding: 0.6rem 0;
 }
