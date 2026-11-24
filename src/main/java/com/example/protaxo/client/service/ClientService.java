@@ -3,9 +3,11 @@ package com.example.protaxo.client.service;
 import com.example.protaxo.address.AddressDirectoryService;
 import com.example.protaxo.audit.entity.AuditAction;
 import com.example.protaxo.audit.service.AuditLogService;
+import com.example.protaxo.client.dto.ClientBankAccountData;
 import com.example.protaxo.client.dto.ClientRequest;
 import com.example.protaxo.client.dto.ClientResponse;
 import com.example.protaxo.client.entity.Client;
+import com.example.protaxo.client.entity.ClientBankAccount;
 import com.example.protaxo.client.mapper.ClientMapper;
 import com.example.protaxo.client.repository.ClientRepository;
 import com.example.protaxo.common.exception.BusinessRuleException;
@@ -13,8 +15,11 @@ import com.example.protaxo.common.exception.NotFoundException;
 import com.example.protaxo.common.exception.UniqueConstraints;
 import com.example.protaxo.common.util.FieldDiff;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -42,8 +47,36 @@ public class ClientService {
         return clientMapper.toResponse(getOrThrow(id));
     }
 
+    /** Додаткові рахунки контрагента (V77), у порядку з форми. */
+    @Transactional(readOnly = true)
+    public List<ClientBankAccountData> findExtraAccounts(Long id) {
+        return getOrThrow(id).getExtraAccounts().stream()
+                .map(a -> new ClientBankAccountData(a.getIban(), a.getBankName(), a.getMfo()))
+                .toList();
+    }
+
+    /** id контрагента → IBAN-и його додаткових рахунків через пробіл (для пошуку в списку). */
+    @Transactional(readOnly = true)
+    public Map<Long, String> extraIbansByClient() {
+        Map<Long, String> result = new HashMap<>();
+        for (Object[] row : clientRepository.findAllExtraAccountIbans()) {
+            result.merge(((Number) row[0]).longValue(), (String) row[1], (a, b) -> a + " " + b);
+        }
+        return result;
+    }
+
     public ClientResponse create(ClientRequest request) {
+        return create(request, null);
+    }
+
+    public ClientResponse update(Long id, ClientRequest request) {
+        return update(id, request, null);
+    }
+
+    /** {@code extraAccounts} null — додаткові рахунки не чіпаються (REST API їх не передає). */
+    public ClientResponse create(ClientRequest request, List<ClientBankAccountData> extraAccounts) {
         Client client = clientMapper.toEntity(request);
+        applyExtraAccounts(client, extraAccounts);
         composeLegalAddress(client);
         client.setEmployerClient(resolveEmployer(request.employerClientId(), null));
         Client saved = saveOrThrowFriendly(client);
@@ -51,10 +84,11 @@ public class ClientService {
         return clientMapper.toResponse(saved);
     }
 
-    public ClientResponse update(Long id, ClientRequest request) {
+    public ClientResponse update(Long id, ClientRequest request, List<ClientBankAccountData> extraAccounts) {
         Client client = getOrThrow(id);
         FieldDiff.Snapshot before = snapshot(client);
         clientMapper.updateEntity(request, client);
+        applyExtraAccounts(client, extraAccounts);
         composeLegalAddress(client);
         client.setEmployerClient(resolveEmployer(request.employerClientId(), id));
         Client saved = saveOrThrowFriendly(client);
@@ -83,6 +117,25 @@ public class ClientService {
             }
             throw ex;
         }
+    }
+
+    /** Порожні рядки (без IBAN) і повтори основного рахунку відкидаються. */
+    private static void applyExtraAccounts(Client client, List<ClientBankAccountData> extraAccounts) {
+        if (extraAccounts == null) {
+            return;
+        }
+        List<ClientBankAccount> accounts = extraAccounts.stream()
+                .filter(a -> a != null && a.getIban() != null && !a.getIban().isBlank())
+                .filter(a -> !a.getIban().equals(client.getIban()))
+                .map(a -> new ClientBankAccount(a.getIban(), blankToNull(a.getBankName()), blankToNull(a.getMfo())))
+                .collect(Collectors.collectingAndThen(Collectors.toMap(ClientBankAccount::getIban, a -> a,
+                        (a, b) -> a, LinkedHashMap::new), m -> List.copyOf(m.values())));
+        client.getExtraAccounts().clear();
+        client.getExtraAccounts().addAll(accounts);
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private Client resolveEmployer(Long employerClientId, Long ownId) {
@@ -141,6 +194,9 @@ public class ClientService {
                 .add("IBAN", c.getIban())
                 .add("Банк", c.getBankName())
                 .add("МФО", c.getMfo())
+                .add("Інші рахунки", c.getExtraAccounts().isEmpty() ? null : c.getExtraAccounts().stream()
+                        .map(a -> a.getIban() + (a.getBankName() == null ? "" : " (" + a.getBankName() + ")"))
+                        .collect(Collectors.joining("; ")))
                 .add("Посада підписанта", c.getSignatoryPosition())
                 .add("Діє на підставі", c.getSignatoryBasis());
     }

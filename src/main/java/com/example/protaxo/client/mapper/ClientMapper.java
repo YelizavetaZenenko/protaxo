@@ -15,8 +15,10 @@ public interface ClientMapper {
 
     // The employer is resolved from its id by ClientService, which has the repository.
     @Mapping(target = "employerClient", ignore = true)
+    @Mapping(target = "extraAccounts", ignore = true)
     Client toEntity(ClientRequest request);
 
     @Mapping(target = "employerClient", ignore = true)
+    @Mapping(target = "extraAccounts", ignore = true)
     void updateEntity(ClientRequest request, @MappingTarget Client client);
 }

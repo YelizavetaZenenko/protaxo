@@ -76,12 +76,18 @@
                     <div th:text="${client.legalAddress}"></div>
                 </div>
                 <div class="field" th:if="${not #strings.isEmpty(client.iban)}">
-                    <label>Поточний рахунок (IBAN)</label>
+                    <label>Основний рахунок (IBAN)</label>
                     <div th:text="${client.iban}"></div>
                 </div>
                 <div class="field" th:if="${not #strings.isEmpty(client.bankName) or not #strings.isEmpty(client.mfo)}">
                     <label>Банк</label>
                     <div th:text="${#strings.trim((client.bankName ?: '') + (#strings.isEmpty(client.mfo) ? '' : ', МФО ' + client.mfo))}"></div>
+                </div>
+                <div class="field field-full" th:if="${extraAccounts != null and !#lists.isEmpty(extraAccounts)}">
+                    <label>Інші рахунки</label>
+                    <div th:each="acc : ${extraAccounts}"
+                         th:text="${acc.iban + (#strings.isEmpty(acc.bankName) ? '' : ' — ' + acc.bankName)
+                                   + (#strings.isEmpty(acc.mfo) ? '' : ', МФО ' + acc.mfo)}"></div>
                 </div>
                 <div class="field" th:if="${not #strings.isEmpty(client.signatoryPosition) or not #strings.isEmpty(client.signatoryBasis)}">
                     <label>Підписант договору</label>

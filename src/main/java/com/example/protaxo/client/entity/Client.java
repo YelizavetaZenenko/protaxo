@@ -1,19 +1,26 @@
 package com.example.protaxo.client.entity;
 
 import com.example.protaxo.common.entity.BaseEntity;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -113,4 +120,13 @@ public class Client extends BaseEntity {
 
     @Column(name = "address_postal_code", length = 5)
     private String addressPostalCode;
+
+    /** Додаткові рахунки (V77), у порядку, як їх ввели у формі. */
+    @ElementCollection
+    @CollectionTable(name = "client_bank_accounts", joinColumns = @JoinColumn(name = "client_id"))
+    @OrderColumn(name = "position")
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<ClientBankAccount> extraAccounts = new ArrayList<>();
 }

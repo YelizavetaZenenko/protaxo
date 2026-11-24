@@ -13,7 +13,14 @@ import com.example.protaxo.driver.service.DriverService;
 import com.example.protaxo.vehicle.dto.VehicleResponse;
 import com.example.protaxo.vehicle.service.VehicleService;
 import jakarta.validation.Valid;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -48,38 +55,52 @@ public class ClientPageController {
         return bankService.findAll();
     }
 
+    /**
+     * Пошук одним рядком (фільтрує сторінка під час введення): кожне слово запиту має знайтися в
+     * тексті контрагента — назва, повна назва, ЄДРПОУ, ІПН, ПІБ, телефони (і самі цифри), email,
+     * адреса, рахунки, банк, МФО. {@code q} з адреси лише підставляється в поле пошуку.
+     */
     @GetMapping
-    public String list(@RequestParam(required = false) String filterName,
-                        @RequestParam(required = false) String filterEdrpou,
-                        Model model) {
-        model.addAttribute("clients", filterClients(clientService.findAll(), filterName, filterEdrpou));
-        model.addAttribute("filterName", filterName);
-        model.addAttribute("filterEdrpou", filterEdrpou);
+    public String list(@RequestParam(required = false) String q, Model model) {
+        List<ClientResponse> clients = clientService.findAll();
+        Map<Long, String> extraIbans = clientService.extraIbansByClient();
+        Map<Long, String> searchText = new HashMap<>();
+        for (ClientResponse c : clients) {
+            searchText.put(c.id(), searchText(c, extraIbans.get(c.id())));
+        }
+        model.addAttribute("clients", clients);
+        model.addAttribute("searchText", searchText);
+        model.addAttribute("q", q);
         return "clients/list";
     }
 
     @GetMapping("/{id}")
     public String view(@PathVariable Long id, Model model) {
         model.addAttribute("client", clientService.findById(id));
+        model.addAttribute("extraAccounts", clientService.findExtraAccounts(id));
         model.addAttribute("drivers", driverService.findByClientId(id));
         model.addAttribute("vehicles", vehicleService.findByClientId(id));
         return "clients/view";
     }
 
-    private List<ClientResponse> filterClients(List<ClientResponse> clients, String filterName, String filterEdrpou) {
-        return clients.stream()
-                .filter(c -> isBlank(filterName) || containsIgnoreCase(c.name(), filterName))
-                .filter(c -> isBlank(filterEdrpou) || containsIgnoreCase(c.edrpou(), filterEdrpou))
-                .toList();
+    private static String searchText(ClientResponse c, String extraIbans) {
+        return normalize(Stream.of(c.name(), c.fullName(), c.edrpou(), c.code(), c.lastName(), c.firstName(),
+                        c.middleName(), c.contactPersonName(), c.contactPersonPhone(), c.phone(), c.email(),
+                        c.legalAddress(), c.iban(), c.bankName(), c.mfo(), extraIbans,
+                        digits(c.contactPersonPhone()), digits(c.phone()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining(" ")));
     }
 
-    private boolean isBlank(String value) {
-        return value == null || value.isBlank();
+    private static String digits(String phone) {
+        return phone == null ? null : phone.replaceAll("\\D", "");
     }
 
-    private boolean containsIgnoreCase(String value, String search) {
-        return value != null && value.toLowerCase().contains(search.toLowerCase());
+    /** Нижній регістр, без лапок, одинарні пробіли — щоб «"Агро"» і «агро» збігались. */
+    static String normalize(String text) {
+        return text.toLowerCase(Locale.ROOT).replaceAll("[«»\"'’ʼ]", "").replaceAll("\\s+", " ").trim();
     }
+
 
     @GetMapping("/new")
     public String createForm(Model model) {
@@ -97,7 +118,7 @@ public class ClientPageController {
             return "clients/form";
         }
         try {
-            clientService.create(toRequest(form, null));
+            clientService.create(toRequest(form, null), form.getExtraAccounts());
         } catch (BusinessRuleException ex) {
             model.addAttribute("formError", ex.getMessage());
             model.addAttribute("drivers", List.<DriverResponse>of());
@@ -110,7 +131,9 @@ public class ClientPageController {
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
         ClientResponse response = clientService.findById(id);
-        model.addAttribute("client", toFormData(response));
+        ClientFormData form = toFormData(response);
+        form.setExtraAccounts(new ArrayList<>(clientService.findExtraAccounts(id)));
+        model.addAttribute("client", form);
         model.addAttribute("editId", id);
         addChildData(model, id);
         return "clients/form";
@@ -126,7 +149,7 @@ public class ClientPageController {
         }
         ClientResponse existing = clientService.findById(id);
         try {
-            clientService.update(id, toRequest(form, existing));
+            clientService.update(id, toRequest(form, existing), form.getExtraAccounts());
         } catch (BusinessRuleException ex) {
             model.addAttribute("formError", ex.getMessage());
             model.addAttribute("editId", id);

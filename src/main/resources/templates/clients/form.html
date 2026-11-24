@@ -113,10 +113,11 @@
                 <div class="field-full muted" id="addressPreview"></div>
 
                 <div class="field">
-                    <label for="iban">Поточний рахунок (IBAN)</label>
+                    <label for="iban">Основний рахунок (IBAN)</label>
                     <input type="text" id="iban" th:field="*{iban}" maxlength="40"
                            autocomplete="off" spellcheck="false">
                     <div class="field-error" th:if="${#fields.hasErrors('iban')}" th:errors="*{iban}"></div>
+                    <div class="muted">Друкується в договорі та рахунках</div>
                 </div>
 
                 <div class="field">
@@ -133,6 +134,35 @@
                     <label for="mfo">МФО</label>
                     <input type="text" id="mfo" th:field="*{mfo}" maxlength="6" inputmode="numeric">
                     <div class="field-error" th:if="${#fields.hasErrors('mfo')}" th:errors="*{mfo}"></div>
+                </div>
+
+                <!-- Інші рахунки (V77): довільна кількість рядків IBAN / банк / МФО; банк і МФО підставляються
+                     за IBAN, як в основного. Рядок без IBAN не зберігається. Індекси name="extraAccounts[i]..."
+                     перенумеровуються перед відправкою форми. -->
+                <div class="field-full" id="extraAccountsBox">
+                    <label>Інші рахунки</label>
+                    <div id="extraAccountsList">
+                        <div class="extra-account-row" th:each="acc, st : *{extraAccounts}">
+                            <input type="text" class="ea-iban" th:name="|extraAccounts[${st.index}].iban|" th:value="${acc.iban}"
+                                   placeholder="IBAN" maxlength="40" autocomplete="off" spellcheck="false">
+                            <input type="text" class="ea-bank" th:name="|extraAccounts[${st.index}].bankName|" th:value="${acc.bankName}"
+                                   placeholder="Банк" maxlength="255" autocomplete="off">
+                            <input type="text" class="ea-mfo" th:name="|extraAccounts[${st.index}].mfo|" th:value="${acc.mfo}"
+                                   placeholder="МФО" maxlength="6" inputmode="numeric">
+                            <button type="button" class="link-btn link-btn-danger ea-remove" title="Прибрати рахунок">✕</button>
+                            <div class="field-error ea-error" th:if="${#fields.hasErrors('extraAccounts[__${st.index}__].*')}"
+                                 th:errors="*{extraAccounts[__${st.index}__].*}"></div>
+                        </div>
+                    </div>
+                    <button type="button" class="link-btn" id="addExtraAccountBtn">+ Додати рахунок</button>
+                    <template id="extraAccountTemplate">
+                        <div class="extra-account-row">
+                            <input type="text" class="ea-iban" placeholder="IBAN" maxlength="40" autocomplete="off" spellcheck="false">
+                            <input type="text" class="ea-bank" placeholder="Банк" maxlength="255" autocomplete="off">
+                            <input type="text" class="ea-mfo" placeholder="МФО" maxlength="6" inputmode="numeric">
+                            <button type="button" class="link-btn link-btn-danger ea-remove" title="Прибрати рахунок">✕</button>
+                        </div>
+                    </template>
                 </div>
 
                 <div class="field">
@@ -404,7 +434,7 @@
                 var mfoIn = document.getElementById('newBankMfo');
                 var edrpouIn = document.getElementById('newBankEdrpou');
                 var addBtn = document.getElementById('addBankBtn');
-                var banks = (window.protaxoBanks || []).slice();
+                var banks = window.protaxoBanks || (window.protaxoBanks = []); // спільний з «Іншими рахунками»
 
                 function plain(text) {
                     return (text || '').toLowerCase().replace(/[«»"'’]/g, '').replace(/\s+/g, ' ').trim();
@@ -496,6 +526,63 @@
                     }).catch(function (err) {
                         errorBox.textContent = err.message;
                         errorBox.hidden = false;
+                    });
+                });
+            })();
+
+            // Інші рахунки: додати / прибрати рядок; IBAN підставляє банк і МФО з довідника; перед відправкою —
+            // name="extraAccounts[i]...." по порядку (Spring зв'язує список за індексами).
+            (function () {
+                var list = document.getElementById('extraAccountsList');
+                var tpl = document.getElementById('extraAccountTemplate');
+                var banks = window.protaxoBanks || [];
+
+                function plain(text) {
+                    return (text || '').toLowerCase().replace(/[«»"'’]/g, '').replace(/\s+/g, ' ').trim();
+                }
+                function wire(row) {
+                    var iban = row.querySelector('.ea-iban');
+                    var bank = row.querySelector('.ea-bank');
+                    var mfo = row.querySelector('.ea-mfo');
+                    row.querySelector('.ea-remove').addEventListener('click', function () { row.remove(); });
+                    mfo.addEventListener('input', function () { mfo.value = mfo.value.replace(/\D/g, ''); });
+                    iban.addEventListener('input', function () {
+                        var v = iban.value.replace(/\s+/g, '').toUpperCase();
+                        if (!/^UA\d{8}/.test(v)) return;
+                        var code = v.substr(4, 6);
+                        var found = banks.find(function (b) { return b.mfo === code; });
+                        mfo.value = code;
+                        if (found) bank.value = found.name;
+                    });
+                    if (window.ProtaxoAutocomplete) {
+                        ProtaxoAutocomplete.attach(bank, {
+                            minLength: 1,
+                            emptyText: 'Банк не знайдено',
+                            source: function (q, done) {
+                                var needle = plain(q);
+                                done(banks.filter(function (b) { return plain(b.name).indexOf(needle) !== -1; })
+                                    .slice(0, 15)
+                                    .map(function (b) { return { label: b.name, hint: b.mfo ? 'МФО ' + b.mfo : '', bank: b }; }));
+                            },
+                            onSelect: function (item) {
+                                bank.value = item.bank.name;
+                                if (item.bank.mfo) mfo.value = item.bank.mfo;
+                            }
+                        });
+                    }
+                }
+                Array.prototype.forEach.call(list.querySelectorAll('.extra-account-row'), wire);
+                document.getElementById('addExtraAccountBtn').addEventListener('click', function () {
+                    var row = tpl.content.firstElementChild.cloneNode(true);
+                    list.appendChild(row);
+                    wire(row);
+                    row.querySelector('.ea-iban').focus();
+                });
+                list.closest('form').addEventListener('submit', function () {
+                    Array.prototype.forEach.call(list.querySelectorAll('.extra-account-row'), function (row, i) {
+                        row.querySelector('.ea-iban').name = 'extraAccounts[' + i + '].iban';
+                        row.querySelector('.ea-bank').name = 'extraAccounts[' + i + '].bankName';
+                        row.querySelector('.ea-mfo').name = 'extraAccounts[' + i + '].mfo';
                     });
                 });
             })();

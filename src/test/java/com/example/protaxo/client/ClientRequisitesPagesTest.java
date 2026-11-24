@@ -102,10 +102,18 @@ class ClientRequisitesPagesTest {
                         .param("lastName", "Іваненко").param("firstName", "Петро").param("middleName", "Васильович")
                         .param("email", "")
                         .param("iban", "ua21 3223 1300 0002 6007 2335 6600 1").param("mfo", "305 299")
-                        .param("signatoryPosition", "Директор").param("signatoryBasis", "Довіреності № 15 від 03.11.2026"))
+                        .param("signatoryPosition", "Директор").param("signatoryBasis", "Довіреності № 15 від 03.11.2026")
+                        .param("extraAccounts[0].iban", "ua 8933 4851 0000 0000 2600 1234 567")
+                        .param("extraAccounts[0].bankName", "АТ «ПУМБ»").param("extraAccounts[0].mfo", "334851"))
                 .andExpect(status().is3xxRedirection());
         ArgumentCaptor<ClientRequest> request = ArgumentCaptor.forClass(ClientRequest.class);
-        verify(clientService).create(request.capture());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<java.util.List<com.example.protaxo.client.dto.ClientBankAccountData>> accounts =
+                ArgumentCaptor.forClass(java.util.List.class);
+        verify(clientService).create(request.capture(), accounts.capture());
+        assertThat(accounts.getValue()).hasSize(1);
+        assertThat(accounts.getValue().get(0).getIban()).isEqualTo("UA893348510000000026001234567");
+        assertThat(accounts.getValue().get(0).getBankName()).isEqualTo("АТ «ПУМБ»");
         assertThat(request.getValue().email()).isNull();
         assertThat(request.getValue().iban()).isEqualTo("UA213223130000026007233566001");
         assertThat(request.getValue().mfo()).isEqualTo("305299");
