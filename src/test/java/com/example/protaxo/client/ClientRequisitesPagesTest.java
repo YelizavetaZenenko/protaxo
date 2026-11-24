@@ -125,11 +125,54 @@ class ClientRequisitesPagesTest {
         when(clientService.findById(5L)).thenReturn(new ClientResponse(5L, "К", "44556677", "ТОВ К", null,
                 "+38(067)-123-45-67", "445566771234", "Іваненко", "Петро", "Васильович", null, null, null, null,
                 null, null, false, null, null, null, null, "Директор", "Наказу № 7 від 01.02.2026",
-                null, null, null, null, null));
+                null, null, null, null, null, null));
         when(driverService.findByClientId(5L)).thenReturn(List.of());
         when(vehicleService.findByClientId(5L)).thenReturn(List.of());
         mvc.perform(get("/clients/5/edit").with(user("a@b.c").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("value=\"Наказу № 7 від 01.02.2026\"")));
+    }
+
+    /** ФОП: назва — ПІБ без лапок, ІПН (РНОКПП) 10 цифр, код ЄДРПОУ береться той самий. */
+    @Test
+    void fopTakesEdrpouFromIpnAndComposesNames() throws Exception {
+        mvc.perform(post("/clients").with(user("a@b.c").roles("ADMIN")).with(csrf())
+                        .param("legalForm", "FOP").param("name", "Іваненко Петро Васильович")
+                        .param("edrpou", "").param("code", "3809602220")
+                        .param("contactPersonPhone", "+38(067)-123-45-67")
+                        .param("lastName", "Іваненко").param("firstName", "Петро").param("middleName", "Васильович"))
+                .andExpect(status().is3xxRedirection());
+        ArgumentCaptor<ClientRequest> request = ArgumentCaptor.forClass(ClientRequest.class);
+        verify(clientService).create(request.capture(), org.mockito.ArgumentMatchers.anyList());
+        assertThat(request.getValue().name()).isEqualTo("ФОП Іваненко Петро Васильович");
+        assertThat(request.getValue().fullName()).isEqualTo("Фізична особа-підприємець Іваненко Петро Васильович");
+        assertThat(request.getValue().edrpou()).isEqualTo("3809602220");
+        assertThat(request.getValue().code()).isEqualTo("3809602220");
+    }
+
+    @Test
+    void fopRejectsTwelveDigitIpn() throws Exception {
+        mvc.perform(post("/clients").with(user("a@b.c").roles("ADMIN")).with(csrf())
+                        .param("legalForm", "FOP").param("name", "Іваненко Петро Васильович")
+                        .param("code", "380960222012")
+                        .param("contactPersonPhone", "+38(067)-123-45-67")
+                        .param("lastName", "Іваненко").param("firstName", "Петро").param("middleName", "Васильович"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("У ФОП код ІПН (РНОКПП) — рівно 10 цифр")));
+    }
+
+    /** ТОВ: лапки, які ввели самі, не подвоюються; повна назва — з повної форми власності. */
+    @Test
+    void tovComposesShortAndFullNames() throws Exception {
+        mvc.perform(post("/clients").with(user("a@b.c").roles("ADMIN")).with(csrf())
+                        .param("legalForm", "TOV").param("name", "\"Карпатський Перевізник\"")
+                        .param("edrpou", "44556677").param("code", "445566771234")
+                        .param("contactPersonPhone", "+38(067)-123-45-67")
+                        .param("lastName", "Іваненко").param("firstName", "Петро").param("middleName", "Васильович"))
+                .andExpect(status().is3xxRedirection());
+        ArgumentCaptor<ClientRequest> request = ArgumentCaptor.forClass(ClientRequest.class);
+        verify(clientService).create(request.capture(), org.mockito.ArgumentMatchers.anyList());
+        assertThat(request.getValue().name()).isEqualTo("ТОВ «Карпатський Перевізник»");
+        assertThat(request.getValue().fullName()).isEqualTo("Товариство з обмеженою відповідальністю «Карпатський Перевізник»");
     }
 }

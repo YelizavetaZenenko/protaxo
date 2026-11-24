@@ -174,6 +174,7 @@ public class ClientService {
 
     private static FieldDiff.Snapshot snapshot(Client c) {
         return FieldDiff.snapshot()
+                .add("Форма власності", c.getLegalForm() == null ? null : c.getLegalForm().getShortLabel())
                 .add("Назва", c.getName())
                 .add("Повна назва", c.getFullName())
                 .add("Код ЄДРПОУ", c.getEdrpou())

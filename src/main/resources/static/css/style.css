@@ -2693,3 +2693,15 @@ a.acc-card-meta:hover {
     border-bottom: 1px dashed var(--border);
     margin-bottom: 1rem;
 }
+
+/* Контрагент: форма власності (список) ліворуч і назва праворуч в одному рядку; під ними — вигляд. */
+.legal-name-row {
+    display: grid;
+    grid-template-columns: 7.5rem minmax(0, 1fr);
+    gap: 0.5rem;
+}
+.legal-name-preview {
+    margin-top: 0.4rem;
+    font-size: 0.9rem;
+    line-height: 1.45;
+}

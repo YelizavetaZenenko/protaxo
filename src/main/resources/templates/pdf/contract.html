@@ -247,14 +247,14 @@
             <td class="lbl">МФО:</td><td class="val" th:classappend="${#strings.isEmpty(client.mfo())} ? 'blank'" th:text="${client.mfo()}"></td><td></td>
             <td class="lbl">МФО:</td><td class="val">334851</td>
         </tr>
-        <!-- Юрособа: Код ЄДРПОУ + ІПН; фізособа/ФОП без ЄДРПОУ: РНОКПП. -->
-        <tr th:with="legal=${not #strings.isEmpty(client.edrpou())}">
+        <!-- Юрособа: Код ЄДРПОУ + ІПН; ФОП (його ЄДРПОУ = ІПН) і фізособа без ЄДРПОУ: РНОКПП. -->
+        <tr th:with="legal=${client.taxIdLabel() == 'Код ЄДРПОУ'}">
             <td class="lbl" th:text="${legal} ? 'Код ЄДРПОУ:' : 'РНОКПП:'">Код ЄДРПОУ:</td>
             <td class="val" th:classappend="${legal or not #strings.isEmpty(client.code())} ? '' : 'blank'"
-                th:text="${legal} ? ${client.edrpou()} : ${client.code()}"></td><td></td>
+                th:text="${client.taxId()}"></td><td></td>
             <td class="lbl">РНОКПП:</td><td class="val">3809602220</td>
         </tr>
-        <tr th:if="${not #strings.isEmpty(client.edrpou())}">
+        <tr th:if="${client.taxIdLabel() == 'Код ЄДРПОУ'}">
             <td class="lbl">ІПН:</td><td class="val" th:classappend="${#strings.isEmpty(client.code())} ? 'blank'" th:text="${client.code()}"></td><td></td>
             <td></td><td></td>
         </tr>
@@ -302,8 +302,8 @@
             </tr>
             <tr>
                 <td class="lbl">Державний номер</td><td></td>
-                <td class="lbl" th:text="${not #strings.isEmpty(client.edrpou())} ? 'Код ЄДРПОУ' : 'РНОКПП'">Код</td>
-                <td th:text="${not #strings.isEmpty(client.edrpou())} ? ${client.edrpou()} : ${client.code()}"></td>
+                <td class="lbl" th:text="${client.taxIdLabel()}">Код</td>
+                <td th:text="${client.taxId()}"></td>
             </tr>
             <tr>
                 <td class="lbl">№ кузова</td><td></td>

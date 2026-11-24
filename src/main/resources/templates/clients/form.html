@@ -19,28 +19,46 @@
                   th:action="${editId} != null ? @{/clients/{id}/edit(id=${editId})} : @{/clients}"
                   method="post" class="form-grid">
 
+                <!-- Форма власності (V78) ліворуч, назва праворуч; під рядком — як контрагент виглядатиме
+                     (коротка назва в списках, повна — у договорі й рахунках). Складає їх LegalForm на сервері,
+                     тут — те саме в JS для попереднього перегляду. -->
                 <div class="field field-full">
                     <label for="name">Назва *</label>
-                    <input type="text" id="name" th:field="*{name}">
+                    <div class="legal-name-row">
+                        <select id="legalForm" th:field="*{legalForm}" aria-label="Форма власності">
+                            <option value="">— без форми —</option>
+                            <option th:each="lf : ${legalForms}" th:if="${lf.name() != 'OTHER'}" th:value="${lf.name()}"
+                                    th:text="${lf.shortLabel}" th:title="${lf.fullLabel}"
+                                    th:attr="data-short=${lf.shortLabel},data-full=${lf.fullLabel}">ТОВ</option>
+                        </select>
+                        <input type="text" id="name" th:field="*{name}" autocomplete="off">
+                    </div>
                     <div class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                    <div class="legal-name-preview" id="namePreview" hidden>
+                        <div><span class="muted">Буде виглядати:</span> <strong id="namePreviewShort"></strong></div>
+                        <div class="muted" id="namePreviewFull"></div>
+                    </div>
                 </div>
 
                 <div class="field field-full">
-                    <label for="fullName">Повна назва *</label>
-                    <input type="text" id="fullName" th:field="*{fullName}" required>
+                    <label for="fullName">Повна назва</label>
+                    <input type="text" id="fullName" th:field="*{fullName}">
                     <div class="field-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                    <div class="muted" id="fullNameHint">Складається сама з форми власності й назви — можна виправити вручну</div>
                 </div>
 
                 <div class="field">
-                    <label for="edrpou">Код ЄДРПОУ *</label>
+                    <label for="edrpou" id="edrpouLabel">Код ЄДРПОУ *</label>
                     <input type="text" id="edrpou" th:field="*{edrpou}" maxlength="8" inputmode="numeric" required>
                     <div class="field-error" th:if="${#fields.hasErrors('edrpou')}" th:errors="*{edrpou}"></div>
+                    <div class="muted" id="edrpouHint" hidden>У ФОП код ЄДРПОУ — це його ІПН (РНОКПП), підставляється сам</div>
                 </div>
 
                 <div class="field">
-                    <label for="code">Код ІПН *</label>
+                    <label for="code" id="codeLabel">Код ІПН *</label>
                     <input type="text" id="code" th:field="*{code}" maxlength="12" inputmode="numeric" required>
                     <div class="field-error" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></div>
+                    <div class="muted" id="codeHint">12 цифр</div>
                 </div>
 
                 <div class="field checkbox-field">
@@ -405,7 +423,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             var codeInput = document.getElementById('code');
             codeInput.addEventListener('input', function () {
-                codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 12);
+                codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, codeInput.maxLength > 0 ? codeInput.maxLength : 12);
             });
 
             var edrpouInput = document.getElementById('edrpou');
@@ -454,6 +472,72 @@
                 sync();
                 kind.addEventListener('change', function () { sync(); if (!details.hidden) details.focus(); });
                 details.addEventListener('input', sync);
+            })();
+
+            // Форма власності + назва → «ТОВ «Агро»» / «Товариство з обмеженою відповідальністю «Агро»» (як LegalForm.java).
+            // Повна назва заповнюється сама, доки її не виправили вручну. ФОП: ІПН (РНОКПП) 10 цифр, ЄДРПОУ = ІПН.
+            (function () {
+                var form = document.getElementById('legalForm');
+                var name = document.getElementById('name');
+                var full = document.getElementById('fullName');
+                var preview = document.getElementById('namePreview');
+                var pShort = document.getElementById('namePreviewShort');
+                var pFull = document.getElementById('namePreviewFull');
+                var edrpou = document.getElementById('edrpou');
+                var code = document.getElementById('code');
+                var edrpouHint = document.getElementById('edrpouHint');
+                var codeLabel = document.getElementById('codeLabel');
+                var codeHint = document.getElementById('codeHint');
+
+                function bare(text) {
+                    return (text || '').trim().replace(/\s+/g, ' ')
+                        .replace(/^[«"'“„]+\s*/, '').replace(/\s*[»"'”“]+$/, '');
+                }
+                function compose(kind) {
+                    var opt = form.options[form.selectedIndex];
+                    var label = opt && opt.value ? opt.dataset[kind] : '';
+                    if (!label) return name.value.trim();
+                    var b = bare(name.value);
+                    if (!b) return '';
+                    return form.value === 'FOP' ? label + ' ' + b : label + ' «' + b + '»';
+                }
+                var lastAutoFull = compose('full');
+                var fullTouched = full.value.trim() !== '' && full.value.trim() !== lastAutoFull;
+                full.addEventListener('input', function () { fullTouched = full.value.trim() !== ''; });
+
+                function update() {
+                    var fop = form.value === 'FOP';
+                    name.placeholder = fop ? 'Прізвище Ім\'я По батькові' : '';
+                    var s = compose('short');
+                    var f = compose('full');
+                    preview.hidden = !s;
+                    pShort.textContent = s;
+                    pFull.textContent = f && f !== s ? f : '';
+                    if (!fullTouched) {
+                        full.value = f;
+                    }
+                    lastAutoFull = f;
+
+                    code.maxLength = fop ? 10 : 12;
+                    codeLabel.textContent = fop ? 'Код ІПН (РНОКПП) *' : 'Код ІПН *';
+                    codeHint.textContent = fop ? '10 цифр — він же код ЄДРПОУ' : '12 цифр';
+                    edrpou.readOnly = fop;
+                    edrpou.maxLength = fop ? 10 : 8;
+                    edrpouHint.hidden = !fop;
+                    if (fop) {
+                        code.value = code.value.slice(0, 10);
+                        edrpou.value = code.value;
+                    }
+                }
+                form.addEventListener('change', function () {
+                    if (form.value !== 'FOP' && edrpou.value === code.value && edrpou.value.length === 10) {
+                        edrpou.value = '';   // був ФОП — код ЄДРПОУ юрособи інший, 8 цифр
+                    }
+                    update();
+                });
+                name.addEventListener('input', update);
+                code.addEventListener('input', function () { if (form.value === 'FOP') edrpou.value = code.value; });
+                update();
             })();
 
             // Банк: пошук за частиною назви (без лапок і «АТ»), вибір підставляє МФО; IBAN обирає банк за МФО;

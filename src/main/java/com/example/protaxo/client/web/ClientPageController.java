@@ -6,6 +6,7 @@ import com.example.protaxo.bank.BankService;
 import com.example.protaxo.client.dto.ClientFormData;
 import com.example.protaxo.client.dto.ClientRequest;
 import com.example.protaxo.client.dto.ClientResponse;
+import com.example.protaxo.client.entity.LegalForm;
 import com.example.protaxo.client.service.ClientService;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.driver.dto.DriverResponse;
@@ -47,6 +48,12 @@ public class ClientPageController {
     @ModelAttribute("addressRegions")
     public List<AddressDirectoryService.Region> addressRegions() {
         return addressDirectoryService.regions();
+    }
+
+    /** Форми власності для списку ліворуч від назви. */
+    @ModelAttribute("legalForms")
+    public LegalForm[] legalForms() {
+        return LegalForm.values();
     }
 
     /** Довідник банків для випадного списку «Банк» у формі (docs/Контрагенти.md). */
@@ -112,6 +119,7 @@ public class ClientPageController {
 
     @PostMapping
     public String create(@Valid @ModelAttribute("client") ClientFormData form, BindingResult bindingResult, Model model) {
+        checkCodes(form, bindingResult);
         if (bindingResult.hasErrors()) {
             model.addAttribute("drivers", List.<DriverResponse>of());
             model.addAttribute("vehicles", List.<VehicleResponse>of());
@@ -142,6 +150,7 @@ public class ClientPageController {
     @PostMapping("/{id}/edit")
     public String update(@PathVariable Long id, @Valid @ModelAttribute("client") ClientFormData form,
                           BindingResult bindingResult, Model model) {
+        checkCodes(form, bindingResult);
         if (bindingResult.hasErrors()) {
             model.addAttribute("editId", id);
             addChildData(model, id);
@@ -180,8 +189,36 @@ public class ClientPageController {
      * position through the REST API). {@code existing} is null on create, where there's nothing
      * to preserve.
      */
+    /**
+     * Довжина кодів залежить від форми власності: ФОП — ІПН (РНОКПП) 10 цифр, і код ЄДРПОУ той самий
+     * (форма підставляє його сама, тут — на випадок, якщо JS не спрацював); решта — ЄДРПОУ 8, ІПН 12.
+     */
+    private static void checkCodes(ClientFormData form, BindingResult bindingResult) {
+        String code = form.getCode() == null ? "" : form.getCode().trim();
+        if (form.getLegalForm() == LegalForm.FOP) {
+            if (!code.isEmpty() && !code.matches("\\d{10}")) {
+                bindingResult.rejectValue("code", "fop", "У ФОП код ІПН (РНОКПП) — рівно 10 цифр");
+            }
+            form.setEdrpou(code);
+            return;
+        }
+        String edrpou = form.getEdrpou() == null ? "" : form.getEdrpou().trim();
+        if (edrpou.isEmpty()) {
+            bindingResult.rejectValue("edrpou", "required", "Код ЄДРПОУ обов'язковий");
+        } else if (!edrpou.matches("\\d{8}")) {
+            bindingResult.rejectValue("edrpou", "edrpou", "Код ЄДРПОУ має складатись рівно з 8 цифр");
+        }
+        if (!code.isEmpty() && !code.matches("\\d{12}")) {
+            bindingResult.rejectValue("code", "code", "Код ІПН має складатись рівно з 12 цифр");
+        }
+    }
+
+    /** Коротка й повна назва — з форми власності й назви; повна, введена вручну, лишається як є. */
     private ClientRequest toRequest(ClientFormData form, ClientResponse existing) {
-        return new ClientRequest(form.getName(), form.getEdrpou(), form.getFullName(),
+        LegalForm legalForm = form.getLegalForm() == null ? LegalForm.OTHER : form.getLegalForm();
+        String name = legalForm.shortName(form.getName());
+        String fullName = blankToNull(form.getFullName()) != null ? form.getFullName().trim() : legalForm.fullName(form.getName());
+        return new ClientRequest(name, form.getEdrpou(), fullName,
                 existing != null ? existing.contactPersonName() : null,
                 form.getContactPersonPhone(), form.getCode(), form.getLastName(), form.getFirstName(),
                 form.getMiddleName(),
@@ -195,7 +232,7 @@ public class ClientPageController {
                 blankToNull(form.getMfo()), blankToNull(form.getSignatoryPosition()), blankToNull(form.getSignatoryBasis()),
                 blankToNull(form.getAddressSettlementCode()), blankToNull(form.getAddressStreet()),
                 blankToNull(form.getAddressBuilding()), blankToNull(form.getAddressOffice()),
-                blankToNull(form.getAddressPostalCode()));
+                blankToNull(form.getAddressPostalCode()), form.getLegalForm());
     }
 
     private static String blankToNull(String value) {
@@ -204,7 +241,8 @@ public class ClientPageController {
 
     private ClientFormData toFormData(ClientResponse response) {
         ClientFormData form = new ClientFormData();
-        form.setName(response.name());
+        form.setLegalForm(response.legalForm());
+        form.setName(response.legalForm() == null ? response.name() : response.legalForm().stripFrom(response.name()));
         form.setEdrpou(response.edrpou());
         form.setFullName(response.fullName());
         form.setContactPersonPhone(response.contactPersonPhone());

@@ -117,8 +117,9 @@
             <td class="value">
                 <strong th:text="${client.fullName()}">Покупець</strong>
                 <p class="details">
-                    <th:block th:if="${not #strings.isEmpty(client.edrpou)}">код за ЄДРПОУ <span th:text="${client.edrpou}">1234567890</span><br/></th:block>
-                    <th:block th:if="${not #strings.isEmpty(client.code)}">РНОКПП <span th:text="${client.code}">1234567890</span><br/></th:block>
+                    <th:block th:if="${client.taxIdLabel() == 'Код ЄДРПОУ'}">код за ЄДРПОУ <span th:text="${client.edrpou}">12345678</span><br/>
+                        <th:block th:if="${not #strings.isEmpty(client.code)}">ІПН <span th:text="${client.code}">123456789012</span><br/></th:block></th:block>
+                    <th:block th:unless="${client.taxIdLabel() == 'Код ЄДРПОУ' or #strings.isEmpty(client.taxId())}">РНОКПП <span th:text="${client.taxId()}">1234567890</span><br/></th:block>
                     <th:block th:if="${not #strings.isEmpty(client.phone)}">Тел.: <span th:text="${client.phone}">+38(0XX)-XXX-XX-XX</span><br/></th:block>
                     <th:block th:if="${not #strings.isEmpty(client.contactPersonName)}">Контактна особа: <span th:text="${client.contactPersonName}">Іванов Іван</span><th:block th:if="${not #strings.isEmpty(client.contactPersonPhone)}">, тел.: <span th:text="${client.contactPersonPhone}">+38(0XX)-XXX-XX-XX</span></th:block></th:block>
                 </p>

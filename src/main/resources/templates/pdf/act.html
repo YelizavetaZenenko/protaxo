@@ -70,8 +70,8 @@
         <tr>
             <td class="lbl">Державний номер</td>
             <td th:text="${vehicle} != null ? ${vehicle.registrationNumber()} : ''"></td>
-            <td class="lbl" th:text="${not #strings.isEmpty(client.edrpou)} ? 'Код ЄДРПОУ' : 'РНОКПП'">Код</td>
-            <td th:text="${not #strings.isEmpty(client.edrpou)} ? ${client.edrpou} : ${client.code}"></td>
+            <td class="lbl" th:text="${client.taxIdLabel()}">Код</td>
+            <td th:text="${client.taxId()}"></td>
         </tr>
         <tr>
             <td class="lbl">№ кузова</td>

@@ -34,6 +34,11 @@ import org.hibernate.annotations.SQLRestriction;
 @SuperBuilder
 public class Client extends BaseEntity {
 
+    /** Форма власності (V78); null у старих записів. name/fullName вже містять її («ТОВ «Агро»»). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "legal_form", length = 10)
+    private LegalForm legalForm;
+
     @Column(nullable = false)
     private String name;
 

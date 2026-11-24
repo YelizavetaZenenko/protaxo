@@ -60,7 +60,7 @@ class InvoiceDocumentsRenderTest {
             "СГПП «Волинь Зерно Продукт»", null, "+38(095)-995-44-16", "314968103989", "Вілія", "Юрій", "Григорович",
             null, null, null, null, null, null, false,
             "45601, Волинська обл., Луцький р-н, с. Рованці, вул. Луцька, 1", null, null, null, "Директор", "Статуту",
-            null, null, null, null, null);
+            null, null, null, null, null, null);
 
     private static BillItemRow row(InvoiceItemResponse i) {
         boolean service = i.catalogItemType() == CatalogItemType.SERVICE;

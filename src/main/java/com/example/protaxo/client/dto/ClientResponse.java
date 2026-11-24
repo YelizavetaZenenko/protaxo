@@ -1,6 +1,7 @@
 package com.example.protaxo.client.dto;
 
 import com.example.protaxo.client.entity.Gender;
+import com.example.protaxo.client.entity.LegalForm;
 import java.time.LocalDate;
 
 public record ClientResponse(
@@ -31,8 +32,24 @@ public record ClientResponse(
         String addressStreet,
         String addressBuilding,
         String addressOffice,
-        String addressPostalCode
+        String addressPostalCode,
+        LegalForm legalForm
 ) {
+
+    /** ФОП — фізособа: у документах «РНОКПП», а не «Код ЄДРПОУ». */
+    public boolean individual() {
+        return legalForm != null && legalForm.isIndividual();
+    }
+
+    /** Підпис коду в документах: «Код ЄДРПОУ» для юрособи, «РНОКПП» для ФОП / без ЄДРПОУ. */
+    public String taxIdLabel() {
+        return !individual() && edrpou != null && !edrpou.isBlank() ? "Код ЄДРПОУ" : "РНОКПП";
+    }
+
+    /** Сам код до taxIdLabel(): ЄДРПОУ юрособи або РНОКПП (ІПН) ФОП. */
+    public String taxId() {
+        return "Код ЄДРПОУ".equals(taxIdLabel()) ? edrpou : (code != null && !code.isBlank() ? code : edrpou);
+    }
 
     /**
      * Хто підписує договір від замовника: «Ім'я контактної особи», якщо задане, інакше ПІБ

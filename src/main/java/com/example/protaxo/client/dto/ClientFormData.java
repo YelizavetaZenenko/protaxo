@@ -1,5 +1,6 @@
 package com.example.protaxo.client.dto;
 
+import com.example.protaxo.client.entity.LegalForm;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -12,22 +13,25 @@ import lombok.Data;
 @Data
 public class ClientFormData {
 
+    /** Форма власності зі списку ліворуч від назви (V78); порожньо — назва як є. */
+    private LegalForm legalForm;
+
+    /** Назва без форми власності й лапок («Агро»; для ФОП — ПІБ). Коротку й повну складає контролер. */
     @NotBlank(message = "Назва обов'язкова")
     private String name;
 
-    @NotBlank(message = "Код ЄДРПОУ обов'язковий")
-    @Pattern(regexp = "^\\d{8}$", message = "Код ЄДРПОУ має складатись рівно з 8 цифр")
+    /** ФОП: те саме, що ІПН (10 цифр); обов'язковість і довжину перевіряє ClientPageController.checkCodes. */
     private String edrpou;
 
-    @NotBlank(message = "Повна назва обов'язкова")
+    /** Порожньо — складеться з форми власності й назви. */
     private String fullName;
 
     @NotBlank(message = "Телефон обов'язковий")
     @Pattern(regexp = "^\\+38\\(0\\d{2}\\)-\\d{3}-\\d{2}-\\d{2}$", message = "Телефон має бути у форматі +38(0XX)-XXX-XX-XX")
     private String contactPersonPhone;
 
+    /** 12 цифр; у ФОП — 10 (РНОКПП). Довжину перевіряє ClientPageController за формою власності. */
     @NotBlank(message = "Код ІПН обов'язковий")
-    @Pattern(regexp = "^\\d{12}$", message = "Код ІПН має складатись рівно з 12 цифр")
     private String code;
 
     @NotBlank(message = "Прізвище обов'язкове")

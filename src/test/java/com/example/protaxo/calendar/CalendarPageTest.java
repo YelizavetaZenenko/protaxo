@@ -57,7 +57,7 @@ class CalendarPageTest {
     private static ClientResponse client() {
         return new ClientResponse(5L, "Волинь Зерно Продукт", "31496816", null, null, null, null, null, null, null,
                 null, null, null, null, "+38(095)-995-44-16", null, false, null, null, null, null, null, null,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
     }
 
     @Test
