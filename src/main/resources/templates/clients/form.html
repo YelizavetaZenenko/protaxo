@@ -173,6 +173,7 @@
                             <div class="field-error" th:if="${#fields.hasErrors('extraAccounts[__${st.index}__].mfo')}"
                                  th:errors="*{extraAccounts[__${st.index}__].mfo}"></div>
                         </div>
+                        <div class="extra-account-end" aria-hidden="true"></div>
                     </div>
                 </div>
 
@@ -195,6 +196,7 @@
                             <label>МФО</label>
                             <input type="text" class="ea-mfo" maxlength="6" inputmode="numeric">
                         </div>
+                        <div class="extra-account-end" aria-hidden="true"></div>
                     </div>
                 </template>
 

@@ -2683,3 +2683,13 @@ a.acc-card-meta:hover {
 .extra-accounts-add .link-btn {
     padding: 0.6rem 0;
 }
+/* Порожня клітинка праворуч від МФО додаткового рахунку — щоб наступне поле форми («Посада
+   підписанта») не ставало поруч, ніби частина рахунку. Останній рахунок закриває лінія. */
+.extra-account-end {
+    min-height: 1px;
+}
+.extra-account:last-child .extra-account-end {
+    grid-column: 1 / -1;
+    border-bottom: 1px dashed var(--border);
+    margin-bottom: 1rem;
+}
