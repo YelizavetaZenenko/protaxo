@@ -1102,6 +1102,7 @@
             var recordDraftBtn = document.getElementById('recordProtocolDraftBtn');
             if (recordDraftBtn && window.ProtaxoProtocolDrafts) {
                 var draftId;
+                var draftInvoiceId = document.getElementById('invoiceId').value || null;
                 var draftStatus = document.getElementById('protocolDraftStatus');
                 var existingDraftId = new URLSearchParams(window.location.search).get('draft');
 
@@ -1185,7 +1186,7 @@
                     }
                 } else {
                     draftId = 'protocol-draft-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
-                    window.ProtaxoProtocolDrafts.upsert({ id: draftId, label: 'Новий протокол', dirty: true, snapshot: null });
+                    window.ProtaxoProtocolDrafts.upsert({ id: draftId, label: 'Новий протокол', dirty: true, snapshot: null, invoiceId: draftInvoiceId });
                 }
 
                 var protocolForm = document.querySelector('form');
@@ -1197,7 +1198,8 @@
                         id: draftId,
                         label: computeDraftLabel(),
                         dirty: false,
-                        snapshot: captureSnapshot()
+                        snapshot: captureSnapshot(),
+                        invoiceId: draftInvoiceId
                     });
                     draftStatus.textContent = 'Записано';
                     draftStatus.hidden = false;

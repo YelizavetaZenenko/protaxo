@@ -224,7 +224,9 @@
                         item.className = 'drafts-sidebar-item';
 
                         var link = document.createElement('a');
-                        link.href = config.newUrl + '?draft=' + encodeURIComponent(d.id);
+                        // invoiceId — протокол, створений з наряд-заказу: без нього зв'язок губиться
+                        link.href = config.newUrl + '?draft=' + encodeURIComponent(d.id)
+                            + (d.invoiceId ? '&invoiceId=' + encodeURIComponent(d.invoiceId) : '');
                         link.textContent = (d.dirty ? '* ' : '') + (d.label || config.defaultLabel);
                         item.appendChild(link);
 
