@@ -128,6 +128,7 @@ public class InvoicePageController {
     public String view(@PathVariable Long id, Model model) {
         InvoiceResponse response = invoiceService.findById(id);
         model.addAttribute("invoice", response);
+        model.addAttribute("vatPayer", financeSettingsService.get().isVatPayer());
         model.addAttribute("client", clientService.findById(response.clientId()));
 
         boolean hasCalibrationService = response.items().stream()

@@ -31,6 +31,18 @@ import com.example.protaxo.vehicle.service.VehicleService;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import com.example.protaxo.catalog.entity.CatalogItemType;
+import com.example.protaxo.catalog.entity.CatalogUnit;
+import com.example.protaxo.client.dto.ClientResponse;
+import com.example.protaxo.common.vat.VatRate;
+import com.example.protaxo.finance.dto.InvoiceSettlement;
+import com.example.protaxo.invoice.dto.InvoiceItemResponse;
+import com.example.protaxo.invoice.dto.InvoiceResponse;
+import com.example.protaxo.invoice.entity.ActStatus;
+import com.example.protaxo.invoice.entity.InvoicePaymentType;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,5 +113,39 @@ class InvoiceFormVatColumnsTest {
                 not(containsString("non-vat-payer")),
                 containsString(">Ціна з ПДВ</th>"),
                 containsString(">ПДВ</th>")));
+    }
+
+    private String viewPage(boolean vatPayer) throws Exception {
+        FinanceSettings settings = new FinanceSettings();
+        settings.setVatPayer(vatPayer);
+        when(financeSettingsService.get()).thenReturn(settings);
+        BigDecimal sum = new BigDecimal("350.00");
+        BigDecimal zero = new BigDecimal("0.00");
+        InvoiceResponse invoice = new InvoiceResponse(1L, "1", LocalDateTime.of(2026, 11, 22, 10, 0),
+                InvoicePaymentType.TRANSFER, 1L, null, null, null, null, null,
+                List.of(new InvoiceItemResponse(1L, 1, 1L, CatalogItemType.MATERIAL, "Пломба", BigDecimal.ONE, sum, null,
+                        sum, VatRate.NO_VAT, zero, sum, CatalogUnit.PIECE)),
+                sum, zero, sum, null, ActStatus.NOT_CREATED);
+        when(invoiceService.findById(1L)).thenReturn(invoice);
+        when(clientService.findById(1L)).thenReturn(new ClientResponse(1L, "Агро", null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, false, null, null, null, null, null, null, null, null,
+                null, null, null, null));
+        when(financeQueryService.settlement(invoice)).thenReturn(
+                InvoiceSettlement.of(1L, sum, zero, zero, null, LocalDate.of(2026, 11, 25)));
+        return mvc.perform(get("/invoices/1").with(user("m@b.c").roles("MASTER")))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void viewOfNonVatPayerHasNoVat() throws Exception {
+        org.hamcrest.MatcherAssert.assertThat(viewPage(false), allOf(
+                containsString(">Ціна</th>"), not(containsString("ПДВ"))));
+    }
+
+    @Test
+    void viewOfVatPayerKeepsVat() throws Exception {
+        org.hamcrest.MatcherAssert.assertThat(viewPage(true), allOf(
+                containsString(">Ціна з ПДВ</th>"), containsString(">Без ПДВ</th>"), containsString(">ПДВ</th>")));
     }
 }
