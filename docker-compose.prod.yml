@@ -20,6 +20,12 @@ services:
       PRINT_AGENT_TOKEN: ${PRINT_AGENT_TOKEN}
       # Email(и) розробника через кому — лише він працює під час технічних робіт (docs/Технічні роботи.md).
       APP_DEVELOPER_EMAILS: ${APP_DEVELOPER_EMAILS:-}
+      # Лог сервера (помилки тощо) — у томі app_logs поруч з audit.log, переживає перебудову контейнера.
+      # Новий файл щодня і кожні 20 МБ, зберігаються 60 днів, не більше 2 ГБ разом.
+      LOGGING_FILE_NAME: /app/logs/app.log
+      LOGGING_LOGBACK_ROLLINGPOLICY_MAX_FILE_SIZE: 20MB
+      LOGGING_LOGBACK_ROLLINGPOLICY_MAX_HISTORY: 60
+      LOGGING_LOGBACK_ROLLINGPOLICY_TOTAL_SIZE_CAP: 2GB
     volumes:
       - app_logs:/app/logs
     depends_on:
