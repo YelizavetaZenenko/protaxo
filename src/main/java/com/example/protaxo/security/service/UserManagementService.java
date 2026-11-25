@@ -4,6 +4,7 @@ import com.example.protaxo.audit.entity.AuditAction;
 import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.common.exception.UniqueConstraints;
 import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.security.dto.UserEditFormData;
 import com.example.protaxo.security.dto.UserInviteFormData;
@@ -145,6 +146,9 @@ public class UserManagementService {
         try {
             return userRepository.saveAndFlush(user);
         } catch (DataIntegrityViolationException ex) {
+            if (!UniqueConstraints.isViolationOf(ex, UniqueConstraints.USER_EMAIL)) {
+                throw ex;
+            }
             throw new BusinessRuleException("Користувач з такою поштою вже існує");
         }
     }

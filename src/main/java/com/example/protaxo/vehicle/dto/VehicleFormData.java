@@ -11,9 +11,11 @@ public class VehicleFormData {
     private Long clientId;
 
     @NotBlank(message = "VIN обов'язковий")
+    @jakarta.validation.constraints.Size(max = 32, message = "VIN — до 32 символів")
     private String vin;
 
     @NotBlank(message = "Держномер обов'язковий")
+    @jakarta.validation.constraints.Size(max = 20, message = "Держномер — до 20 символів")
     private String registrationNumber;
 
     private String chassisNumber;

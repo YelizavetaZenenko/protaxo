@@ -17,6 +17,8 @@ public final class UniqueConstraints {
 
     public static final String CALIBRATION_PROTOCOL_INVOICE = "uq_calibration_protocols_invoice_id";
 
+    public static final String USER_EMAIL = "uq_users_email_active";
+
     private UniqueConstraints() {
     }
 

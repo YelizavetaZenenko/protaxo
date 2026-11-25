@@ -32,7 +32,7 @@
 
                 <div class="field">
                     <label for="vin">VIN *</label>
-                    <input type="text" id="vin" th:field="*{vin}">
+                    <input type="text" id="vin" th:field="*{vin}" maxlength="32">
                     <div class="field-error" th:if="${#fields.hasErrors('vin')}" th:errors="*{vin}"></div>
                 </div>
 
@@ -45,7 +45,7 @@
 
                 <div class="field">
                     <label for="registrationNumber">Держномер *</label>
-                    <input type="text" id="registrationNumber" th:field="*{registrationNumber}">
+                    <input type="text" id="registrationNumber" th:field="*{registrationNumber}" maxlength="20">
                     <div class="field-error" th:if="${#fields.hasErrors('registrationNumber')}" th:errors="*{registrationNumber}"></div>
                 </div>
 

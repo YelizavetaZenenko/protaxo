@@ -34,8 +34,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<String> findFullNameByIdIncludingDeleted(@Param("id") Long id);
 
     /**
-     * Також бачить soft-deleted рядки: unique-обмеження users_email_key діє на всі рядки, тож
-     * email видаленого користувача все одно зайнятий (AdminUserSeeder інакше падає на старті).
+     * Також бачить soft-deleted рядки (AdminUserSeeder не відновлює видаленого адміна). З V80
+     * email видаленого користувача вже не зайнятий — його можна запросити знову.
      */
     @Query(value = "SELECT EXISTS (SELECT 1 FROM users WHERE email = :email)", nativeQuery = true)
     boolean existsByEmailIncludingDeleted(@Param("email") String email);
