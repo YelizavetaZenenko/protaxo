@@ -305,7 +305,6 @@ public class InvoicePageController {
         context.setVariable("services", ActSection.of(rows.stream().filter(BillItemRow::service).toList()));
         context.setVariable("vehicle", findInvoiceVehicle(invoice));
         byte[] pdf = pdfRenderService.render("act", context);
-        invoiceService.markActPrinted(id);
 
         response.setContentType(MediaType.APPLICATION_PDF_VALUE);
         response.setHeader("Content-Disposition", "inline; filename=\"act-" + id + ".pdf\"");

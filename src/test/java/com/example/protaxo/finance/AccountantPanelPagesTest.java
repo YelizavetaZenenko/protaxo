@@ -128,12 +128,9 @@ class AccountantPanelPagesTest {
     }
 
     @Test
-    void firstActPrintMarksItOnSigning() {
-        invoiceService.markActPrinted(invoice.id());
-        assertThat(invoiceService.findById(invoice.id()).actStatus()).isEqualTo(ActStatus.ON_SIGNING);
-        invoiceService.updateActStatus(invoice.id(), ActStatus.SIGNED);
-        invoiceService.markActPrinted(invoice.id());
-        assertThat(invoiceService.findById(invoice.id()).actStatus()).isEqualTo(ActStatus.SIGNED);
+    void viewingActPdfDoesNotChangeItsStatus() throws Exception {
+        mvc.perform(get("/invoices/" + invoice.id() + "/act-pdf").session(session));
+        assertThat(invoiceService.findById(invoice.id()).actStatus()).isEqualTo(ActStatus.NOT_CREATED);
     }
 
     @Test

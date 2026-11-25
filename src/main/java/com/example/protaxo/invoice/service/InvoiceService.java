@@ -147,14 +147,6 @@ public class InvoiceService {
         auditLogService.record(AuditAction.UPDATE, "Invoice", id, changes);
     }
 
-    /** Перший друк акта: «не створено» → «на підписі». Пізніші стани не чіпає. */
-    public void markActPrinted(Long id) {
-        Invoice invoice = getOrThrow(id);
-        if (invoice.getActStatus() == ActStatus.NOT_CREATED) {
-            updateActStatus(id, ActStatus.ON_SIGNING);
-        }
-    }
-
     public void softDelete(Long id) {
         Invoice invoice = getOrThrow(id);
         if (financeOperationRepository.sumForInvoice(id, FinanceOperationType.PAYMENT).signum() > 0) {
