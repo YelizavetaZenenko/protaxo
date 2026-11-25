@@ -133,8 +133,9 @@
                 <td class="blank" th:colspan="${section.hasDiscount()} ? 4 : 3"></td>
                 <td class="num" th:text="${#numbers.formatDecimal(section.vat(), 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
             </tr>
-            <tr>
-                <td class="sum-lbl" colspan="2" th:text="${vatPayer} ? 'Всього з ПДВ' : 'Всього, без ПДВ'">Всього з ПДВ</td>
+            <!-- Неплатник ПДВ: без знижки цей рядок повторював би «Всього», тому не друкується. -->
+            <tr th:if="${vatPayer or section.totalWithVat().compareTo(section.totalWithoutVat()) != 0}">
+                <td class="sum-lbl" colspan="2" th:text="${vatPayer} ? 'Всього з ПДВ' : 'Всього до сплати'">Всього з ПДВ</td>
                 <td class="blank" th:colspan="${section.hasDiscount()} ? 4 : 3"></td>
                 <td class="num" th:text="${#numbers.formatDecimal(section.totalWithVat(), 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
             </tr>

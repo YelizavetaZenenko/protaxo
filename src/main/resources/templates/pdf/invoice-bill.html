@@ -168,14 +168,14 @@
             <td class="value" th:text="${#numbers.formatDecimal(totalVat, 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
         </tr>
         <tr>
-            <td class="label" th:text="${vatPayer} ? 'Усього з ПДВ:' : 'До сплати, без ПДВ:'">Усього з ПДВ:</td>
+            <td class="label" th:text="${vatPayer} ? 'Усього з ПДВ:' : 'До сплати:'">Усього з ПДВ:</td>
             <td class="value" th:text="${#numbers.formatDecimal(totalAmount, 1, 'WHITESPACE', 2, 'COMMA')}">0,00</td>
         </tr>
     </table>
 
     <p class="summary" th:text="'Всього найменувань ' + ${rows.size()} + ', на суму ' + ${#numbers.formatDecimal(totalAmount, 1, 'WHITESPACE', 2, 'COMMA')} + ' грн.'">Всього найменувань</p>
     <p class="summary-words" th:text="${amountInWords}">Сума словами</p>
-    <p class="summary-words" th:text="${vatPayer} ? 'У т.ч. ПДВ: ' + ${vatInWords} : 'Без ПДВ'">У т.ч. ПДВ</p>
+    <p class="summary-words" th:if="${vatPayer}" th:text="'У т.ч. ПДВ: ' + ${vatInWords}">У т.ч. ПДВ</p>
 
     <div class="rule"></div>
     <table class="issued">

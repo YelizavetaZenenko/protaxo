@@ -326,7 +326,7 @@ public class InvoicePageController {
         context.setVariable("totalWithoutVat", invoice.totalWithoutVat());
         context.setVariable("amountInWords", UkrainianAmountWords.amountToWords(invoice.totalAmount()));
         context.setVariable("vatInWords", UkrainianAmountWords.amountToWords(invoice.totalVat()));
-        // Неплатник ПДВ: документи без рядків ПДВ і з позначкою «Без ПДВ».
+        // Неплатник ПДВ: документи без жодних згадок ПДВ.
         context.setVariable("vatPayer", financeSettingsService.get().isVatPayer());
         context.setVariable("contractNumber", contract == null ? null : contract.contractNumber());
         context.setVariable("contractDate", contract == null ? null : contract.contractDate());

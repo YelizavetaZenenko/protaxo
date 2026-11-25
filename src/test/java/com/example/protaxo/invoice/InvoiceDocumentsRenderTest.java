@@ -93,7 +93,7 @@ class InvoiceDocumentsRenderTest {
         c.setVariable("rows", rows);
         c.setVariable("hasDiscount", false);
         String html = engine.process("invoice-bill", c);
-        assertThat(html).contains("Без ПДВ").contains("Калібрування тахографа-Цифровий").doesNotContain("ПДВ (20%)");
+        assertThat(html).contains("До сплати:").contains("Калібрування тахографа-Цифровий").doesNotContain("Без ПДВ", "без ПДВ", "ПДВ (20%)");
         save("rahunok-bez-pdv.pdf", renderer.render("invoice-bill", c));
     }
 
@@ -105,7 +105,7 @@ class InvoiceDocumentsRenderTest {
         c.setVariable("services", ActSection.of(rows.stream().filter(BillItemRow::service).toList()));
         c.setVariable("vehicle", new VehicleResponse(1L, 1L, "YV2RT40A0KB123456", "AC1466HI", null, "Volvo", "FH", 2019));
         String html = engine.process("act", c);
-        assertThat(html).contains("Всього, без ПДВ").doesNotContain("ПДВ (20%)");
+        assertThat(html).contains("Всього").doesNotContain("без ПДВ", "Всього до сплати", "ПДВ (20%)");
         save("akt-bez-pdv.pdf", renderer.render("act", c));
     }
 
