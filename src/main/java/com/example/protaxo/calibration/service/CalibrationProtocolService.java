@@ -11,6 +11,7 @@ import com.example.protaxo.client.entity.Client;
 import com.example.protaxo.client.repository.ClientRepository;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.common.exception.NotFoundException;
+import com.example.protaxo.common.exception.UniqueConstraints;
 import com.example.protaxo.common.util.FieldDiff;
 import com.example.protaxo.invoice.entity.Invoice;
 import com.example.protaxo.invoice.repository.InvoiceRepository;
@@ -129,6 +130,9 @@ public class CalibrationProtocolService {
         try {
             saved = calibrationProtocolRepository.saveAndFlush(protocol);
         } catch (DataIntegrityViolationException ex) {
+            if (!UniqueConstraints.isViolationOf(ex, UniqueConstraints.CALIBRATION_PROTOCOL_INVOICE)) {
+                throw ex;
+            }
             throw new BusinessRuleException("Для цього наряд-заказу протокол уже створено");
         }
         auditLogService.record(AuditAction.CREATE, "CalibrationProtocol", saved.getId(), FieldDiff.created(snapshot(saved)));

@@ -7,6 +7,7 @@ import com.example.protaxo.calibration.dto.CalibrationProtocolResponse;
 import com.example.protaxo.calibration.service.CalibrationProtocolService;
 import com.example.protaxo.client.dto.ClientResponse;
 import com.example.protaxo.client.service.ClientService;
+import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.invoice.dto.InvoiceItemResponse;
 import com.example.protaxo.invoice.dto.InvoiceResponse;
 import com.example.protaxo.invoice.service.InvoiceService;
@@ -163,8 +164,15 @@ public class CalibrationProtocolPageController {
             addReferenceData(model, form);
             return "calibration-protocols/form";
         }
-        CalibrationProtocolResponse created = calibrationProtocolService.create(toRequest(form));
-        return "redirect:/calibration-protocols/" + created.id();
+        try {
+            CalibrationProtocolResponse created = calibrationProtocolService.create(toRequest(form));
+            return "redirect:/calibration-protocols/" + created.id();
+        } catch (BusinessRuleException ex) {
+            // Не 500: форма лишається з усім введеним і поясненням
+            model.addAttribute("formError", ex.getMessage());
+            addReferenceData(model, form);
+            return "calibration-protocols/form";
+        }
     }
 
     @GetMapping("/{id}")

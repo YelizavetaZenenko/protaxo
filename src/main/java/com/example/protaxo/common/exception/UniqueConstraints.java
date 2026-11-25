@@ -15,6 +15,8 @@ public final class UniqueConstraints {
     public static final String VEHICLE_VIN = "uq_vehicles_vin_active";
     public static final String TACHOGRAPH_SERIAL_NUMBER = "uq_tachographs_serial_number_active";
 
+    public static final String CALIBRATION_PROTOCOL_INVOICE = "uq_calibration_protocols_invoice_id";
+
     private UniqueConstraints() {
     }
 

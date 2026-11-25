@@ -16,6 +16,7 @@
                 <a th:if="${editId} != null" class="btn-outline" th:href="@{/calibration-protocols/{id}/pdf(id=${editId})}" target="_blank">Друк PDF</a>
             </div>
 
+            <div class="alert alert-error" th:if="${formError}" th:text="${formError}"></div>
             <form th:object="${protocol}"
                   th:action="${editId} != null ? @{/calibration-protocols/{id}/edit(id=${editId})} : @{/calibration-protocols}"
                   method="post" class="form-grid protocol-form">
