@@ -193,8 +193,7 @@ public class CalibrationProtocolPageController {
     @PostMapping("/{id}/print-label")
     public String printLabel(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         CalibrationProtocolResponse protocol = calibrationProtocolService.ensureQrHash(id);
-        ClientResponse client = clientService.findById(protocol.clientId());
-        byte[] label = labelImageRenderer.renderPng(protocol, client.edrpou());
+        byte[] label = labelImageRenderer.renderPng(protocol);
         boolean sent = printAgentSessionRegistry.broadcast(label);
         auditLogService.record(AuditAction.PRINT, "CalibrationProtocol", id, Map.of("Результат",
                 new String[]{"", sent ? "Наклейку надіслано на принтер" : "Не надіслано: Print Agent не підключений"}));
@@ -217,7 +216,7 @@ public class CalibrationProtocolPageController {
         model.addAttribute("protocol", protocol);
         model.addAttribute("clientName", client.name());
         model.addAttribute("verifyUrl", protocol.labelType().isSmart() ? null : labelImageRenderer.verifyUrl(protocol));
-        model.addAttribute("labelDataUri", labelImageRenderer.renderPngDataUri(protocol, client.edrpou()));
+        model.addAttribute("labelDataUri", labelImageRenderer.renderPngDataUri(protocol));
         return "calibration-protocols/label-preview";
     }
 

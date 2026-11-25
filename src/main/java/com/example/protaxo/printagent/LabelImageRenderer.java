@@ -85,10 +85,10 @@ public class LabelImageRenderer {
     }
 
     /** The exact bytes sent to the Print Agent. */
-    public byte[] renderPng(CalibrationProtocolResponse protocol, String clientEdrpou) {
+    public byte[] renderPng(CalibrationProtocolResponse protocol) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
-            ImageIO.write(render(protocol, clientEdrpou), "png", out);
+            ImageIO.write(render(protocol), "png", out);
         } catch (IOException e) {
             throw new UncheckedIOException("Не вдалось зберегти наклейку як PNG", e);
         }
@@ -96,26 +96,26 @@ public class LabelImageRenderer {
     }
 
     /** Same PNG the printer gets, for the preview page — one source of truth, no separate mock. */
-    public String renderPngDataUri(CalibrationProtocolResponse protocol, String clientEdrpou) {
-        return "data:image/png;base64," + Base64.getEncoder().encodeToString(renderPng(protocol, clientEdrpou));
+    public String renderPngDataUri(CalibrationProtocolResponse protocol) {
+        return "data:image/png;base64," + Base64.getEncoder().encodeToString(renderPng(protocol));
     }
 
     /**
      * The service on the linked наряд-заказ picks the layout: Smart 1/Smart 2 get the
      * smart-tachograph sticker (no QR), everything else the original one with the QR code.
      */
-    BufferedImage render(CalibrationProtocolResponse protocol, String clientEdrpou) {
+    BufferedImage render(CalibrationProtocolResponse protocol) {
         return protocol.labelType() != null && protocol.labelType().isSmart()
                 ? renderSmart(protocol)
-                : renderStandard(protocol, clientEdrpou);
+                : renderStandard(protocol);
     }
 
     /**
      * Top to bottom: logo → company name, address (two lines — ~64 chars won't fit one), phone, all
-     * centered → stamp number, large → Date, VIN, S/N (the client's EDRPOU/RNOKPP, so the seal traces
-     * back to the carrier without a scan), Wheels, L, W, k in bold → QR filling the space left.
+     * centered → stamp number, large → Date, VIN, S/N (the tachograph serial number; until 2026-11-25 the client EDRPOU
+     * which is often empty now that it is optional), Wheels, L, W, k in bold → QR filling the space left.
      */
-    private BufferedImage renderStandard(CalibrationProtocolResponse protocol, String clientEdrpou) {
+    private BufferedImage renderStandard(CalibrationProtocolResponse protocol) {
         BufferedImage canvas = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = canvas.createGraphics();
         try {
@@ -144,7 +144,7 @@ public class LabelImageRenderer {
             String date = protocol.protocolDate() == null ? null : DATE_FORMAT.format(protocol.protocolDate());
             y = left(g, details, "Date: " + orDash(date), y);
             y = left(g, details, "VIN: " + orDash(protocol.vehicleVin()), y);
-            y = left(g, details, "S/N: " + orDash(clientEdrpou), y);
+            y = left(g, details, "S/N: " + orDash(protocol.tachographSerialNumber()), y);
             y = left(g, details, "Wheels: " + orDash(protocol.tireSize()), y);
             y = left(g, details, "L=" + orDash(protocol.tireCircumferenceL()), y);
             y = left(g, details, "W=" + orDash(protocol.coefficientW()), y);

@@ -21,7 +21,7 @@ class LabelImageRendererTest {
         LabelImageRenderer renderer = new LabelImageRenderer();
         ReflectionTestUtils.setField(renderer, "publicVerifyBaseUrl", "https://protaxo.tail3cfdbd.ts.net:8443");
 
-        byte[] png = renderer.renderPng(protocol(), "3124509876");
+        byte[] png = renderer.renderPng(protocol());
 
         assertPureBlackAndWhiteAtPrinterResolution(png);
 
@@ -34,8 +34,8 @@ class LabelImageRendererTest {
         LabelImageRenderer renderer = new LabelImageRenderer();
         ReflectionTestUtils.setField(renderer, "publicVerifyBaseUrl", "https://example.test");
 
-        byte[] smart1 = renderer.renderPng(smartProtocol(CalibrationLabelType.SMART_1), null);
-        byte[] smart2 = renderer.renderPng(smartProtocol(CalibrationLabelType.SMART_2), null);
+        byte[] smart1 = renderer.renderPng(smartProtocol(CalibrationLabelType.SMART_1));
+        byte[] smart2 = renderer.renderPng(smartProtocol(CalibrationLabelType.SMART_2));
 
         assertPureBlackAndWhiteAtPrinterResolution(smart1);
         assertPureBlackAndWhiteAtPrinterResolution(smart2);
