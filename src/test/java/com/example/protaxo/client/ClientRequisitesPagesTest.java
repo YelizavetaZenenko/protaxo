@@ -150,6 +150,23 @@ class ClientRequisitesPagesTest {
         assertThat(request.getValue().code()).isEqualTo("3809602220");
     }
 
+    /** Коди й по батькові необов'язкові — і для юрособи, і для ФОП; у базу йде null, не порожній рядок. */
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"TOV", "FOP", ""})
+    void savesWithoutCodesAndMiddleName(String legalForm) throws Exception {
+        mvc.perform(post("/clients").with(user("a@b.c").roles("ADMIN")).with(csrf())
+                        .param("legalForm", legalForm).param("name", "Іваненко Петро")
+                        .param("edrpou", "").param("code", "")
+                        .param("contactPersonPhone", "+38(067)-123-45-67")
+                        .param("lastName", "Іваненко").param("firstName", "Петро").param("middleName", ""))
+                .andExpect(status().is3xxRedirection());
+        ArgumentCaptor<ClientRequest> request = ArgumentCaptor.forClass(ClientRequest.class);
+        verify(clientService).create(request.capture(), org.mockito.ArgumentMatchers.anyList());
+        assertThat(request.getValue().edrpou()).isNull();
+        assertThat(request.getValue().code()).isNull();
+        assertThat(request.getValue().middleName()).isNull();
+    }
+
     @Test
     void fopRejectsTwelveDigitIpn() throws Exception {
         mvc.perform(post("/clients").with(user("a@b.c").roles("ADMIN")).with(csrf())

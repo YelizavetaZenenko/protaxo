@@ -191,7 +191,7 @@ public class ClientPageController {
      */
     /**
      * Довжина кодів залежить від форми власності: ФОП — ІПН (РНОКПП) 10 цифр, і код ЄДРПОУ той самий
-     * (форма підставляє його сама, тут — на випадок, якщо JS не спрацював); решта — ЄДРПОУ 8, ІПН 12.
+     * (форма підставляє його сама, тут — на випадок, якщо JS не спрацював); решта — ЄДРПОУ 8, ІПН 12. Обидва коди необов'язкові.
      */
     private static void checkCodes(ClientFormData form, BindingResult bindingResult) {
         String code = form.getCode() == null ? "" : form.getCode().trim();
@@ -203,9 +203,7 @@ public class ClientPageController {
             return;
         }
         String edrpou = form.getEdrpou() == null ? "" : form.getEdrpou().trim();
-        if (edrpou.isEmpty()) {
-            bindingResult.rejectValue("edrpou", "required", "Код ЄДРПОУ обов'язковий");
-        } else if (!edrpou.matches("\\d{8}")) {
+        if (!edrpou.isEmpty() && !edrpou.matches("\\d{8}")) {
             bindingResult.rejectValue("edrpou", "edrpou", "Код ЄДРПОУ має складатись рівно з 8 цифр");
         }
         if (!code.isEmpty() && !code.matches("\\d{12}")) {
@@ -218,10 +216,10 @@ public class ClientPageController {
         LegalForm legalForm = form.getLegalForm() == null ? LegalForm.OTHER : form.getLegalForm();
         String name = legalForm.shortName(form.getName());
         String fullName = blankToNull(form.getFullName()) != null ? form.getFullName().trim() : legalForm.fullName(form.getName());
-        return new ClientRequest(name, form.getEdrpou(), fullName,
+        return new ClientRequest(name, blankToNull(form.getEdrpou()), fullName,
                 existing != null ? existing.contactPersonName() : null,
-                form.getContactPersonPhone(), form.getCode(), form.getLastName(), form.getFirstName(),
-                form.getMiddleName(),
+                form.getContactPersonPhone(), blankToNull(form.getCode()), form.getLastName(), form.getFirstName(),
+                blankToNull(form.getMiddleName()),
                 existing != null ? existing.birthDate() : null,
                 existing != null ? existing.gender() : null,
                 existing != null ? existing.employerClientId() : null,

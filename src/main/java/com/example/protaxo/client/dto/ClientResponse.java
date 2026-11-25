@@ -41,9 +41,12 @@ public record ClientResponse(
         return legalForm != null && legalForm.isIndividual();
     }
 
-    /** Підпис коду в документах: «Код ЄДРПОУ» для юрособи, «РНОКПП» для ФОП / без ЄДРПОУ. */
+    /** Підпис коду в документах: «Код ЄДРПОУ» для юрособи, «РНОКПП» для ФОП; без форми власності — за наявністю ЄДРПОУ. */
     public String taxIdLabel() {
-        return !individual() && edrpou != null && !edrpou.isBlank() ? "Код ЄДРПОУ" : "РНОКПП";
+        boolean legalEntity = legalForm != null && legalForm != LegalForm.OTHER
+                ? !individual()
+                : edrpou != null && !edrpou.isBlank();
+        return legalEntity ? "Код ЄДРПОУ" : "РНОКПП";
     }
 
     /** Сам код до taxIdLabel(): ЄДРПОУ юрособи або РНОКПП (ІПН) ФОП. */

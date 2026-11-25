@@ -250,7 +250,7 @@
         <!-- Юрособа: Код ЄДРПОУ + ІПН; ФОП (його ЄДРПОУ = ІПН) і фізособа без ЄДРПОУ: РНОКПП. -->
         <tr th:with="legal=${client.taxIdLabel() == 'Код ЄДРПОУ'}">
             <td class="lbl" th:text="${legal} ? 'Код ЄДРПОУ:' : 'РНОКПП:'">Код ЄДРПОУ:</td>
-            <td class="val" th:classappend="${legal or not #strings.isEmpty(client.code())} ? '' : 'blank'"
+            <td class="val" th:classappend="${#strings.isEmpty(client.taxId())} ? 'blank'"
                 th:text="${client.taxId()}"></td><td></td>
             <td class="lbl">РНОКПП:</td><td class="val">3809602220</td>
         </tr>

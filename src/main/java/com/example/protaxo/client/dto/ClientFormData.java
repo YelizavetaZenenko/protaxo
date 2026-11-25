@@ -20,7 +20,7 @@ public class ClientFormData {
     @NotBlank(message = "Назва обов'язкова")
     private String name;
 
-    /** ФОП: те саме, що ІПН (10 цифр); обов'язковість і довжину перевіряє ClientPageController.checkCodes. */
+    /** ФОП: те саме, що ІПН (10 цифр); необов'язковий, довжину перевіряє ClientPageController.checkCodes. */
     private String edrpou;
 
     /** Порожньо — складеться з форми власності й назви. */
@@ -30,8 +30,7 @@ public class ClientFormData {
     @Pattern(regexp = "^\\+38\\(0\\d{2}\\)-\\d{3}-\\d{2}-\\d{2}$", message = "Телефон має бути у форматі +38(0XX)-XXX-XX-XX")
     private String contactPersonPhone;
 
-    /** 12 цифр; у ФОП — 10 (РНОКПП). Довжину перевіряє ClientPageController за формою власності. */
-    @NotBlank(message = "Код ІПН обов'язковий")
+    /** Необов'язковий. 12 цифр; у ФОП — 10 (РНОКПП). Довжину перевіряє ClientPageController за формою власності. */
     private String code;
 
     @NotBlank(message = "Прізвище обов'язкове")
@@ -40,7 +39,6 @@ public class ClientFormData {
     @NotBlank(message = "Ім'я обов'язкове")
     private String firstName;
 
-    @NotBlank(message = "По батькові обов'язкове")
     private String middleName;
 
     /** Необов'язковий (2026-11-22). */

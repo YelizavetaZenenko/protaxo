@@ -48,15 +48,15 @@
                 </div>
 
                 <div class="field">
-                    <label for="edrpou" id="edrpouLabel">Код ЄДРПОУ *</label>
-                    <input type="text" id="edrpou" th:field="*{edrpou}" maxlength="8" inputmode="numeric" required>
+                    <label for="edrpou" id="edrpouLabel">Код ЄДРПОУ</label>
+                    <input type="text" id="edrpou" th:field="*{edrpou}" maxlength="8" inputmode="numeric">
                     <div class="field-error" th:if="${#fields.hasErrors('edrpou')}" th:errors="*{edrpou}"></div>
                     <div class="muted" id="edrpouHint" hidden>У ФОП код ЄДРПОУ — це його ІПН (РНОКПП), підставляється сам</div>
                 </div>
 
                 <div class="field">
-                    <label for="code" id="codeLabel">Код ІПН *</label>
-                    <input type="text" id="code" th:field="*{code}" maxlength="12" inputmode="numeric" required>
+                    <label for="code" id="codeLabel">Код ІПН</label>
+                    <input type="text" id="code" th:field="*{code}" maxlength="12" inputmode="numeric">
                     <div class="field-error" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></div>
                     <div class="muted" id="codeHint">12 цифр</div>
                 </div>
@@ -263,8 +263,8 @@
                 </div>
 
                 <div class="field">
-                    <label for="middleName">По батькові *</label>
-                    <input type="text" id="middleName" th:field="*{middleName}" required>
+                    <label for="middleName">По батькові</label>
+                    <input type="text" id="middleName" th:field="*{middleName}">
                     <div class="field-error" th:if="${#fields.hasErrors('middleName')}" th:errors="*{middleName}"></div>
                 </div>
 
@@ -519,7 +519,7 @@
                     lastAutoFull = f;
 
                     code.maxLength = fop ? 10 : 12;
-                    codeLabel.textContent = fop ? 'Код ІПН (РНОКПП) *' : 'Код ІПН *';
+                    codeLabel.textContent = fop ? 'Код ІПН (РНОКПП)' : 'Код ІПН';
                     codeHint.textContent = fop ? '10 цифр — він же код ЄДРПОУ' : '12 цифр';
                     edrpou.readOnly = fop;
                     edrpou.maxLength = fop ? 10 : 8;
