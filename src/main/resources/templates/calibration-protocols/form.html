@@ -144,8 +144,10 @@
 
                 <div class="field">
                     <label for="tachographType">Тип</label>
-                    <select id="tachographType" th:field="*{tachographType}"></select>
-                    <button type="button" class="link-btn" data-category="TYPE" data-target="tachographType">+ Додати тип</button>
+                    <!-- Вписується вручну; під полем — підказки з довідника типів. Новий тип після
+                         збереження протоколу сам додається в довідник (TachographAttributeService#rememberIfNew). -->
+                    <input type="text" id="tachographType" th:field="*{tachographType}"
+                           placeholder="почніть вводити або оберіть" autocomplete="off">
                 </div>
 
                 <div class="field">
@@ -780,7 +782,38 @@
 
             loadAttributeCategory('BRAND', ['tachographBrand']);
             loadAttributeCategory('MODEL', ['tachographModel']);
-            loadAttributeCategory('TYPE', ['tachographType']);
+            loadAttributeCategory('TYPE', []); // лише кеш для підказок поля «Тип» (воно не <select>)
+            (function () {
+                // «Тип» — текстове поле з підказками: спершу ті, що починаються з введеного,
+                // потім ті, де збіг з початку слова, потім решта збігів. Порожнє поле — весь список.
+                var typeInput = document.getElementById('tachographType');
+                function plain(s) { return (s || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+                ProtaxoAutocomplete.attach(typeInput, {
+                    minLength: 0,
+                    openOnFocus: true,
+                    source: function (q, done) {
+                        var needle = plain(q);
+                        function rank(name) {
+                            var n = plain(name);
+                            if (!needle) return 0;
+                            if (n.indexOf(needle) === 0) return 0;
+                            if ((' ' + n).indexOf(' ' + needle) !== -1) return 1;
+                            return n.indexOf(needle) !== -1 ? 2 : -1;
+                        }
+                        done((attributeCache.TYPE || [])
+                            .map(function (a) { return { name: a.name, r: rank(a.name) }; })
+                            .filter(function (x) { return x.r >= 0 && plain(x.name) !== needle; })
+                            .sort(function (a, b) { return a.r - b.r || a.name.localeCompare(b.name, 'uk'); })
+                            .slice(0, 15)
+                            .map(function (x) { return { label: x.name }; }));
+                    },
+                    onSelect: function (item) {
+                        typeInput.value = item.label;
+                        // 'change', не 'input' — інакше список підказок одразу відкрився б знову
+                        typeInput.dispatchEvent(new Event('change'));
+                    }
+                });
+            })();
             loadAttributeCategory('MANUFACTURER', ['tachographManufacturer']);
             loadAttributeCategory('INSPECTION_REASON', ['inspectionReason']);
             loadAttributeCategory('TIRE_SIZE', ['tireSize']);
@@ -1119,7 +1152,7 @@
                     'labelType', 'loadType', 'extGnss', 'gnssSerialNumber', 'dsrcSerialNumber']
                     // "Тип наклейки" is on the form only for a protocol without a наряд-заказ.
                     .filter(function (id) { return document.getElementById(id); });
-                var selectFieldIds = ['tachographBrand', 'tachographModel', 'tachographType', 'tachographManufacturer', 'inspectionReason', 'tireSize'];
+                var selectFieldIds = ['tachographBrand', 'tachographModel', 'tachographManufacturer', 'inspectionReason', 'tireSize'];
 
                 function computeDraftLabel() {
                     var vehicle = document.getElementById('vehicleName').value.trim();
@@ -1215,5 +1248,6 @@
             }
         });
     </script>
+    <script th:src="@{/js/autocomplete.js}"></script>
 </body>
 </html>

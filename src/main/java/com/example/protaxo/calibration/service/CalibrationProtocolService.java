@@ -5,6 +5,7 @@ import com.example.protaxo.audit.service.AuditLogService;
 import com.example.protaxo.calibration.dto.CalibrationProtocolRequest;
 import com.example.protaxo.calibration.dto.CalibrationProtocolResponse;
 import com.example.protaxo.calibration.entity.CalibrationProtocol;
+import com.example.protaxo.calibration.entity.TachographAttributeCategory;
 import com.example.protaxo.calibration.mapper.CalibrationProtocolMapper;
 import com.example.protaxo.calibration.repository.CalibrationProtocolRepository;
 import com.example.protaxo.client.entity.Client;
@@ -61,6 +62,7 @@ public class CalibrationProtocolService {
     private final TachographRepository tachographRepository;
     private final CalibrationProtocolMapper calibrationProtocolMapper;
     private final FieldSuggestionService fieldSuggestionService;
+    private final TachographAttributeService tachographAttributeService;
     private final AuditLogService auditLogService;
     private final UserRepository userRepository;
 
@@ -297,6 +299,8 @@ public class CalibrationProtocolService {
 
         fieldSuggestionService.remember(FieldSuggestionCategory.VEHICLE, request.vehicleName());
         fieldSuggestionService.remember(FieldSuggestionCategory.REPRESENTATIVE, request.representativeName());
+        // "Тип" вписується вручну з підказками — новий тип одразу стає підказкою для наступних протоколів
+        tachographAttributeService.rememberIfNew(TachographAttributeCategory.TYPE, request.tachographType());
     }
 
     // The four "effective*" helpers are the single source of truth for what actually gets

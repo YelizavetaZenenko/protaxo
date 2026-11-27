@@ -97,6 +97,18 @@ public class TachographAttributeService {
         return new TachographAttributeResponse(saved.getId(), saved.getName(), saved.getLabelType());
     }
 
+    /**
+     * Значення, вписане в протокол вручну (поле з підказками, а не список), — додати в довідник,
+     * якщо його там ще немає, щоб наступного разу воно було серед підказок. Без помилки на дублікат.
+     */
+    public void rememberIfNew(TachographAttributeCategory category, String name) {
+        if (name == null || name.isBlank()
+                || tachographAttributeRepository.existsByCategoryAndNameIgnoreCase(category, name.trim())) {
+            return;
+        }
+        create(category, name, null);
+    }
+
     /** Тип наклейки моделі тахографа — можна змінити вже після додавання моделі. */
     public TachographAttributeResponse updateLabelType(Long id, CalibrationLabelType labelType) {
         TachographAttribute attribute = tachographAttributeRepository.findById(id)
