@@ -37,10 +37,17 @@ $sshOptions = @("-o", "BatchMode=yes", "-o", "ConnectTimeout=20",
 
 try {
     # "розмір ім'я" для кожного дампа — розмір потрібен, щоб відрізнити повний файл від обрізаного.
-    $listing = & ssh @sshOptions $RemoteHost "cd $RemoteDir && stat -c '%s %n' protaxo_*.dump 2>/dev/null"
+    # Після пробудження ноутбука Tailscale піднімається не одразу — до 3 спроб з паузою 10 хв,
+    # замість чекати наступного дня.
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        $listing = & ssh @sshOptions $RemoteHost "cd $RemoteDir && stat -c '%s %n' protaxo_*.dump 2>/dev/null"
+        if ($LASTEXITCODE -eq 0 -and $listing) { break }
+        Write-Log "Сервер недоступний (ssh код $LASTEXITCODE), спроба $attempt з 3"
+        if ($attempt -lt 3) { Start-Sleep -Seconds 600 }
+    }
     if ($LASTEXITCODE -ne 0 -or -not $listing) {
-        Write-Log "Сервер недоступний або бекапів ще немає (ssh код $LASTEXITCODE) — пропускаю цей запуск."
-        exit 0
+        Write-Log "ПОМИЛКА: сервер так і не відповів — спробую під час наступного запуску."
+        exit 1
     }
 
     $copied = 0
