@@ -113,7 +113,8 @@ public class LabelImageRenderer {
     /**
      * Top to bottom: logo → company name, address (two lines — ~64 chars won't fit one), phone, all
      * centered → stamp number, large → Date, VIN, S/N (the tachograph serial number; until 2026-11-25 the client EDRPOU
-     * which is often empty now that it is optional), Wheels, L, W, k in bold → QR filling the space left.
+     * which is often empty now that it is optional), Wheels, L, W, k, V-set (speed limiter triggering
+     * speed) in bold → QR filling the space left.
      */
     private BufferedImage renderStandard(CalibrationProtocolResponse protocol) {
         BufferedImage canvas = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
@@ -149,6 +150,7 @@ public class LabelImageRenderer {
             y = left(g, details, "L=" + orDash(protocol.tireCircumferenceL()), y);
             y = left(g, details, "W=" + orDash(protocol.coefficientW()), y);
             y = left(g, details, "k=" + orDash(protocol.constantK()), y);
+            y = left(g, details, "V-set=" + orDash(protocol.speedLimiterValue()) + " km/h", y);
 
             drawQr(g, verifyUrl(protocol), y + 8);
         } finally {

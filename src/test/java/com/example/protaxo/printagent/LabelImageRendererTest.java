@@ -69,7 +69,7 @@ class LabelImageRendererTest {
                 null, null, null, null, "315/70 R22.5",
                 null, "3250", "8000", "8000", null,
                 null, null, null, null, null,
-                null, null, null, null, null,
+                "90", null, null, null, null,
                 null, null, null, "0123456789abcdef0123456789abcdef", null,
                 null, null, null, null, CalibrationLabelType.STANDARD,
                 false, false, false, false, null, null, null);
