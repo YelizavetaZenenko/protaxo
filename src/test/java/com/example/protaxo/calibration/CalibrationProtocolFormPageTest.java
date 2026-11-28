@@ -58,8 +58,10 @@ class CalibrationProtocolFormPageTest {
                 .andReturn().getResponse().getContentAsString();
         assertThat(html).contains("Рік виготовлення", "Відхилення</h2>", "Реєстрування факту</h2>",
                 "data-category=\"INSPECTION_REASON\"", "data-category=\"TIRE_SIZE\"", "value=\"0.1\"", "value=\"+0.01 та +0.07\"",
-                "value=\"0.7 хвилин за 7 діб\"", "Цілісність пломб", "Табличка перевірки",
+                "Цілісність пломб", "Табличка перевірки",
                 "<option value=\"0.20\">2,0 бар (0.20 МПа)</option>", "<option value=\"0.95\">9,5 бар (0.95 МПа)</option>");
+        // Відхилення часу «в експлуатації» на формі немає з 38c031d (у PDF друкується «-»)
+        assertThat(html).doesNotContain("id=\"timeDeviationInService\"");
         Files.writeString(Path.of("target", "calibration-protocol-form-test.html"), html);
         // Відхилення шляху/швидкості "в експлуатації" на сайті не вводяться — у бланку завжди "-"
         assertThat(html).doesNotContain("id=\"pathDeviationInService\"", "id=\"speedDeviationInService\"", "id=\"timeDeviationInService\"");
