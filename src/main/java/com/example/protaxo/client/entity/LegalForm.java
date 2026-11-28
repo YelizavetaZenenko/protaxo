@@ -7,6 +7,8 @@ package com.example.protaxo.client.entity;
  */
 public enum LegalForm {
     TOV("ТОВ", "Товариство з обмеженою відповідальністю"),
+    /** Те саме ТОВ, але так скорочують на заході України («ТзОВ «Агро»»). */
+    TZOV("ТзОВ", "Товариство з обмеженою відповідальністю"),
     FOP("ФОП", "Фізична особа-підприємець"),
     PP("ПП", "Приватне підприємство"),
     AT("АТ", "Акціонерне товариство"),
@@ -22,7 +24,12 @@ public enum LegalForm {
     BO("БО", "Благодійна організація"),
     OSBB("ОСББ", "Об'єднання співвласників багатоквартирного будинку"),
     /** Без префікса — назва як є. */
-    OTHER("", "");
+    OTHER("", ""),
+    /**
+     * Своя форма з довідника {@link CustomLegalForm} (V81): скорочення й повна назва — там, тож методи
+     * нижче без них поводяться як OTHER; складає назву контролер через {@link #withLabel}.
+     */
+    CUSTOM("", "");
 
     private final String shortLabel;
     private final String fullLabel;
@@ -46,36 +53,45 @@ public enum LegalForm {
 
     /** «ТОВ «Агро»», «ФОП Іваненко Петро Васильович»; для OTHER — назва як є (лапки не чіпаємо). */
     public String shortName(String name) {
-        if (this == OTHER) {
+        if (shortLabel.isEmpty()) {
             return name == null ? "" : name.trim();
         }
-        String bare = bare(name);
-        if (bare.isEmpty()) {
-            return bare;
-        }
-        return isIndividual() ? shortLabel + " " + bare : shortLabel + " «" + bare + "»";
+        return withLabel(shortLabel, name, isIndividual());
     }
 
     /** «Товариство з обмеженою відповідальністю «Агро»». */
     public String fullName(String name) {
-        if (this == OTHER) {
+        if (fullLabel.isEmpty()) {
             return name == null ? "" : name.trim();
         }
-        String bare = bare(name);
-        if (bare.isEmpty()) {
-            return bare;
-        }
-        return isIndividual() ? fullLabel + " " + bare : fullLabel + " «" + bare + "»";
+        return withLabel(fullLabel, name, isIndividual());
     }
 
     /** Назва без форми власності й лапок — для поля праворуч від списку при редагуванні. */
     public String stripFrom(String composedName) {
+        if (shortLabel.isEmpty()) {
+            return composedName == null ? "" : bare(composedName);
+        }
+        return stripLabel(shortLabel, composedName);
+    }
+
+    /** «Мітка «Назва»» (юрособа) або «Мітка Назва» (фізособа); порожня назва — порожньо. */
+    public static String withLabel(String label, String name, boolean individual) {
+        String bare = bare(name);
+        if (bare.isEmpty()) {
+            return bare;
+        }
+        return individual ? label + " " + bare : label + " «" + bare + "»";
+    }
+
+    /** Зворотне до {@link #withLabel}: «ТОВ «Агро»» → Агро. */
+    public static String stripLabel(String label, String composedName) {
         if (composedName == null) {
             return "";
         }
         String s = composedName.trim();
-        if (this != OTHER && s.startsWith(shortLabel + " ")) {
-            s = s.substring(shortLabel.length() + 1);
+        if (s.startsWith(label + " ")) {
+            s = s.substring(label.length() + 1);
         }
         return bare(s);
     }

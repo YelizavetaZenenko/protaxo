@@ -39,6 +39,10 @@ public class Client extends BaseEntity {
     @Column(name = "legal_form", length = 10)
     private LegalForm legalForm;
 
+    /** Своя форма власності (V81) — лише коли {@code legalForm = CUSTOM}. */
+    @Column(name = "custom_legal_form_id")
+    private Long customLegalFormId;
+
     @Column(nullable = false)
     private String name;
 

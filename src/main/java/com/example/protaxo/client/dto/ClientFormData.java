@@ -1,6 +1,5 @@
 package com.example.protaxo.client.dto;
 
-import com.example.protaxo.client.entity.LegalForm;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -13,8 +12,11 @@ import lombok.Data;
 @Data
 public class ClientFormData {
 
-    /** Форма власності зі списку ліворуч від назви (V78); порожньо — назва як є. */
-    private LegalForm legalForm;
+    /**
+     * Форма власності зі списку ліворуч від назви (V78): ім'я вбудованої {@code LegalForm} («TOV», «FOP»)
+     * або «C&lt;id&gt;» для своєї форми з довідника (V81); порожньо — назва як є.
+     */
+    private String legalForm;
 
     /** Назва без форми власності й лапок («Агро»; для ФОП — ПІБ). Коротку й повну складає контролер. */
     @NotBlank(message = "Назва обов'язкова")

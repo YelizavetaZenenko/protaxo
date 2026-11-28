@@ -33,7 +33,8 @@ public record ClientResponse(
         String addressBuilding,
         String addressOffice,
         String addressPostalCode,
-        LegalForm legalForm
+        LegalForm legalForm,
+        Long customLegalFormId
 ) {
 
     /** ФОП — фізособа: у документах «РНОКПП», а не «Код ЄДРПОУ». */

@@ -36,7 +36,7 @@ class ContractPdfRenderTest {
                 withRequisites ? "305299" : null,
                 withRequisites ? "Директор" : null,
                 withRequisites ? "Статуту" : null,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null);
     }
 
     private String html(ClientResponse client) {

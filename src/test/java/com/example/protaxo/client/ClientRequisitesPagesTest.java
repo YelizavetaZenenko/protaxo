@@ -19,7 +19,10 @@ import com.example.protaxo.bank.Bank;
 import com.example.protaxo.bank.BankService;
 import com.example.protaxo.client.dto.ClientRequest;
 import com.example.protaxo.client.dto.ClientResponse;
+import com.example.protaxo.client.entity.CustomLegalForm;
+import com.example.protaxo.client.entity.LegalForm;
 import com.example.protaxo.client.service.ClientService;
+import com.example.protaxo.client.service.CustomLegalFormService;
 import com.example.protaxo.client.web.ClientPageController;
 import com.example.protaxo.driver.service.DriverService;
 import com.example.protaxo.maintenance.service.MaintenanceModeService;
@@ -52,6 +55,7 @@ class ClientRequisitesPagesTest {
     @MockitoBean VehicleService vehicleService;
     @MockitoBean BankService bankService;
     @MockitoBean AddressDirectoryService addressDirectoryService;
+    @MockitoBean CustomLegalFormService customLegalFormService;
     @MockitoBean AuditLogService auditLogService;
     @MockitoBean AuthAuditRecorder authAuditRecorder;
     @MockitoBean LoginAttemptService loginAttemptService;
@@ -125,7 +129,7 @@ class ClientRequisitesPagesTest {
         when(clientService.findById(5L)).thenReturn(new ClientResponse(5L, "К", "44556677", "ТОВ К", null,
                 "+38(067)-123-45-67", "445566771234", "Іваненко", "Петро", "Васильович", null, null, null, null,
                 null, null, false, null, null, null, null, "Директор", "Наказу № 7 від 01.02.2026",
-                null, null, null, null, null, null));
+                null, null, null, null, null, null, null));
         when(driverService.findByClientId(5L)).thenReturn(List.of());
         when(vehicleService.findByClientId(5L)).thenReturn(List.of());
         mvc.perform(get("/clients/5/edit").with(user("a@b.c").roles("ADMIN")))
@@ -191,5 +195,38 @@ class ClientRequisitesPagesTest {
         verify(clientService).create(request.capture(), org.mockito.ArgumentMatchers.anyList());
         assertThat(request.getValue().name()).isEqualTo("ТОВ «Карпатський Перевізник»");
         assertThat(request.getValue().fullName()).isEqualTo("Товариство з обмеженою відповідальністю «Карпатський Перевізник»");
+    }
+
+    /** ТзОВ — та сама повна форма, що й ТОВ, лише інше скорочення. */
+    @Test
+    void tzovComposesShortAndFullNames() throws Exception {
+        mvc.perform(post("/clients").with(user("a@b.c").roles("ADMIN")).with(csrf())
+                        .param("legalForm", "TZOV").param("name", "Агро")
+                        .param("contactPersonPhone", "+38(067)-123-45-67")
+                        .param("lastName", "Іваненко").param("firstName", "Петро"))
+                .andExpect(status().is3xxRedirection());
+        ArgumentCaptor<ClientRequest> request = ArgumentCaptor.forClass(ClientRequest.class);
+        verify(clientService).create(request.capture(), org.mockito.ArgumentMatchers.anyList());
+        assertThat(request.getValue().name()).isEqualTo("ТзОВ «Агро»");
+        assertThat(request.getValue().fullName()).isEqualTo("Товариство з обмеженою відповідальністю «Агро»");
+        assertThat(request.getValue().legalForm()).isEqualTo(LegalForm.TZOV);
+    }
+
+    /** Своя форма з довідника (V81): значення «C<id>» → CUSTOM + id, назва складається з її скорочення й повної назви. */
+    @Test
+    void customLegalFormComposesNamesAndKeepsItsId() throws Exception {
+        when(customLegalFormService.findById(7L)).thenReturn(java.util.Optional.of(
+                CustomLegalForm.builder().id(7L).shortLabel("НВП").fullLabel("Науково-виробниче підприємство").build()));
+        mvc.perform(post("/clients").with(user("a@b.c").roles("ADMIN")).with(csrf())
+                        .param("legalForm", "C7").param("name", "Тахосервіс")
+                        .param("contactPersonPhone", "+38(067)-123-45-67")
+                        .param("lastName", "Іваненко").param("firstName", "Петро"))
+                .andExpect(status().is3xxRedirection());
+        ArgumentCaptor<ClientRequest> request = ArgumentCaptor.forClass(ClientRequest.class);
+        verify(clientService).create(request.capture(), org.mockito.ArgumentMatchers.anyList());
+        assertThat(request.getValue().name()).isEqualTo("НВП «Тахосервіс»");
+        assertThat(request.getValue().fullName()).isEqualTo("Науково-виробниче підприємство «Тахосервіс»");
+        assertThat(request.getValue().legalForm()).isEqualTo(LegalForm.CUSTOM);
+        assertThat(request.getValue().customLegalFormId()).isEqualTo(7L);
     }
 }

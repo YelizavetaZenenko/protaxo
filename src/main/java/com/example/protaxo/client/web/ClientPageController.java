@@ -6,8 +6,10 @@ import com.example.protaxo.bank.BankService;
 import com.example.protaxo.client.dto.ClientFormData;
 import com.example.protaxo.client.dto.ClientRequest;
 import com.example.protaxo.client.dto.ClientResponse;
+import com.example.protaxo.client.entity.CustomLegalForm;
 import com.example.protaxo.client.entity.LegalForm;
 import com.example.protaxo.client.service.ClientService;
+import com.example.protaxo.client.service.CustomLegalFormService;
 import com.example.protaxo.common.exception.BusinessRuleException;
 import com.example.protaxo.driver.dto.DriverResponse;
 import com.example.protaxo.driver.service.DriverService;
@@ -15,6 +17,7 @@ import com.example.protaxo.vehicle.dto.VehicleResponse;
 import com.example.protaxo.vehicle.service.VehicleService;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -43,6 +46,7 @@ public class ClientPageController {
     private final VehicleService vehicleService;
     private final BankService bankService;
     private final AddressDirectoryService addressDirectoryService;
+    private final CustomLegalFormService customLegalFormService;
 
     /** Області для поля «Юридична адреса» (КАТОТТГ, V73). */
     @ModelAttribute("addressRegions")
@@ -51,9 +55,23 @@ public class ClientPageController {
     }
 
     /** Форми власності для списку ліворуч від назви. */
+    /** Вбудовані форми власності для списку (OTHER і CUSTOM — службові, у списку їх немає). */
     @ModelAttribute("legalForms")
-    public LegalForm[] legalForms() {
-        return LegalForm.values();
+    public List<LegalForm> legalForms() {
+        return Arrays.stream(LegalForm.values())
+                .filter(lf -> lf != LegalForm.OTHER && lf != LegalForm.CUSTOM)
+                .toList();
+    }
+
+    /** Свої форми власності (V81) — у тому ж списку після вбудованих, значення «C&lt;id&gt;». */
+    @ModelAttribute("customLegalForms")
+    public List<CustomLegalForm> customLegalForms() {
+        return customLegalFormService.findAll();
+    }
+
+    /** Значення своєї форми у списку форми контрагента. */
+    public static String customCode(Long id) {
+        return "C" + id;
     }
 
     /** Довідник банків для випадного списку «Банк» у формі (docs/Контрагенти.md). */
@@ -195,7 +213,7 @@ public class ClientPageController {
      */
     private static void checkCodes(ClientFormData form, BindingResult bindingResult) {
         String code = form.getCode() == null ? "" : form.getCode().trim();
-        if (form.getLegalForm() == LegalForm.FOP) {
+        if (LegalForm.FOP.name().equals(form.getLegalForm())) {
             if (!code.isEmpty() && !code.matches("\\d{10}")) {
                 bindingResult.rejectValue("code", "fop", "У ФОП код ІПН (РНОКПП) — рівно 10 цифр");
             }
@@ -213,9 +231,20 @@ public class ClientPageController {
 
     /** Коротка й повна назва — з форми власності й назви; повна, введена вручну, лишається як є. */
     private ClientRequest toRequest(ClientFormData form, ClientResponse existing) {
-        LegalForm legalForm = form.getLegalForm() == null ? LegalForm.OTHER : form.getLegalForm();
-        String name = legalForm.shortName(form.getName());
-        String fullName = blankToNull(form.getFullName()) != null ? form.getFullName().trim() : legalForm.fullName(form.getName());
+        String code = blankToNull(form.getLegalForm());
+        CustomLegalForm custom = code != null && code.startsWith("C") ? findCustom(code) : null;
+        LegalForm legalForm = custom != null ? LegalForm.CUSTOM : builtIn(code);
+        String name;
+        String composedFull;
+        if (custom != null) {
+            name = LegalForm.withLabel(custom.getShortLabel(), form.getName(), false);
+            composedFull = LegalForm.withLabel(custom.fullOrShortLabel(), form.getName(), false);
+        } else {
+            LegalForm forNames = legalForm == null ? LegalForm.OTHER : legalForm;
+            name = forNames.shortName(form.getName());
+            composedFull = forNames.fullName(form.getName());
+        }
+        String fullName = blankToNull(form.getFullName()) != null ? form.getFullName().trim() : composedFull;
         return new ClientRequest(name, blankToNull(form.getEdrpou()), fullName,
                 existing != null ? existing.contactPersonName() : null,
                 form.getContactPersonPhone(), blankToNull(form.getCode()), form.getLastName(), form.getFirstName(),
@@ -230,7 +259,29 @@ public class ClientPageController {
                 blankToNull(form.getMfo()), blankToNull(form.getSignatoryPosition()), blankToNull(form.getSignatoryBasis()),
                 blankToNull(form.getAddressSettlementCode()), blankToNull(form.getAddressStreet()),
                 blankToNull(form.getAddressBuilding()), blankToNull(form.getAddressOffice()),
-                blankToNull(form.getAddressPostalCode()), form.getLegalForm());
+                blankToNull(form.getAddressPostalCode()), legalForm, custom != null ? custom.getId() : null);
+    }
+
+    /** «C12» → своя форма 12; невідомий чи зіпсований код — як без форми. */
+    private CustomLegalForm findCustom(String code) {
+        try {
+            return customLegalFormService.findById(Long.parseLong(code.substring(1))).orElse(null);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** «TOV» → LegalForm.TOV; порожньо чи невідоме значення — null (назва як є). */
+    private static LegalForm builtIn(String code) {
+        if (code == null) {
+            return null;
+        }
+        try {
+            LegalForm lf = LegalForm.valueOf(code);
+            return lf == LegalForm.CUSTOM ? null : lf;
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private static String blankToNull(String value) {
@@ -239,8 +290,17 @@ public class ClientPageController {
 
     private ClientFormData toFormData(ClientResponse response) {
         ClientFormData form = new ClientFormData();
-        form.setLegalForm(response.legalForm());
-        form.setName(response.legalForm() == null ? response.name() : response.legalForm().stripFrom(response.name()));
+        CustomLegalForm custom = response.legalForm() == LegalForm.CUSTOM
+                ? customLegalFormService.findById(response.customLegalFormId()).orElse(null) : null;
+        if (custom != null) {
+            form.setLegalForm(customCode(custom.getId()));
+            form.setName(LegalForm.stripLabel(custom.getShortLabel(), response.name()));
+        } else if (response.legalForm() == null || response.legalForm() == LegalForm.CUSTOM) {
+            form.setName(response.name());
+        } else {
+            form.setLegalForm(response.legalForm().name());
+            form.setName(response.legalForm().stripFrom(response.name()));
+        }
         form.setEdrpou(response.edrpou());
         form.setFullName(response.fullName());
         form.setContactPersonPhone(response.contactPersonPhone());

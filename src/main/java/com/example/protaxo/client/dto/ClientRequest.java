@@ -43,6 +43,7 @@ public record ClientRequest(
         @Size(max = 30) String addressOffice,
         @Pattern(regexp = "^(\\d{5})?$", message = "Індекс має складатись з 5 цифр")
         String addressPostalCode,
-        LegalForm legalForm
+        LegalForm legalForm,
+        Long customLegalFormId
 ) {
 }

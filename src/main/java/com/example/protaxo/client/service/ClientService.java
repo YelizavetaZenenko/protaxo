@@ -8,6 +8,7 @@ import com.example.protaxo.client.dto.ClientRequest;
 import com.example.protaxo.client.dto.ClientResponse;
 import com.example.protaxo.client.entity.Client;
 import com.example.protaxo.client.entity.ClientBankAccount;
+import com.example.protaxo.client.entity.LegalForm;
 import com.example.protaxo.client.mapper.ClientMapper;
 import com.example.protaxo.client.repository.ClientRepository;
 import com.example.protaxo.common.exception.BusinessRuleException;
@@ -174,7 +175,9 @@ public class ClientService {
 
     private static FieldDiff.Snapshot snapshot(Client c) {
         return FieldDiff.snapshot()
-                .add("Форма власності", c.getLegalForm() == null ? null : c.getLegalForm().getShortLabel())
+                // Своя форма (V81): скорочення видно в самій назві («ТзОВ «Агро»»), тут — лише що вона своя
+                .add("Форма власності", c.getLegalForm() == null ? null
+                        : c.getLegalForm() == LegalForm.CUSTOM ? "Своя форма" : c.getLegalForm().getShortLabel())
                 .add("Назва", c.getName())
                 .add("Повна назва", c.getFullName())
                 .add("Код ЄДРПОУ", c.getEdrpou())

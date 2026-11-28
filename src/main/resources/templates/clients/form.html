@@ -27,12 +27,17 @@
                     <div class="legal-name-row">
                         <select id="legalForm" th:field="*{legalForm}" aria-label="Форма власності">
                             <option value="">— без форми —</option>
-                            <option th:each="lf : ${legalForms}" th:if="${lf.name() != 'OTHER'}" th:value="${lf.name()}"
+                            <option th:each="lf : ${legalForms}" th:value="${lf.name()}"
                                     th:text="${lf.shortLabel}" th:title="${lf.fullLabel}"
                                     th:attr="data-short=${lf.shortLabel},data-full=${lf.fullLabel}">ТОВ</option>
+                            <!-- Свої форми (V81) — значення «C<id>», додаються кнопкою нижче -->
+                            <option th:each="cf : ${customLegalForms}" th:value="${'C' + cf.id}"
+                                    th:text="${cf.shortLabel}" th:title="${cf.fullOrShortLabel()}"
+                                    th:attr="data-short=${cf.shortLabel},data-full=${cf.fullOrShortLabel()}">ТзОВ</option>
                         </select>
                         <input type="text" id="name" th:field="*{name}" autocomplete="off">
                     </div>
+                    <button type="button" class="link-btn" id="addLegalFormBtn" sec:authorize="!hasRole('ACCOUNTANT')">+ Додати свою форму власності</button>
                     <div class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
                     <div class="legal-name-preview" id="namePreview" hidden>
                         <div><span class="muted">Буде виглядати:</span> <strong id="namePreviewShort"></strong></div>
@@ -373,6 +378,26 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="legalFormModalOverlay" hidden>
+        <div class="modal">
+            <h2>Своя форма власності</h2>
+            <div class="alert alert-error" id="legalFormModalError" hidden></div>
+            <div class="field field-full">
+                <label for="newLegalFormShort">Скорочення *</label>
+                <input type="text" id="newLegalFormShort" maxlength="20" placeholder="напр. НВП">
+            </div>
+            <div class="field field-full">
+                <label for="newLegalFormFull">Повна назва форми</label>
+                <input type="text" id="newLegalFormFull" maxlength="255" placeholder="напр. Науково-виробниче підприємство">
+                <div class="muted">Для повної назви контрагента в договорі й рахунках. Якщо не вказати — буде скорочення.</div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" id="saveLegalFormBtn">Додати</button>
+                <button type="button" class="btn-outline" id="cancelLegalFormBtn">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="bankModalOverlay" hidden>
         <div class="modal">
             <h2>Новий банк</h2>
@@ -538,6 +563,60 @@
                 name.addEventListener('input', update);
                 code.addEventListener('input', function () { if (form.value === 'FOP') edrpou.value = code.value; });
                 update();
+
+                // «+ Додати свою форму власності» — модальне вікно → POST /api/legal-forms; нова форма
+                // з'являється в списку (значення «C<id>») і одразу обирається.
+                var overlay = document.getElementById('legalFormModalOverlay');
+                var errorBox = document.getElementById('legalFormModalError');
+                var shortIn = document.getElementById('newLegalFormShort');
+                var fullIn = document.getElementById('newLegalFormFull');
+                var addBtn = document.getElementById('addLegalFormBtn');
+                if (addBtn) {
+                    addBtn.addEventListener('click', function () {
+                        errorBox.hidden = true;
+                        shortIn.value = '';
+                        fullIn.value = '';
+                        overlay.hidden = false;
+                        shortIn.focus();
+                    });
+                }
+                document.getElementById('cancelLegalFormBtn').addEventListener('click', function () { overlay.hidden = true; });
+                document.getElementById('saveLegalFormBtn').addEventListener('click', function () {
+                    var shortLabel = shortIn.value.trim();
+                    if (!shortLabel) {
+                        errorBox.textContent = 'Вкажіть скорочення, напр. НВП';
+                        errorBox.hidden = false;
+                        return;
+                    }
+                    fetch('/api/legal-forms', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ shortLabel: shortLabel, fullLabel: fullIn.value.trim() || null })
+                    }).then(function (resp) {
+                        if (!resp.ok) {
+                            return resp.json().catch(function () { return {}; }).then(function (b) {
+                                throw new Error(b.message || 'Не вдалося додати форму власності');
+                            });
+                        }
+                        return resp.json();
+                    }).then(function (lf) {
+                        var opt = document.createElement('option');
+                        opt.value = lf.code;
+                        opt.textContent = lf.shortLabel;
+                        opt.title = lf.fullLabel;
+                        opt.dataset.short = lf.shortLabel;
+                        opt.dataset.full = lf.fullLabel;
+                        form.appendChild(opt);
+                        form.value = lf.code;
+                        form.dispatchEvent(new Event('change'));
+                        overlay.hidden = true;
+                        name.focus();
+                    }).catch(function (err) {
+                        errorBox.textContent = err.message;
+                        errorBox.hidden = false;
+                    });
+                });
             })();
 
             // Банк: пошук за частиною назви (без лапок і «АТ»), вибір підставляє МФО; IBAN обирає банк за МФО;

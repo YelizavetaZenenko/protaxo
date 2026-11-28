@@ -129,7 +129,7 @@ class InvoiceFormVatColumnsTest {
         when(invoiceService.findById(1L)).thenReturn(invoice);
         when(clientService.findById(1L)).thenReturn(new ClientResponse(1L, "Агро", null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, false, null, null, null, null, null, null, null, null,
-                null, null, null, null));
+                null, null, null, null, null));
         when(financeQueryService.settlement(invoice)).thenReturn(
                 InvoiceSettlement.of(1L, sum, zero, zero, null, LocalDate.of(2026, 11, 25)));
         return mvc.perform(get("/invoices/1").with(user("m@b.c").roles("MASTER")))
